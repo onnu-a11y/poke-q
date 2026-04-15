@@ -103,7 +103,7 @@ body::after{
   background:var(--card2);border:2px solid rgba(255,255,255,0.1);
   border-radius:var(--radius-sm);padding:0.9rem 0.5rem;
   font-size:16px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;
-  cursor:pointer;transition:all 0.15s;color:var(--text);
+  cursor:pointer;transition:all 0.15s;color:var(--text);touch-action:manipulation;-webkit-tap-highlight-color:transparent;
   min-height:62px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;
 }
 .choice-btn:hover:not(:disabled){border-color:var(--yellow);color:var(--yellow);transform:translateY(-2px);box-shadow:0 4px 16px rgba(255,203,5,0.2);}
@@ -121,7 +121,7 @@ body::after{
 .result-banner.wrong{background:var(--wrong-bg);border:1.5px solid var(--wrong);color:#ff8a80;animation:bannerIn 0.25s ease;}
 @keyframes bannerIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-.next-btn{
+.next-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;
   width:100%;padding:1rem;font-size:17px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;
   border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--red),#ff5722);
   color:#fff;border:none;cursor:pointer;transition:all 0.15s;
@@ -165,7 +165,7 @@ body::after{
 .score-denom{font-size:28px;color:var(--text-sub);font-weight:500;}
 .score-pct{display:inline-block;font-size:14px;font-weight:700;background:rgba(255,203,5,0.15);color:var(--yellow);padding:4px 16px;border-radius:20px;margin:0.5rem 0 0.25rem;border:1px solid rgba(255,203,5,0.3);}
 .score-msg{font-size:18px;color:var(--text);margin:0.75rem 0 1.75rem;font-weight:700;}
-.restart-btn{
+.restart-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;
   padding:1rem 2.5rem;font-size:17px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;
   border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--red),#ff5722);
   color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(227,53,13,0.4);transition:all 0.15s;
@@ -305,7 +305,7 @@ function render(){
 function pick(btn,chosen,correct){
   if(answered)return;
   answered=true;
-  document.querySelectorAll('.choice-btn').forEach(b=>{b.disabled=true;if(b.textContent===correct)b.classList.add('correct');});
+  document.querySelectorAll('.choice-btn').forEach(b=>{b.style.pointerEvents='none';if(b.textContent===correct)b.classList.add('correct');});
   const rb=document.getElementById('rb');
   const img=document.getElementById('poke-img');
   if(chosen===correct){
