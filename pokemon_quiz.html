@@ -247,28 +247,59 @@ function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Mat
 function makeChoices(c){return shuffle([c,...shuffle(allPokemon.filter(p=>p.id!==c.id)).slice(0,3)]);}
 function startQuiz(){questions=shuffle(allPokemon).slice(0,30);current=0;score=0;answered=false;render();}
 
+function el(tag,cls,txt){
+  const e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(txt!=null)e.textContent=txt;
+  return e;
+}
 function render(){
   const app=document.getElementById('quiz-area');
   if(current>=questions.length){showScore();return;}
+  app.innerHTML='';
   const q=questions[current];
   const choices=makeChoices(q);
-  const imgUrl=`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${q.id}.png`;
-  app.innerHTML=`
-    <div class="status-bar">
-      <span class="q-badge">もんだい ${current+1}/${questions.length}</span>
-      <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${(current/questions.length)*100}%"></div></div></div>
-      <span class="score-badge">⭐ ${score}せいかい</span>
-    </div>
-    <div class="img-card"><img class="poke-img" id="poke-img" src="${imgUrl}" alt="ポケモン"/></div>
-    <div class="hint-box"><div class="hint-label">ヒント</div><div class="hint-text">${getHint(q.id)}</div></div>
-    <div class="choices" id="choices-wrap">${choices.map(c=>`<button class="choice-btn" data-chosen="${encodeURIComponent(c.jpName)}" data-correct="${encodeURIComponent(q.jpName)}">${c.jpName}</button>`).join('')}</div>
-    <div class="result-banner" id="rb"></div>
-    <button class="next-btn" id="nb" style="display:none" onclick="next()">${current+1<questions.length?'つぎのもんだい ▶':'けっかをみる 🎉'}</button>`;
-  document.getElementById('choices-wrap').addEventListener('click',function(e){
-    const btn=e.target.closest('.choice-btn');
-    if(!btn)return;
-    pick(btn,decodeURIComponent(btn.dataset.chosen),decodeURIComponent(btn.dataset.correct));
+
+  const statusBar=el('div','status-bar');
+  statusBar.appendChild(el('span','q-badge','もんだい '+(current+1)+'/'+questions.length));
+  const pw=el('div','progress-wrap');
+  const pb=el('div','progress-bar');
+  const pf=el('div','progress-fill');
+  pf.style.width=(current/questions.length*100)+'%';
+  pb.appendChild(pf);pw.appendChild(pb);statusBar.appendChild(pw);
+  statusBar.appendChild(el('span','score-badge','⭐ '+score+'せいかい'));
+  app.appendChild(statusBar);
+
+  const imgCard=el('div','img-card');
+  const img=document.createElement('img');
+  img.className='poke-img';img.id='poke-img';
+  img.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/'+q.id+'.png';
+  img.alt='ポケモン';
+  imgCard.appendChild(img);
+  app.appendChild(imgCard);
+
+  const hintBox=el('div','hint-box');
+  hintBox.appendChild(el('div','hint-label','ヒント'));
+  hintBox.appendChild(el('div','hint-text',getHint(q.id)));
+  app.appendChild(hintBox);
+
+  const cw=el('div','choices');
+  choices.forEach(function(c){
+    const btn=el('button','choice-btn',c.jpName);
+    (function(chosen,correct){
+      btn.addEventListener('click',function(){pick(btn,chosen,correct);});
+    })(c.jpName,q.jpName);
+    cw.appendChild(btn);
   });
+  app.appendChild(cw);
+
+  app.appendChild(el('div','result-banner',''));
+  document.getElementById('quiz-area').lastChild.id='rb';
+
+  const nb=el('button','next-btn',current+1<questions.length?'つぎのもんだい ▶':'けっかをみる 🎉');
+  nb.id='nb';nb.style.display='none';
+  nb.addEventListener('click',next);
+  app.appendChild(nb);
 }
 
 function pick(btn,chosen,correct){
