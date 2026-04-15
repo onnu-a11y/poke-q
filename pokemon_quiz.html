@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケモンクイズ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:#f0f4ff;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:1rem;}
+#app{width:100%;max-width:480px;}
+.progress-bar{height:10px;background:#dde3f0;border-radius:5px;margin-bottom:0.75rem;overflow:hidden;}
+.progress-fill{height:100%;background:#4a90e2;border-radius:5px;transition:width 0.4s ease;}
+.q-counter{font-size:14px;color:#666;text-align:center;margin-bottom:0.5rem;}
+.img-box{background:#fff;border-radius:16px;padding:1rem;text-align:center;margin-bottom:0.75rem;min-height:180px;display:flex;align-items:center;justify-content:center;border:2px solid #e8ecf5;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.poke-img{width:150px;height:150px;object-fit:contain;}
+.hint-text{font-size:14px;color:#666;text-align:center;margin-bottom:1rem;line-height:1.6;padding:0 0.5rem;}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.choice-btn{background:#fff;border:2px solid #c8d0e8;border-radius:14px;padding:0.85rem 0.5rem;font-size:17px;font-weight:600;cursor:pointer;transition:all 0.15s;color:#333;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.04);}
+.choice-btn:hover:not(:disabled){background:#f0f4ff;border-color:#4a90e2;transform:scale(1.02);}
+.choice-btn:active:not(:disabled){transform:scale(0.98);}
+.choice-btn.correct{background:#e8f5e9;border-color:#4caf50;color:#1b5e20;}
+.choice-btn.wrong{background:#ffebee;border-color:#e53935;color:#7f0000;}
+.choice-btn:disabled{cursor:default;}
+.result-banner{text-align:center;padding:0.75rem;border-radius:12px;font-size:16px;font-weight:600;margin-bottom:1rem;min-height:48px;line-height:1.4;}
+.result-banner.correct{background:#e8f5e9;color:#1b5e20;}
+.result-banner.wrong{background:#ffebee;color:#7f0000;}
+.next-btn{width:100%;padding:1rem;font-size:17px;font-weight:600;border-radius:14px;background:#4a90e2;color:#fff;border:none;cursor:pointer;transition:background 0.15s;box-shadow:0 3px 8px rgba(74,144,226,0.3);}
+.next-btn:hover{background:#357abd;}
+.score-screen{text-align:center;padding:3rem 1rem;background:#fff;border-radius:20px;box-shadow:0 4px 16px rgba(0,0,0,0.08);}
+.score-big{font-size:64px;font-weight:700;color:#4a90e2;line-height:1;margin-bottom:0.5rem;}
+.score-label{font-size:17px;color:#666;margin-bottom:2rem;}
+.restart-btn{padding:1rem 3rem;font-size:17px;font-weight:600;border-radius:14px;background:#4a90e2;color:#fff;border:none;cursor:pointer;box-shadow:0 3px 8px rgba(74,144,226,0.3);}
+.restart-btn:hover{background:#357abd;}
+.loading{text-align:center;padding:4rem 1rem;background:#fff;border-radius:20px;box-shadow:0 4px 16px rgba(0,0,0,0.08);}
+.spinner{width:40px;height:40px;border:4px solid #e8ecf5;border-top-color:#4a90e2;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1.5rem;}
+.loading-text{font-size:16px;color:#666;line-height:1.8;}
+.loading-sub{font-size:13px;color:#999;margin-top:0.5rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">ポケモンを よみこみ中...🎮</div>
+    <div class="loading-sub">少し待ってね！</div>
+  </div>
+</div>
+<script>
+const EXCLUDED = ['mega','gmax','alola','galar','hisui','paldea','totem','partner','origin','sky','land','attack','defense','speed','heat','wash','frost','fan','mow','therian','incarnate','black','white','ordinary','pirouette','aria','resolute','baile','pau','sensu','dusk','midnight','midday','zen','school','complete','unbound','blade','shield','cap','hoopa'];
+function isBase(name){const l=name.toLowerCase();for(const k of EXCLUDED){if(l.includes('-'+k))return false;}return true;}
+
+const HINTS={1:"くさ・どくタイプ🌿",2:"ほのおのトカゲ🔥",3:"みずのカメ💧",4:"虫と草のポケモン",5:"ハチみたいなポケモン",6:"ちょうちょのポケモン🦋",25:"黄色くて耳の先が黒い⚡",26:"ピカチュウが進化したポケモン⚡",39:"ふわふわのピンクのポケモン",40:"大きくなったピンクのポケモン",52:"ネコのポケモン🐱",53:"ペルシャネコのポケモン🐱",94:"むらさきのおばけ👻",113:"タマゴを産む優しいポケモン🥚",129:"はねる魚のポケモン🐟",130:"大きなりゅうのポケモン🐉",131:"首が長い青いポケモン🌊",132:"なんでも変身できるポケモン",133:"ノーマルのイーブイ✨",134:"水のイーブイ💧",135:"電気のイーブイ⚡",136:"炎のイーブイ🔥",143:"とっても大きくていつも寝てるポケモン😴",144:"こおりの鳥の伝説ポケモン❄️",145:"雷の鳥の伝説ポケモン⚡",146:"炎の鳥の伝説ポケモン🔥",147:"小さなドラゴン🐉",148:"大きくなったドラゴン🐉",149:"青いドラゴン🐉",150:"にんげんがつくった伝説のポケモン💜",151:"ピンクの小さな伝説ポケモン✨",196:"ピンクのイーブイ進化形✨",197:"黒いイーブイ進化形🌑",243:"雷の犬の伝説⚡",244:"炎の犬の伝説🔥",245:"水の犬の伝説💧",249:"白い大きな翼の伝説🌊",250:"カラフルな羽の伝説🔥",251:"緑の小さな伝説✨",282:"白いドレスのポケモン🔮",350:"きれいな赤い魚💎",380:"青いドラゴン✈️",381:"赤いドラゴン✈️",382:"雨の伝説ポケモン🌊",383:"大地の伝説ポケモン🌋",384:"緑の長い空の伝説ポケモン",385:"金色の願いのポケモン✨",448:"青い格闘ポケモン💙",470:"草のイーブイ進化形🌿",471:"氷のイーブイ進化形❄️",483:"時間の伝説ドラゴン⏰",484:"空間の伝説ポケモン🌌",487:"反世界の伝説ポケモン👁",493:"全ての神様ポケモン✨",571:"黒いキツネのポケモン🦊",700:"フェアリーイーブイ🎀",716:"鹿の伝説ポケモン🦌",717:"赤黒翼の伝説ポケモン",791:"太陽の伝説ポケモン☀️",792:"月の伝説ポケモン🌙",800:"光の伝説ポケモン✨",888:"剣の伝説ポケモン⚔️",889:"盾の伝説ポケモン🛡",890:"リング伝説🌀",898:"森の伝説✨",1009:"赤いバイクみたいな伝説🏍🔴",1010:"紫のバイクみたいな伝説⚡🔵",1012:"亀みたいなテラスタル伝説💎"};
+function getHint(id){return HINTS[id]||"どんなポケモンかな？";}
+
+let allPokemon=[],questions=[],current=0,score=0,answered=false;
+
+async function loadPokemon(){
+  try{
+    document.querySelector('.loading-text').textContent='ポケモンリストをよみこみ中...';
+    const r=await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
+    const d=await r.json();
+    const baseList=d.results.map((p,i)=>({id:i+1,name:p.name})).filter(p=>isBase(p.name)&&p.id<=1017);
+    document.querySelector('.loading-text').textContent='なまえをよみこみ中... (少し時間がかかるよ)';
+    await loadNames(baseList);
+  }catch(e){
+    document.getElementById('app').innerHTML='<div class="loading"><div style="font-size:32px;margin-bottom:1rem">😢</div><div class="loading-text">よみこみに失敗しました</div><div class="loading-sub">ページをリロードしてください</div></div>';
+  }
+}
+
+async function loadNames(baseList){
+  const BATCH=80;
+  for(let i=0;i<baseList.length;i+=BATCH){
+    const batch=baseList.slice(i,i+BATCH);
+    const pct=Math.round((i/baseList.length)*100);
+    document.querySelector('.loading-sub').textContent=`よみこみ中... ${pct}%`;
+    await Promise.all(batch.map(async p=>{
+      try{
+        const r=await fetch(`https://pokeapi.co/api/v2/pokemon-species/${p.id}/`);
+        const d=await r.json();
+        const jp=d.names.find(n=>n.language.name==='ja-Hrkt')||d.names.find(n=>n.language.name==='ja');
+        if(jp){allPokemon.push({id:p.id,name:p.name,jpName:jp.name});}
+      }catch{}
+    }));
+  }
+  if(allPokemon.length===0){
+    document.getElementById('app').innerHTML='<div class="loading"><div style="font-size:32px;margin-bottom:1rem">😢</div><div class="loading-text">ポケモンのよみこみに失敗しました</div><div class="loading-sub">ページをリロードしてください</div></div>';
+    return;
+  }
+  startQuiz();
+}
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function makeChoices(correct){
+  const others=shuffle(allPokemon.filter(p=>p.id!==correct.id)).slice(0,3);
+  return shuffle([correct,...others]);
+}
+
+function startQuiz(){
+  questions=shuffle(allPokemon).slice(0,30);
+  current=0;score=0;answered=false;
+  render();
+}
+
+function render(){
+  const app=document.getElementById('app');
+  if(current>=questions.length){
+    const pct=Math.round((score/questions.length)*100);
+    let msg='よくできました！🎉';
+    if(pct>=90)msg='かんぺき！すごすぎ！🏆';
+    else if(pct>=70)msg='よくできました！👏';
+    else if(pct>=50)msg='がんばったね！😊';
+    else msg='またチャレンジしてみよう！💪';
+    app.innerHTML=`<div class="score-screen"><div style="font-size:56px;margin-bottom:0.5rem">🎊</div><div class="score-big">${score}<span style="font-size:32px;color:#999">/${questions.length}</span></div><div class="score-label">${msg}</div><button class="restart-btn" onclick="startQuiz()">もういちど あそぶ 🎮</button></div>`;
+    return;
+  }
+  const q=questions[current];
+  const choices=makeChoices(q);
+  const imgUrl=`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${q.id}.png`;
+  app.innerHTML=`
+    <div class="q-counter">もんだい ${current+1} / ${questions.length}　⭐ ${score}せいかい</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${(current/questions.length)*100}%"></div></div>
+    <div class="img-box"><img class="poke-img" src="${imgUrl}" alt="ポケモン" /></div>
+    <div class="hint-text">ヒント：${getHint(q.id)}</div>
+    <div class="choices">${choices.map(c=>`<button class="choice-btn" onclick="pick(this,'${c.jpName}','${q.jpName}')">${c.jpName}</button>`).join('')}</div>
+    <div class="result-banner" id="rb"></div>
+    <button class="next-btn" id="nb" style="display:none" onclick="next()">${current+1<questions.length?'つぎのもんだい →':'けっかをみる 🎉'}</button>`;
+}
+
+function pick(btn,chosen,correct){
+  if(answered)return;
+  answered=true;
+  document.querySelectorAll('.choice-btn').forEach(b=>{b.disabled=true;if(b.textContent===correct)b.classList.add('correct');});
+  const rb=document.getElementById('rb');
+  if(chosen===correct){btn.classList.add('correct');rb.className='result-banner correct';rb.textContent='🎉 せいかい！すごい！';score++;}
+  else{btn.classList.add('wrong');rb.className='result-banner wrong';rb.textContent=`😢 ざんねん… こたえは「${correct}」だよ！`;}
+  document.getElementById('nb').style.display='block';
+}
+
+function next(){current++;answered=false;render();}
+loadPokemon();
+</script>
+</body>
+</html>
