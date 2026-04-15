@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -24,129 +25,140 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 @keyframes rotateBall{to{transform:rotate(360deg);}}
 #app{width:100%;max-width:460px;position:relative;z-index:1;}
 
-/* ヘッダー */
 .top-header{display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;position:relative;}
-.header-title{font-size:26px;font-weight:900;color:var(--yellow);text-shadow:0 2px 0 var(--yellow-dark),0 4px 12px rgba(255,203,5,0.3);letter-spacing:2px;}
-.header-title::before{content:'⚡ ';}
-.header-title::after{content:' ⚡';}
+.header-title{font-size:26px;font-weight:900;color:var(–yellow);text-shadow:0 2px 0 var(–yellow-dark),0 4px 12px rgba(255,203,5,0.3);letter-spacing:2px;}
+.header-title::before{content:‘⚡ ‘;}
+.header-title::after{content:’ ⚡’;}
 .gear-btn{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background 0.2s;}
 .gear-btn:hover{background:rgba(255,255,255,0.15);}
 
-/* 設定パネル */
 .settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s ease;}
-.settings-panel{background:var(--card);border-radius:24px 24px 0 0;padding:1.5rem 1.25rem 2.5rem;width:100%;max-width:460px;animation:slideUp 0.25s ease;}
+.settings-panel{background:var(–card);border-radius:24px 24px 0 0;padding:1.5rem 1.25rem 2.5rem;width:100%;max-width:460px;animation:slideUp 0.25s ease;}
 @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 .settings-handle{width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 1.25rem;}
-.settings-title{font-size:16px;font-weight:700;color:var(--yellow);margin-bottom:1.25rem;text-align:center;}
+.settings-title{font-size:16px;font-weight:700;color:var(–yellow);margin-bottom:1.25rem;text-align:center;}
 .settings-row{margin-bottom:1.25rem;}
-.settings-label{font-size:13px;color:var(--text-sub);font-weight:700;letter-spacing:1px;margin-bottom:0.6rem;}
+.settings-label{font-size:13px;color:var(–text-sub);font-weight:700;letter-spacing:1px;margin-bottom:0.6rem;}
 .diff-btns{display:flex;gap:8px;}
-.diff-btn{flex:1;padding:0.65rem 0;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;border-radius:var(--radius-sm);border:2px solid rgba(255,255,255,0.15);background:var(--card2);color:var(--text-sub);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all 0.15s;}
-.diff-btn.active{border-color:var(--yellow);color:var(--yellow);background:rgba(255,203,5,0.1);}
-.settings-close{width:100%;padding:0.85rem;font-size:16px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--red),#ff5722);color:#fff;border:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;margin-top:0.5rem;}
+.diff-btn{flex:1;padding:0.65rem 0;font-size:14px;font-weight:700;font-family:‘Zen Maru Gothic’,sans-serif;border-radius:var(–radius-sm);border:2px solid rgba(255,255,255,0.15);background:var(–card2);color:var(–text-sub);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all 0.15s;}
+.diff-btn.active{border-color:var(–yellow);color:var(–yellow);background:rgba(255,203,5,0.1);}
+.settings-close{width:100%;padding:0.85rem;font-size:16px;font-weight:700;font-family:‘Zen Maru Gothic’,sans-serif;border-radius:var(–radius-sm);background:linear-gradient(135deg,var(–red),#ff5722);color:#fff;border:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;margin-top:0.5rem;}
 
-/* トップ画面 */
-.top-screen{text-align:center;padding:1rem 0;}
-.top-sub{font-size:13px;color:var(--text-sub);margin-bottom:2rem;letter-spacing:1px;}
-.mode-cards{display:flex;flex-direction:column;gap:14px;}
-.mode-card{background:var(--card);border:2px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:1.4rem 1.25rem;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all 0.15s;text-align:left;display:flex;align-items:center;gap:1rem;}
-.mode-card:hover{border-color:var(--yellow);transform:translateY(-2px);}
-.mode-icon{font-size:44px;flex-shrink:0;}
-.mode-info{}
-.mode-name{font-size:20px;font-weight:900;color:var(--yellow);margin-bottom:4px;}
-.mode-desc{font-size:13px;color:var(--text-sub);line-height:1.5;}
+.top-screen{padding:0.5rem 0;}
+.top-sub{font-size:13px;color:var(–text-sub);margin-bottom:1.25rem;letter-spacing:1px;text-align:center;}
+.mode-cards{display:flex;flex-direction:column;gap:12px;}
+.mode-card{background:var(–card);border:2px solid rgba(255,255,255,0.08);border-radius:var(–radius);padding:1.1rem 1.25rem;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all 0.15s;text-align:left;display:flex;align-items:center;gap:1rem;}
+.mode-card:hover{border-color:var(–yellow);transform:translateY(-2px);}
+.mode-icon{font-size:40px;flex-shrink:0;}
+.mode-name{font-size:18px;font-weight:900;color:var(–yellow);margin-bottom:3px;}
+.mode-desc{font-size:12px;color:var(–text-sub);line-height:1.5;}
+.mode-trophy{margin-left:auto;flex-shrink:0;font-size:22px;min-width:28px;text-align:center;}
 
-/* ステータスバー */
-.status-bar{display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;}
-.q-badge{background:var(--red);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 6px rgba(227,53,13,0.4);}
-.mode-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.trophy-section{margin-top:1.25rem;}
+.trophy-section-title{font-size:12px;color:var(–text-sub);font-weight:700;letter-spacing:1px;margin-bottom:0.6rem;text-align:center;}
+.trophy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.trophy-cell{background:var(–card);border-radius:var(–radius-sm);padding:0.6rem 0.4rem;text-align:center;border:1px solid rgba(255,255,255,0.06);}
+.trophy-cell-mode{font-size:10px;color:var(–text-sub);margin-bottom:2px;}
+.trophy-cell-diff{font-size:10px;color:var(–text-sub);margin-bottom:4px;}
+.trophy-cell-icon{font-size:20px;}
+
+.status-bar{display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;}
+.q-badge{background:var(–red);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 6px rgba(227,53,13,0.4);}
+.mode-badge{font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;}
 .mode-badge.normal{background:rgba(90,109,232,0.3);color:#a0aaff;}
 .mode-badge.silhouette{background:rgba(0,0,0,0.4);color:#ccc;}
-.score-badge{background:var(--yellow);color:#1a1200;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 6px rgba(255,203,5,0.4);margin-left:auto;}
+.mode-badge.math{background:rgba(46,204,113,0.25);color:#7fffc0;}
+.mode-badge.retry{background:rgba(255,203,5,0.2);color:var(–yellow);}
+.score-badge{background:var(–yellow);color:#1a1200;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 6px rgba(255,203,5,0.4);margin-left:auto;}
 .progress-wrap{flex:1;}
 .progress-bar{height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue-light),var(--yellow));border-radius:4px;transition:width 0.5s cubic-bezier(.4,0,.2,1);}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(–blue-light),var(–yellow));border-radius:4px;transition:width 0.5s cubic-bezier(.4,0,.2,1);}
 
-/* 画像カード */
-.img-card{background:var(--card);border-radius:var(--radius);padding:1.25rem 1rem 1rem;text-align:center;margin-bottom:0.85rem;border:1.5px solid rgba(255,255,255,0.07);overflow:hidden;position:relative;}
-.img-card::before{content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,203,5,0.12) 0%,transparent 70%);}
-.poke-img{width:160px;height:160px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(255,203,5,0.25));animation:floatPoke 3s ease-in-out infinite;position:relative;z-index:1;}
+.img-card{background:var(–card);border-radius:var(–radius);padding:1.25rem 1rem 1rem;text-align:center;margin-bottom:0.85rem;border:1.5px solid rgba(255,255,255,0.07);overflow:hidden;position:relative;}
+.img-card::before{content:’’;position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,203,5,0.12) 0%,transparent 70%);}
+.poke-img{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(255,203,5,0.25));animation:floatPoke 3s ease-in-out infinite;position:relative;z-index:1;}
 .poke-img.silhouette{filter:brightness(0) drop-shadow(0 4px 16px rgba(0,0,0,0.5));}
 @keyframes floatPoke{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
 .poke-img.shake{animation:shakePoke 0.4s ease forwards;}
 @keyframes shakePoke{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
 .poke-img.bounce{animation:bouncePoke 0.5s ease forwards;}
 @keyframes bouncePoke{0%,100%{transform:scale(1);}30%{transform:scale(1.15);}60%{transform:scale(0.95);}}
-.reveal-img{width:160px;height:160px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(255,203,5,0.25));position:relative;z-index:1;animation:bouncePoke 0.5s ease;}
+.reveal-img{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(255,203,5,0.25));position:relative;z-index:1;animation:bouncePoke 0.5s ease;}
 
-/* ヒント */
-.hint-box{background:rgba(59,76,202,0.2);border:1px solid rgba(90,109,232,0.3);border-radius:var(--radius-sm);padding:0.6rem 1rem;margin-bottom:0.85rem;text-align:center;}
-.hint-label{font-size:10px;color:var(--blue-light);font-weight:700;letter-spacing:1.5px;margin-bottom:2px;}
-.hint-text{font-size:14px;color:var(--text);line-height:1.6;}
+.math-card{background:var(–card);border-radius:var(–radius);padding:1.5rem 1rem;text-align:center;margin-bottom:0.85rem;border:1.5px solid rgba(46,204,113,0.2);}
+.math-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
+.math-poke{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.math-poke img{width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(255,203,5,0.2));}
+.math-poke-count{font-size:18px;font-weight:900;color:var(–yellow);}
+.math-op{font-size:28px;font-weight:900;color:var(–text-sub);}
+.math-eq{font-size:28px;font-weight:900;color:var(–text-sub);}
+.math-q{font-size:38px;font-weight:900;color:var(–yellow);}
+
+.hint-box{background:rgba(59,76,202,0.2);border:1px solid rgba(90,109,232,0.3);border-radius:var(–radius-sm);padding:0.6rem 1rem;margin-bottom:0.85rem;text-align:center;}
+.hint-label{font-size:10px;color:var(–blue-light);font-weight:700;letter-spacing:1.5px;margin-bottom:2px;}
+.hint-text{font-size:14px;color:var(–text);line-height:1.6;}
 .hint-text ruby{ruby-position:over;}
-.hint-text rt{font-size:9px;color:var(--text-sub);}
+.hint-text rt{font-size:9px;color:var(–text-sub);}
 
-/* 選択肢 */
 .choices{display:grid;gap:10px;margin-bottom:0.85rem;}
 .choices.col2{grid-template-columns:1fr 1fr;}
 .choices.col3{grid-template-columns:1fr 1fr 1fr;}
-.choice-btn{background:var(--card2);border:2px solid rgba(255,255,255,0.1);border-radius:var(--radius-sm);padding:0.9rem 0.5rem;font-size:16px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;cursor:pointer;transition:all 0.15s;color:var(--text);touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-height:62px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;}
-.choices.col3 .choice-btn{font-size:14px;padding:0.75rem 0.25rem;min-height:56px;}
-.choice-btn:hover:not(:disabled){border-color:var(--yellow);color:var(--yellow);transform:translateY(-2px);box-shadow:0 4px 16px rgba(255,203,5,0.2);}
+.choice-btn{background:var(–card2);border:2px solid rgba(255,255,255,0.1);border-radius:var(–radius-sm);padding:0.9rem 0.5rem;font-size:16px;font-weight:700;font-family:‘Zen Maru Gothic’,sans-serif;cursor:pointer;transition:all 0.15s;color:var(–text);touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-height:62px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;}
+.choices.col3 .choice-btn{font-size:15px;padding:0.75rem 0.25rem;min-height:56px;}
+.choice-btn:hover:not(:disabled){border-color:var(–yellow);color:var(–yellow);transform:translateY(-2px);box-shadow:0 4px 16px rgba(255,203,5,0.2);}
 .choice-btn:active:not(:disabled){transform:scale(0.97);}
-.choice-btn.correct{background:var(--correct-bg);border-color:var(--correct);color:var(--correct);animation:correctPop 0.3s ease;}
+.choice-btn.correct{background:var(–correct-bg);border-color:var(–correct);color:var(–correct);animation:correctPop 0.3s ease;}
 @keyframes correctPop{0%{transform:scale(0.95);}60%{transform:scale(1.05);}100%{transform:scale(1);}}
-.choice-btn.wrong{background:var(--wrong-bg);border-color:var(--wrong);color:var(--wrong);}
+.choice-btn.wrong{background:var(–wrong-bg);border-color:var(–wrong);color:var(–wrong);}
 
-/* 結果バナー */
-.result-banner{text-align:center;padding:0.7rem 1rem;border-radius:var(--radius-sm);font-size:16px;font-weight:700;margin-bottom:0.85rem;min-height:46px;line-height:1.4;}
-.result-banner.correct{background:var(--correct-bg);border:1.5px solid var(--correct);color:var(--correct);animation:bannerIn 0.25s ease;}
-.result-banner.wrong{background:var(--wrong-bg);border:1.5px solid var(--wrong);color:#ff8a80;animation:bannerIn 0.25s ease;}
+.result-banner{text-align:center;padding:0.7rem 1rem;border-radius:var(–radius-sm);font-size:16px;font-weight:700;margin-bottom:0.85rem;min-height:46px;line-height:1.4;}
+.result-banner.correct{background:var(–correct-bg);border:1.5px solid var(–correct);color:var(–correct);animation:bannerIn 0.25s ease;}
+.result-banner.wrong{background:var(–wrong-bg);border:1.5px solid var(–wrong);color:#ff8a80;animation:bannerIn 0.25s ease;}
 @keyframes bannerIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-/* ボタン */
-.next-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;padding:1rem;font-size:17px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--red),#ff5722);color:#fff;border:none;cursor:pointer;transition:all 0.15s;box-shadow:0 4px 16px rgba(227,53,13,0.4);}
-.next-btn:hover{background:linear-gradient(135deg,var(--red-dark),#e64a19);transform:translateY(-2px);}
+.next-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;padding:1rem;font-size:17px;font-weight:700;font-family:‘Zen Maru Gothic’,sans-serif;border-radius:var(–radius-sm);background:linear-gradient(135deg,var(–red),#ff5722);color:#fff;border:none;cursor:pointer;transition:all 0.15s;box-shadow:0 4px 16px rgba(227,53,13,0.4);}
+.next-btn:hover{background:linear-gradient(135deg,var(–red-dark),#e64a19);transform:translateY(-2px);}
 .next-btn:active{transform:scale(0.98);}
-.back-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:transparent;border:1.5px solid rgba(255,255,255,0.2);border-radius:var(--radius-sm);color:var(--text-sub);font-size:13px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;padding:0.5rem 1rem;cursor:pointer;margin-bottom:1rem;display:inline-flex;align-items:center;gap:4px;}
+.back-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:transparent;border:1.5px solid rgba(255,255,255,0.2);border-radius:var(–radius-sm);color:var(–text-sub);font-size:13px;font-weight:700;font-family:‘Zen Maru Gothic’,sans-serif;padding:0.5rem 1rem;cursor:pointer;margin-bottom:1rem;display:inline-flex;align-items:center;gap:4px;}
 
-/* ローディング */
-.loading{text-align:center;padding:3rem 1.5rem;background:var(--card);border-radius:var(--radius);border:1.5px solid rgba(255,255,255,0.07);}
-.pokeball-loader{width:60px;height:60px;border-radius:50%;background:conic-gradient(from 0deg,var(--red) 0% 50%,#fff 50% 100%);margin:0 auto 1rem;position:relative;animation:spin 0.9s linear infinite;box-shadow:0 0 20px rgba(227,53,13,0.3);}
-.pokeball-loader::after{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--card);border:3px solid rgba(255,255,255,0.3);}
+.loading{text-align:center;padding:3rem 1.5rem;background:var(–card);border-radius:var(–radius);border:1.5px solid rgba(255,255,255,0.07);}
+.pokeball-loader{width:60px;height:60px;border-radius:50%;background:conic-gradient(from 0deg,var(–red) 0% 50%,#fff 50% 100%);margin:0 auto 1rem;position:relative;animation:spin 0.9s linear infinite;box-shadow:0 0 20px rgba(227,53,13,0.3);}
+.pokeball-loader::after{content:’’;position:absolute;inset:6px;border-radius:50%;background:var(–card);border:3px solid rgba(255,255,255,0.3);}
 @keyframes spin{to{transform:rotate(360deg);}}
-.loading-title{font-size:18px;font-weight:700;color:var(--yellow);margin-bottom:0.5rem;}
-.loading-text{font-size:14px;color:var(--text-sub);line-height:1.8;}
+.loading-title{font-size:18px;font-weight:700;color:var(–yellow);margin-bottom:0.5rem;}
+.loading-text{font-size:14px;color:var(–text-sub);line-height:1.8;}
 .loading-bar-wrap{margin:1rem auto 0;max-width:200px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;}
-.loading-bar{height:100%;background:linear-gradient(90deg,var(--blue-light),var(--yellow));border-radius:3px;width:0%;transition:width 0.4s ease;}
+.loading-bar{height:100%;background:linear-gradient(90deg,var(–blue-light),var(–yellow));border-radius:3px;width:0%;transition:width 0.4s ease;}
 
-/* スコア画面 */
-.score-screen{text-align:center;padding:2.5rem 1.5rem;background:var(--card);border-radius:var(--radius);border:1.5px solid rgba(255,255,255,0.07);position:relative;overflow:hidden;}
-.score-screen::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--red),var(--yellow),var(--blue-light));}
-.score-stars{font-size:40px;margin-bottom:0.75rem;animation:starPop 0.5s ease;}
+.score-screen{text-align:center;padding:2rem 1.5rem;background:var(–card);border-radius:var(–radius);border:1.5px solid rgba(255,255,255,0.07);position:relative;overflow:hidden;}
+.score-screen::before{content:’’;position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(–red),var(–yellow),var(–blue-light));}
+.score-stars{font-size:40px;margin-bottom:0.5rem;animation:starPop 0.5s ease;}
 @keyframes starPop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
-.score-big{font-size:72px;font-weight:900;color:var(--yellow);line-height:1;text-shadow:0 4px 0 var(--yellow-dark),0 8px 24px rgba(255,203,5,0.3);margin-bottom:0.25rem;}
-.score-denom{font-size:28px;color:var(--text-sub);font-weight:500;}
-.score-pct{display:inline-block;font-size:14px;font-weight:700;background:rgba(255,203,5,0.15);color:var(--yellow);padding:4px 16px;border-radius:20px;margin:0.5rem 0 0.25rem;border:1px solid rgba(255,203,5,0.3);}
-.score-msg{font-size:18px;color:var(--text);margin:0.75rem 0 1.25rem;font-weight:700;}
+.score-big{font-size:72px;font-weight:900;color:var(–yellow);line-height:1;text-shadow:0 4px 0 var(–yellow-dark),0 8px 24px rgba(255,203,5,0.3);margin-bottom:0.25rem;}
+.score-denom{font-size:28px;color:var(–text-sub);font-weight:500;}
+.score-pct{display:inline-block;font-size:14px;font-weight:700;background:rgba(255,203,5,0.15);color:var(–yellow);padding:4px 16px;border-radius:20px;margin:0.5rem 0 0.25rem;border:1px solid rgba(255,203,5,0.3);}
+.score-trophy-earned{font-size:36px;margin:0.5rem 0;animation:starPop 0.6s 0.2s both ease;}
+.score-msg{font-size:17px;color:var(–text);margin:0.5rem 0 1.25rem;font-weight:700;}
 .score-btns{display:flex;flex-direction:column;gap:10px;}
-.restart-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:1rem;font-size:17px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--red),#ff5722);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(227,53,13,0.4);transition:all 0.15s;}
+.restart-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:1rem;font-size:17px;font-weight:700;font-family:‘Zen Maru Gothic’,sans-serif;border-radius:var(–radius-sm);background:linear-gradient(135deg,var(–red),#ff5722);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(227,53,13,0.4);transition:all 0.15s;}
 .restart-btn:hover{transform:translateY(-2px);}
-.top-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:0.85rem;font-size:15px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;border-radius:var(--radius-sm);background:transparent;color:var(--text-sub);border:1.5px solid rgba(255,255,255,0.2);cursor:pointer;transition:all 0.15s;}
-.top-btn:hover{border-color:var(--yellow);color:var(--yellow);}
+.retry-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:0.85rem;font-size:15px;font-weight:700;font-family:‘Zen Maru Gothic’,sans-serif;border-radius:var(–radius-sm);background:rgba(46,204,113,0.15);color:var(–correct);border:1.5px solid rgba(46,204,113,0.4);cursor:pointer;transition:all 0.15s;}
+.retry-btn:hover{background:rgba(46,204,113,0.25);}
+.top-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:0.85rem;font-size:15px;font-weight:700;font-family:‘Zen Maru Gothic’,sans-serif;border-radius:var(–radius-sm);background:transparent;color:var(–text-sub);border:1.5px solid rgba(255,255,255,0.2);cursor:pointer;transition:all 0.15s;}
+.top-btn:hover{border-color:var(–yellow);color:var(–yellow);}
 
-/* 紙吹雪 */
 .confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:200;}
 .confetti{position:absolute;border-radius:2px;animation:fall linear forwards;}
 @keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
 </style>
+
 </head>
 <body>
 <div id="app">
   <div class="top-header">
     <div class="header-title">ポケモンクイズ</div>
-    <button class="gear-btn" id="gear-btn" aria-label="設定">⚙️</button>
+    <button class="gear-btn" id="gear-btn">⚙️</button>
   </div>
   <div id="loading-screen" class="loading">
     <div class="pokeball-loader"></div>
@@ -156,354 +168,444 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
   </div>
   <div id="main-area" style="display:none;"></div>
 </div>
-
 <script>
-// ===== 除外キーワード =====
 const EXCLUDED=['mega','gmax','alola','galar','hisui','paldea','totem','partner','origin','sky','land','attack','defense','speed','heat','wash','frost','fan','mow','therian','incarnate','black','white','ordinary','pirouette','aria','resolute','baile','pau','sensu','dusk','midnight','midday','zen','school','complete','unbound','blade','shield','cap','hoopa'];
-function isBase(name){const l=name.toLowerCase();for(const k of EXCLUDED)if(l.includes('-'+k))return false;return true;}
+function isBase(n){const l=n.toLowerCase();for(const k of EXCLUDED)if(l.includes('-'+k))return false;return true;}
 
-// ===== かんたんポケモンID（1-4世代の有名どころ）=====
 const EASY_IDS=new Set([
-  // 第1世代: 御三家最終進化・ピカチュウ・アニメ有名・伝説
-  3,6,9,25,26,52,53,54,55,59,65,68,94,102,103,112,113,115,122,
-  129,130,131,132,133,134,135,136,142,143,144,145,146,149,150,151,
-  // 第2世代: 御三家最終・イーブイ追加・アニメ有名・伝説
-  154,157,160,175,176,183,184,196,197,242,243,244,245,248,249,250,251,
-  // 第3世代: 御三家最終・有名どころ・伝説
-  254,257,260,282,350,373,376,380,381,382,383,384,385,
-  // 第4世代: 御三家最終・有名どころ・イーブイ追加・伝説
-  389,392,395,405,407,419,428,445,448,460,470,471,483,484,487,493
+3,6,9,25,26,52,53,54,55,59,65,68,94,102,103,112,113,115,122,
+129,130,131,132,133,134,135,136,142,143,144,145,146,149,150,151,
+154,157,160,175,176,183,184,196,197,242,243,244,245,248,249,250,251,
+254,257,260,282,350,373,376,380,381,382,383,384,385,
+389,392,395,405,407,419,428,445,448,460,470,471,483,484,487,493
 ]);
 
-// ===== ヒント（ふりがなつき）=====
-const HINTS={
-  1:"くさ・どくタイプ🌿",2:"ほのおのトカゲ🔥",3:"みずのカメ💧",4:"<ruby>虫<rt>むし</rt></ruby>と<ruby>草<rt>くさ</rt></ruby>のポケモン",5:"ハチみたいなポケモン🐝",6:"ちょうちょのポケモン🦋",7:"カメのこどものポケモン🐢",8:"もっと<ruby>大<rt>おお</rt></ruby>きなカメ🐢",9:"<ruby>大<rt>おお</rt></ruby>きなカメと<ruby>大砲<rt>たいほう</rt></ruby>💧",10:"いもむしのポケモン🐛",11:"サナギのポケモン",12:"ちょうちょのポケモン🦋",13:"<ruby>小<rt>ちい</rt></ruby>さな<ruby>虫<rt>むし</rt></ruby>🐛",14:"どくのサナギ",15:"<ruby>大<rt>おお</rt></ruby>きなハチ🐝",16:"<ruby>小<rt>ちい</rt></ruby>さなとり🐦",17:"もっと<ruby>大<rt>おお</rt></ruby>きなとり",18:"<ruby>大<rt>おお</rt></ruby>きなとり🦅",19:"<ruby>小<rt>ちい</rt></ruby>さなネズミ🐭",20:"<ruby>大<rt>おお</rt></ruby>きなネズミ🐭",21:"<ruby>小<rt>ちい</rt></ruby>さなスズメ🐦",22:"<ruby>大<rt>おお</rt></ruby>きなスズメ🦅",23:"コブラのポケモン",24:"<ruby>大<rt>おお</rt></ruby>きなコブラ",25:"<ruby>黄色<rt>きいろ</rt></ruby>くて<ruby>耳<rt>みみ</rt></ruby>のさきが<ruby>黒<rt>くろ</rt></ruby>い⚡",26:"ピカチュウが<ruby>進化<rt>しんか</rt></ruby>したポケモン⚡",27:"さばくのポケモン",28:"<ruby>大<rt>おお</rt></ruby>きなさばくポケモン",29:"どくのポケモン",30:"もっと<ruby>大<rt>おお</rt></ruby>きなどく",31:"<ruby>大<rt>おお</rt></ruby>きなどくポケモン",32:"どくのつのポケモン",33:"もっと<ruby>大<rt>おお</rt></ruby>きなどくつの",34:"<ruby>大<rt>おお</rt></ruby>きなどくつのポケモン",35:"ふわふわのピンクのポケモン",36:"<ruby>大<rt>おお</rt></ruby>きくなったピンクのポケモン",37:"ほのおのキツネ🔥🦊",38:"<ruby>大<rt>おお</rt></ruby>きなほのおキツネ🔥🦊",39:"ふわふわのピンクのポケモン",40:"<ruby>大<rt>おお</rt></ruby>きくなったピンクのポケモン",41:"コウモリ🦇",42:"<ruby>大<rt>おお</rt></ruby>きなコウモリ🦇",43:"くさのどくポケモン🌿",44:"もっと<ruby>大<rt>おお</rt></ruby>きなくさどく",45:"<ruby>大<rt>おお</rt></ruby>きなはな🌸",46:"キノコの<ruby>虫<rt>むし</rt></ruby>ポケモン🍄",47:"<ruby>大<rt>おお</rt></ruby>きなキノコ<ruby>虫<rt>むし</rt></ruby>🍄",48:"<ruby>虫<rt>むし</rt></ruby>のポケモン",49:"<ruby>大<rt>おお</rt></ruby>きな<ruby>虫<rt>むし</rt></ruby>",50:"モグラ🐾",51:"<ruby>大<rt>おお</rt></ruby>きなモグラ🐾",52:"ネコのポケモン🐱",53:"ペルシャネコ🐱",54:"アヒル🦆",55:"<ruby>大<rt>おお</rt></ruby>きなアヒル🦆",56:"サル🐒",57:"<ruby>大<rt>おお</rt></ruby>きなサル🦍",58:"いぬポケモン🐶",59:"<ruby>大<rt>おお</rt></ruby>きないぬ🐕",60:"おたまじゃくし🐸",61:"もっと<ruby>大<rt>おお</rt></ruby>きなカエル",62:"<ruby>大<rt>おお</rt></ruby>きなカエル🐸",63:"スプーンまげポケモン",64:"2ほんスプーン",65:"3ほんスプーンポケモン",66:"ちからもちポケモン",67:"もっとちからもち",68:"ちょうちからもちポケモン",69:"<ruby>食虫植物<rt>しょくちゅうしょくぶつ</rt></ruby>ポケモン",70:"<ruby>大<rt>おお</rt></ruby>きな<ruby>食虫植物<rt>しょくちゅうしょくぶつ</rt></ruby>",71:"とても<ruby>大<rt>おお</rt></ruby>きな<ruby>食虫植物<rt>しょくちゅうしょくぶつ</rt></ruby>",72:"クラゲ🪼",73:"<ruby>大<rt>おお</rt></ruby>きなクラゲ🪼",74:"いわのポケモン",75:"もっと<ruby>大<rt>おお</rt></ruby>きないわ",76:"<ruby>大<rt>おお</rt></ruby>きないわポケモン",77:"うまポケモン🐴",78:"<ruby>大<rt>おお</rt></ruby>きなほのおうま🐴🔥",79:"のろまなポケモン",80:"<ruby>大<rt>おお</rt></ruby>きなのろまポケモン",81:"じしゃくポケモン🧲",82:"2つのじしゃく🧲",83:"ねぎをもったとり🐦",84:"2つのあたまのとり",85:"<ruby>大<rt>おお</rt></ruby>きな2あたまとり",86:"アシカ🦭",87:"<ruby>大<rt>おお</rt></ruby>きなアシカ🦭",88:"ヘドロのポケモン",89:"<ruby>大<rt>おお</rt></ruby>きなヘドロ",90:"カタツムリ🐌",91:"<ruby>大<rt>おお</rt></ruby>きなカタツムリ🐌",92:"ちいさなおばけ👻",93:"もっと<ruby>大<rt>おお</rt></ruby>きなおばけ👻",94:"むらさきのおばけ👻",95:"いわのポケモン",96:"ねむらせるポケモン",97:"<ruby>大<rt>おお</rt></ruby>きなねむりポケモン",98:"カニ🦀",99:"<ruby>大<rt>おお</rt></ruby>きなカニ🦀",100:"でんきのボール⚡",101:"<ruby>大<rt>おお</rt></ruby>きなでんきボール⚡",102:"タマゴのポケモン🥚",103:"<ruby>大<rt>おお</rt></ruby>きなヤシのき🌴",104:"ほねのポケモン",105:"<ruby>大<rt>おお</rt></ruby>きなほねポケモン",106:"かくとうポケモン🥊",107:"かくとうポケモン🥊",108:"したがながいポケモン",109:"どくガスポケモン",110:"<ruby>大<rt>おお</rt></ruby>きなどくガス",111:"サイのポケモン🦏",112:"<ruby>大<rt>おお</rt></ruby>きなサイ🦏",113:"タマゴをうむやさしいポケモン🥚",114:"つるがいっぱい🌿",115:"カンガルー🦘",116:"タツノオトシゴ🐴",117:"<ruby>大<rt>おお</rt></ruby>きなタツノオトシゴ",118:"きんのさかな🐟",119:"<ruby>大<rt>おお</rt></ruby>きなきんさかな🐟",120:"ヒトデ⭐",121:"きれいなヒトデ⭐",122:"どうけしポケモン",123:"カマキリ🌿",124:"だきつくポケモン",125:"でんきポケモン⚡",126:"ほのおポケモン🔥",127:"カブトムシ🪲",128:"うしポケモン🐄",129:"はねるさかな🐟",130:"<ruby>大<rt>おお</rt></ruby>きなりゅう🐉",131:"<ruby>首<rt>くび</rt></ruby>がながいあおいポケモン🌊",132:"へんしんできるポケモン",133:"ノーマルのイーブイ✨",134:"みずのイーブイ💧",135:"でんきのイーブイ⚡",136:"ほのおのイーブイ🔥",137:"じんこうポケモン",138:"こだいかいポケモン",139:"<ruby>大<rt>おお</rt></ruby>きなこだいかい",140:"こだいカニポケモン🦀",141:"<ruby>大<rt>おお</rt></ruby>きなこだいカニ🦀",142:"こだいとりポケモン",143:"とても<ruby>大<rt>おお</rt></ruby>きくていつもねてばかり😴",144:"こおりのでんせつのとり❄️",145:"かみなりのでんせつのとり⚡",146:"ほのおのでんせつのとり🔥",147:"ちいさなドラゴン🐉",148:"<ruby>大<rt>おお</rt></ruby>きくなったドラゴン🐉",149:"あおいドラゴン🐉",150:"にんげんがつくったでんせつ💜",151:"ピンクのちいさなでんせつ✨",
-  152:"くさのサルポケモン🌿",153:"もっと<ruby>大<rt>おお</rt></ruby>きなくさサル",154:"<ruby>大<rt>おお</rt></ruby>きなくさサル🌿",155:"ほのおのウサギ🔥",156:"もっとつよいほのおポケモン",157:"ほのおのかくとう🔥🥊",158:"みずのワニ🐊",159:"もっと<ruby>大<rt>おお</rt></ruby>きなワニ",160:"<ruby>大<rt>おお</rt></ruby>きなみずワニ🐊",161:"リスポケモン",162:"<ruby>大<rt>おお</rt></ruby>きなリス",163:"フクロウ🦉",164:"<ruby>大<rt>おお</rt></ruby>きなフクロウ🦉",172:"ピカチュウのあかちゃん⚡",173:"クリームのあかちゃん",174:"ぷにぷにのポケモン",175:"タマゴのポケモン🥚",176:"はねのタマゴ🥚",179:"でんきのひつじ⚡🐑",180:"もっと<ruby>大<rt>おお</rt></ruby>きなでんきひつじ",181:"でんきのひつじ🔥⚡",183:"ちいさなマリル🩵",184:"<ruby>大<rt>おお</rt></ruby>きなマリル🩵",185:"きのポケモン🌲",186:"カエルポケモン🐸",196:"ピンクのイーブイしんかけい✨",197:"くろいイーブイしんかけい🌑",199:"のろまなポケモン",200:"おばけポケモン👻",202:"ぼんやりポケモン",203:"キリンポケモン🦒",209:"いぬポケモン🐶",210:"<ruby>大<rt>おお</rt></ruby>きないぬ🐕",212:"カマキリポケモン",213:"カタツムリ🐌",214:"カブトムシ🪲",216:"クマ🐻",217:"<ruby>大<rt>おお</rt></ruby>きなクマ🐻",220:"ブタポケモン🐷",221:"<ruby>大<rt>おお</rt></ruby>きなブタ🐷",222:"サンゴポケモン🪸",225:"プレゼントポケモン🎁",226:"マンタポケモン",228:"いぬポケモン🐕",229:"<ruby>大<rt>おお</rt></ruby>きなほのおいぬ🐕🔥",230:"<ruby>大<rt>おお</rt></ruby>きなりゅう🐉",231:"ぞうポケモン🐘",232:"<ruby>大<rt>おお</rt></ruby>きなぞう🐘",234:"つののしか🦌",238:"こおりのあかちゃん❄️",239:"でんきのあかちゃん⚡",240:"ほのおのあかちゃん🔥",241:"うしポケモン🐄",242:"<ruby>大<rt>おお</rt></ruby>きなハートポケモン💕",243:"かみなりのいぬのでんせつ⚡",244:"ほのおのいぬのでんせつ🔥",245:"みずのいぬのでんせつ💧",246:"ちいさなサナギ",247:"もっと<ruby>大<rt>おお</rt></ruby>きなサナギ",248:"よろいのかいじゅうポケモン",249:"しろい<ruby>大<rt>おお</rt></ruby>きなつばさのでんせつ🌊",250:"カラフルなはねのでんせつ🔥",251:"みどりのちいさなでんせつ✨",
-  252:"ちいさなトカゲ🦎",253:"<ruby>大<rt>おお</rt></ruby>きなトカゲ🦎",254:"みどりのトカゲ🦎",255:"ほのおのひよこ🔥🐣",256:"もっとつよいほのおポケモン",257:"ほのおのかくとうとり🔥🥊",258:"みずのヤモリ💧",259:"もっと<ruby>大<rt>おお</rt></ruby>きなみずヤモリ",260:"<ruby>大<rt>おお</rt></ruby>きなあおいカエル💧",270:"ちいさなくさポケモン🌿",271:"<ruby>大<rt>おお</rt></ruby>きなくさポケモン",272:"さらに<ruby>大<rt>おお</rt></ruby>きなくさ",273:"きのみポケモン🌰",274:"もっと<ruby>大<rt>おお</rt></ruby>きなきのみ",275:"<ruby>大<rt>おお</rt></ruby>きなくさポケモン",280:"ちいさなエスパー🔮",281:"もっと<ruby>大<rt>おお</rt></ruby>きなエスパー",282:"しろいドレスのポケモン🔮",285:"キノコポケモン🍄",286:"<ruby>大<rt>おお</rt></ruby>きなキノコ🍄",300:"ネコポケモン🐱",301:"きれいなネコ🐱",302:"やみのポケモン",303:"くちが<ruby>大<rt>おお</rt></ruby>きいポケモン",309:"でんきのいぬ⚡🐶",310:"<ruby>大<rt>おお</rt></ruby>きなでんきいぬ⚡",315:"ばらポケモン🌹",318:"サメポケモン🦈",319:"<ruby>大<rt>おお</rt></ruby>きなサメ🦈",320:"クジラポケモン🐋",321:"<ruby>大<rt>おお</rt></ruby>きなクジラ🐋",325:"ちいさなサル",326:"<ruby>大<rt>おお</rt></ruby>きなサル",329:"もっと<ruby>大<rt>おお</rt></ruby>きなさばく",330:"<ruby>大<rt>おお</rt></ruby>きなさばくポケモン",331:"サボテン🌵",332:"<ruby>大<rt>おお</rt></ruby>きなサボテン🌵",333:"ちいさなとり🐦",334:"あおいとり🐦",336:"コブラ🐍",337:"つきのポケモン🌙",338:"たいようのポケモン☀️",341:"ザリガニ🦞",342:"<ruby>大<rt>おお</rt></ruby>きなザリガニ🦞",349:"よわそうなさかな🐟",350:"きれいなあかいさかな💎",351:"てんきでかわるポケモン",352:"だっぴするポケモン",353:"にんぎょうみたいなポケモン",354:"<ruby>大<rt>おお</rt></ruby>きなにんぎょう",355:"ちいさなドクロ",356:"<ruby>大<rt>おお</rt></ruby>きなドクロ",357:"バナナみたい🍌",358:"すずのポケモン🔔",363:"アザラシ🦭",364:"もっと<ruby>大<rt>おお</rt></ruby>きなアザラシ",365:"<ruby>大<rt>おお</rt></ruby>きなアザラシ🦭",369:"こだいさかなポケモン",371:"ちいさなドラゴン🐉",372:"もっと<ruby>大<rt>おお</rt></ruby>きなドラゴン",373:"あかいドラゴン🐉",374:"じしゃく⚙️",375:"もっと<ruby>大<rt>おお</rt></ruby>きなじしゃく",376:"<ruby>大<rt>おお</rt></ruby>きなじしゃく⚙️",377:"いわのでんせつ",378:"こおりのでんせつ❄️",379:"はがねのでんせつ⚙️",380:"あおいドラゴン✈️",381:"あかいドラゴン✈️",382:"あめのでんせつ🌊",383:"だいちのでんせつ🌋",384:"みどりのながいそらのでんせつ",385:"きんいろのねがいのポケモン✨",386:"うちゅうのポケモン",
-  387:"くさのカメ🌿🐢",388:"もっと<ruby>大<rt>おお</rt></ruby>きなくさカメ",389:"<ruby>大<rt>おお</rt></ruby>きなくさカメ🌿",390:"ほのおのサル🔥🐒",391:"もっとつよいほのおサル",392:"ほのおのかくとうサル🔥🥊",393:"みずのペンギン💧🐧",394:"もっと<ruby>大<rt>おお</rt></ruby>きなペンギン",395:"<ruby>大<rt>おお</rt></ruby>きなみずペンギン💧",399:"ビーバー🦫",400:"<ruby>大<rt>おお</rt></ruby>きなビーバー🦫",401:"コオロギ🎵",402:"<ruby>大<rt>おお</rt></ruby>きなコオロギ🎵",403:"ちいさなでんきライオン⚡",404:"もっと<ruby>大<rt>おお</rt></ruby>きなでんきライオン",405:"<ruby>大<rt>おお</rt></ruby>きなでんきライオン⚡",406:"ちいさなつぼみ🌱",407:"<ruby>大<rt>おお</rt></ruby>きなばら🌹",415:"ハチポケモン🐝",416:"<ruby>大<rt>おお</rt></ruby>きなハチ👑🐝",417:"リス🐿",418:"カワウソ🦦",419:"<ruby>大<rt>おお</rt></ruby>きなカワウソ🦦",427:"ウサギ🐰",428:"<ruby>大<rt>おお</rt></ruby>きなウサギ🐰",430:"カラス🐦",431:"ネコ🐱",432:"きれいなネコ🐱",440:"ハートのポケモン💕",441:"がくふのポケモン🎵",443:"ちいさなドラゴン🐉",444:"もっと<ruby>大<rt>おお</rt></ruby>きなドラゴン",445:"サメみたいなドラゴン🦈",446:"カビゴンのあかちゃん",447:"ちいさなかくとう🥊",448:"あおいかくとうポケモン💙",449:"カバ🦛",450:"<ruby>大<rt>おお</rt></ruby>きなカバ🦛",451:"サソリ🦂",452:"<ruby>大<rt>おお</rt></ruby>きなサソリ🦂",453:"どくガエル🐸",454:"<ruby>大<rt>おお</rt></ruby>きなどくガエル🐸",459:"もみのき❄️",460:"<ruby>大<rt>おお</rt></ruby>きなゆきポケモン❄️",462:"<ruby>大<rt>おお</rt></ruby>きなじしゃく⚙️",463:"したがながいポケモン",464:"<ruby>大<rt>おお</rt></ruby>きないわポケモン",466:"でんき⚡",467:"ほのお🔥",468:"しろいとり🕊",470:"くさのイーブイしんかけい🌿",471:"こおりのイーブイしんかけい❄️",473:"マンモス🦣",475:"かたなのひじのポケモン⚔️",478:"ゆきのおんなのこ❄️",479:"でんきのゆうれい👻⚡",480:"ちしきのでんせつ",481:"かんじょうのでんせつ",482:"いしのでんせつ",483:"じかんのでんせつ⏰",484:"くうかんのでんせつ🌌",485:"ようがんのでんせつ🌋",486:"<ruby>大<rt>おお</rt></ruby>きないわのでんせつ",487:"はんせかいのでんせつ👁",488:"つきのでんせつ🌙",490:"うみのでんせつ🌊",491:"あくむのでんせつ",492:"ハリネズミのでんせつ",493:"すべてのポケモンのかみさま✨"
-};
-function getHint(id){return HINTS[id]||"どんなポケモンかな？";}
+const MATH_POKE=[
+{id:25,name:‘ピカチュウ’},{id:6,name:‘リザードン’},{id:3,name:‘フシギバナ’},
+{id:9,name:‘カメックス’},{id:143,name:‘カビゴン’},{id:94,name:‘ゲンガー’},
+{id:131,name:‘ラプラス’},{id:133,name:‘イーブイ’},{id:150,name:‘ミュウツー’},
+{id:151,name:‘ミュウ’},{id:129,name:‘コイキング’},{id:52,name:‘ニャース’},
+];
+
+const HINTS={1:“くさ・どくタイプ🌿”,2:“ほのおのトカゲ🔥”,3:“みずのカメ💧”,4:”<ruby>虫<rt>むし</rt></ruby>と<ruby>草<rt>くさ</rt></ruby>のポケモン”,5:“ハチみたいなポケモン🐝”,6:“ちょうちょのポケモン🦋”,7:“カメのこどものポケモン🐢”,8:“もっと<ruby>大<rt>おお</rt></ruby>きなカメ🐢”,9:”<ruby>大<rt>おお</rt></ruby>きなカメと<ruby>大砲<rt>たいほう</rt></ruby>💧”,10:“いもむしのポケモン🐛”,12:“ちょうちょのポケモン🦋”,13:”<ruby>小<rt>ちい</rt></ruby>さな<ruby>虫<rt>むし</rt></ruby>🐛”,15:”<ruby>大<rt>おお</rt></ruby>きなハチ🐝”,16:”<ruby>小<rt>ちい</rt></ruby>さなとり🐦”,18:”<ruby>大<rt>おお</rt></ruby>きなとり🦅”,19:”<ruby>小<rt>ちい</rt></ruby>さなネズミ🐭”,20:”<ruby>大<rt>おお</rt></ruby>きなネズミ🐭”,25:”<ruby>黄色<rt>きいろ</rt></ruby>くて<ruby>耳<rt>みみ</rt></ruby>のさきが<ruby>黒<rt>くろ</rt></ruby>い⚡”,26:“ピカチュウが<ruby>進化<rt>しんか</rt></ruby>したポケモン⚡”,35:“ふわふわのピンクのポケモン”,36:”<ruby>大<rt>おお</rt></ruby>きくなったピンクのポケモン”,37:“ほのおのキツネ🔥🦊”,38:”<ruby>大<rt>おお</rt></ruby>きなほのおキツネ🔥🦊”,39:“ふわふわのピンクのポケモン”,40:”<ruby>大<rt>おお</rt></ruby>きくなったピンクのポケモン”,41:“コウモリ🦇”,42:”<ruby>大<rt>おお</rt></ruby>きなコウモリ🦇”,45:”<ruby>大<rt>おお</rt></ruby>きなはな🌸”,46:“キノコの<ruby>虫<rt>むし</rt></ruby>ポケモン🍄”,47:”<ruby>大<rt>おお</rt></ruby>きなキノコ<ruby>虫<rt>むし</rt></ruby>🍄”,50:“モグラ🐾”,52:“ネコのポケモン🐱”,53:“ペルシャネコ🐱”,54:“アヒル🦆”,56:“サル🐒”,57:”<ruby>大<rt>おお</rt></ruby>きなサル🦍”,58:“いぬポケモン🐶”,59:”<ruby>大<rt>おお</rt></ruby>きないぬ🐕”,60:“おたまじゃくし🐸”,62:”<ruby>大<rt>おお</rt></ruby>きなカエル🐸”,63:“スプーンまげポケモン”,65:“3ほんスプーンポケモン”,66:“ちからもちポケモン”,68:“ちょうちからもちポケモン”,72:“クラゲ🪼”,74:“いわのポケモン”,76:”<ruby>大<rt>おお</rt></ruby>きないわポケモン”,77:“うまポケモン🐴”,79:“のろまなポケモン”,81:“じしゃくポケモン🧲”,83:“ねぎをもったとり🐦”,86:“アシカ🦭”,88:“ヘドロのポケモン”,90:“カタツムリ🐌”,92:“ちいさなおばけ👻”,93:“もっと<ruby>大<rt>おお</rt></ruby>きなおばけ👻”,94:“むらさきのおばけ👻”,98:“カニ🦀”,100:“でんきのボール⚡”,102:“タマゴのポケモン🥚”,103:”<ruby>大<rt>おお</rt></ruby>きなヤシのき🌴”,104:“ほねのポケモン”,106:“かくとうポケモン🥊”,108:“したがながいポケモン”,111:“サイのポケモン🦏”,112:”<ruby>大<rt>おお</rt></ruby>きなサイ🦏”,113:“タマゴをうむやさしいポケモン🥚”,114:“つるがいっぱい🌿”,115:“カンガルー🦘”,116:“タツノオトシゴ🐴”,118:“きんのさかな🐟”,120:“ヒトデ⭐”,122:“どうけしポケモン”,123:“カマキリ🌿”,125:“でんきポケモン⚡”,126:“ほのおポケモン🔥”,127:“カブトムシ🪲”,128:“うしポケモン🐄”,129:“はねるさかな🐟”,130:”<ruby>大<rt>おお</rt></ruby>きなりゅう🐉”,131:”<ruby>首<rt>くび</rt></ruby>がながいあおいポケモン🌊”,132:“へんしんできるポケモン”,133:“ノーマルのイーブイ✨”,134:“みずのイーブイ💧”,135:“でんきのイーブイ⚡”,136:“ほのおのイーブイ🔥”,142:“こだいとりポケモン”,143:“とても<ruby>大<rt>おお</rt></ruby>きくていつもねてばかり😴”,144:“こおりのでんせつのとり❄️”,145:“かみなりのでんせつのとり⚡”,146:“ほのおのでんせつのとり🔥”,147:“ちいさなドラゴン🐉”,149:“あおいドラゴン🐉”,150:“にんげんがつくったでんせつ💜”,151:“ピンクのちいさなでんせつ✨”,152:“くさのサルポケモン🌿”,154:”<ruby>大<rt>おお</rt></ruby>きなくさサル🌿”,155:“ほのおのウサギ🔥”,157:“ほのおのかくとう🔥🥊”,158:“みずのワニ🐊”,160:”<ruby>大<rt>おお</rt></ruby>きなみずワニ🐊”,163:“フクロウ🦉”,172:“ピカチュウのあかちゃん⚡”,175:“タマゴのポケモン🥚”,176:“はねのタマゴ🥚”,179:“でんきのひつじ⚡🐑”,181:“でんきのひつじ🔥⚡”,183:“ちいさなマリル🩵”,184:”<ruby>大<rt>おお</rt></ruby>きなマリル🩵”,196:“ピンクのイーブイしんかけい✨”,197:“くろいイーブイしんかけい🌑”,200:“おばけポケモン👻”,209:“いぬポケモン🐶”,212:“カマキリポケモン”,214:“カブトムシ🪲”,216:“クマ🐻”,220:“ブタポケモン🐷”,222:“サンゴポケモン🪸”,228:“いぬポケモン🐕”,229:”<ruby>大<rt>おお</rt></ruby>きなほのおいぬ🐕🔥”,231:“ぞうポケモン🐘”,234:“つののしか🦌”,241:“うしポケモン🐄”,242:”<ruby>大<rt>おお</rt></ruby>きなハートポケモン💕”,243:“かみなりのいぬのでんせつ⚡”,244:“ほのおのいぬのでんせつ🔥”,245:“みずのいぬのでんせつ💧”,248:“よろいのかいじゅうポケモン”,249:“しろい<ruby>大<rt>おお</rt></ruby>きなつばさのでんせつ🌊”,250:“カラフルなはねのでんせつ🔥”,251:“みどりのちいさなでんせつ✨”,252:“ちいさなトカゲ🦎”,254:“みどりのトカゲ🦎”,255:“ほのおのひよこ🔥🐣”,257:“ほのおのかくとうとり🔥🥊”,258:“みずのヤモリ💧”,260:”<ruby>大<rt>おお</rt></ruby>きなあおいカエル💧”,280:“ちいさなエスパー🔮”,282:“しろいドレスのポケモン🔮”,300:“ネコポケモン🐱”,309:“でんきのいぬ⚡🐶”,315:“ばらポケモン🌹”,318:“サメポケモン🦈”,320:“クジラポケモン🐋”,325:“ちいさなサル”,329:“もっと<ruby>大<rt>おお</rt></ruby>きなさばく”,330:”<ruby>大<rt>おお</rt></ruby>きなさばくポケモン”,331:“サボテン🌵”,333:“ちいさなとり🐦”,334:“あおいとり🐦”,336:“コブラ🐍”,337:“つきのポケモン🌙”,338:“たいようのポケモン☀️”,341:“ザリガニ🦞”,349:“よわそうなさかな🐟”,350:“きれいなあかいさかな💎”,351:“てんきでかわるポケモン”,355:“ちいさなドクロ”,357:“バナナみたい🍌”,363:“アザラシ🦭”,371:“ちいさなドラゴン🐉”,373:“あかいドラゴン🐉”,374:“じしゃく⚙️”,376:”<ruby>大<rt>おお</rt></ruby>きなじしゃく⚙️”,377:“いわのでんせつ”,378:“こおりのでんせつ❄️”,379:“はがねのでんせつ⚙️”,380:“あおいドラゴン✈️”,381:“あかいドラゴン✈️”,382:“あめのでんせつ🌊”,383:“だいちのでんせつ🌋”,384:“みどりのながいそらのでんせつ”,385:“きんいろのねがいのポケモン✨”,386:“うちゅうのポケモン”,387:“くさのカメ🌿🐢”,389:”<ruby>大<rt>おお</rt></ruby>きなくさカメ🌿”,390:“ほのおのサル🔥🐒”,392:“ほのおのかくとうサル🔥🥊”,393:“みずのペンギン💧🐧”,395:”<ruby>大<rt>おお</rt></ruby>きなみずペンギン💧”,399:“ビーバー🦫”,401:“コオロギ🎵”,403:“ちいさなでんきライオン⚡”,405:”<ruby>大<rt>おお</rt></ruby>きなでんきライオン⚡”,406:“ちいさなつぼみ🌱”,407:”<ruby>大<rt>おお</rt></ruby>きなばら🌹”,415:“ハチポケモン🐝”,416:”<ruby>大<rt>おお</rt></ruby>きなハチ👑🐝”,417:“リス🐿”,418:“カワウソ🦦”,419:”<ruby>大<rt>おお</rt></ruby>きなカワウソ🦦”,427:“ウサギ🐰”,428:”<ruby>大<rt>おお</rt></ruby>きなウサギ🐰”,430:“カラス🐦”,431:“ネコ🐱”,440:“ハートのポケモン💕”,443:“ちいさなドラゴン🐉”,445:“サメみたいなドラゴン🦈”,447:“ちいさなかくとう🥊”,448:“あおいかくとうポケモン💙”,449:“カバ🦛”,451:“サソリ🦂”,453:“どくガエル🐸”,459:“もみのき❄️”,460:”<ruby>大<rt>おお</rt></ruby>きなゆきポケモン❄️”,466:“でんき⚡”,467:“ほのお🔥”,468:“しろいとり🕊”,470:“くさのイーブイしんかけい🌿”,471:“こおりのイーブイしんかけい❄️”,473:“マンモス🦣”,475:“かたなのひじのポケモン⚔️”,478:“ゆきのおんなのこ❄️”,479:“でんきのゆうれい👻⚡”,483:“じかんのでんせつ⏰”,484:“くうかんのでんせつ🌌”,485:“ようがんのでんせつ🌋”,487:“はんせかいのでんせつ👁”,488:“つきのでんせつ🌙”,490:“うみのでんせつ🌊”,491:“あくむのでんせつ”,492:“ハリネズミのでんせつ”,493:“すべてのポケモンのかみさま✨”};
+function getHint(id){return HINTS[id]||“どんなポケモンかな？”;}
 
 // ===== 状態管理 =====
-let allPokemon=[], easyPokemon=[], hardPokemon=[];
-let currentMode='top'; // 'top' | 'normal' | 'silhouette'
-let difficulty='normal'; // 'easy' | 'normal' | 'hard'
-let questions=[], current=0, score=0, answered=false;
+let allPokemon=[],easyPokemon=[],hardPokemon=[];
+let currentMode=‘top’,difficulty=‘normal’;
+let questions=[],current=0,score=0,answered=false;
+let isRetryMode=false;
+
+// ===== localStorage =====
+const LS_TROPHY=‘poke_trophies’;
+const LS_WRONG=‘poke_wrong’;
+
+function loadTrophies(){try{return JSON.parse(localStorage.getItem(LS_TROPHY)||’{}’);}catch{return{};}}
+function saveTrophy(mode,diff,medal){
+const t=loadTrophies(),key=mode+’*’+diff,order=[‘bronze’,‘silver’,‘gold’];
+if(!t[key]||order.indexOf(medal)>order.indexOf(t[key])){t[key]=medal;localStorage.setItem(LS_TROPHY,JSON.stringify(t));}
+}
+function getTrophy(mode,diff){return loadTrophies()[mode+’*’+diff]||null;}
+function trophyIcon(m){return m===‘gold’?‘🥇’:m===‘silver’?‘🥈’:m===‘bronze’?‘🥉’:’’;}
+function calcMedal(pct){return pct===100?‘gold’:pct>=80?‘silver’:‘bronze’;}
+
+function loadWrong(){try{return JSON.parse(localStorage.getItem(LS_WRONG)||’[]’);}catch{return[];}}
+function saveWrong(list){localStorage.setItem(LS_WRONG,JSON.stringify(list));}
+
+// 間違えた問題を追加（重複なし・最大100件）
+function addWrong(q){
+const stored=loadWrong();
+const key=q.type+’*’+(q.type===‘math’?q.a+’*’+q.op+’*’+q.b:q.id);
+if(!stored.find(function(x){return (x.type+’*’+(x.type===‘math’?x.a+’*’+x.op+’*’+x.b:x.id))===key;})){
+stored.push(q);
+if(stored.length>100)stored.shift();
+saveWrong(stored);
+}
+}
+
+// まちがいなおしで正解したら削除
+function removeWrong(q){
+const key=q.type+’*’+(q.type===‘math’?q.a+’*’+q.op+’*’+q.b:q.id);
+const stored=loadWrong().filter(function(x){
+return (x.type+’*’+(x.type===‘math’?x.a+’*’+x.op+’*’+x.b:x.id))!==key;
+});
+saveWrong(stored);
+}
 
 // ===== ローディング =====
 async function loadPokemon(){
-  try{
-    setLoad('ポケモンリストをよみこみ中...',5);
-    const r=await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
-    const d=await r.json();
-    const baseList=d.results.map((p,i)=>({id:i+1,name:p.name})).filter(p=>isBase(p.name)&&p.id<=1017);
-    setLoad('なまえをよみこみ中...',10);
-    await loadNames(baseList);
-  }catch(e){showError();}
+try{
+setLoad(‘ポケモンリストをよみこみ中…’,5);
+const r=await fetch(‘https://pokeapi.co/api/v2/pokemon?limit=1025’);
+const d=await r.json();
+const baseList=d.results.map(function(p,i){return{id:i+1,name:p.name};}).filter(function(p){return isBase(p.name)&&p.id<=1017;});
+setLoad(‘なまえをよみこみ中…’,10);
+await loadNames(baseList);
+}catch(e){showError();}
 }
 function setLoad(msg,pct){
-  const t=document.getElementById('loading-text');
-  const b=document.getElementById('loading-bar');
-  if(t)t.textContent=msg;
-  if(b)b.style.width=pct+'%';
+const t=document.getElementById(‘loading-text’),b=document.getElementById(‘loading-bar’);
+if(t)t.textContent=msg;if(b)b.style.width=pct+’%’;
 }
-function showError(){
-  document.getElementById('loading-screen').innerHTML='<div style="font-size:40px;margin-bottom:1rem">😢</div><div class="loading-title">よみこみにしっぱいしたよ</div><div class="loading-text">ページをリロードしてね</div>';
-}
+function showError(){document.getElementById(‘loading-screen’).innerHTML=’<div style="font-size:40px;margin-bottom:1rem">😢</div><div class="loading-title">よみこみにしっぱいしたよ</div><div class="loading-text">ページをリロードしてね</div>’;}
 async function loadNames(baseList){
-  const BATCH=80;
-  for(let i=0;i<baseList.length;i+=BATCH){
-    const batch=baseList.slice(i,i+BATCH);
-    const pct=10+Math.round((i/baseList.length)*88);
-    setLoad('なまえをよみこみ中... '+Math.round((i/baseList.length)*100)+'%',pct);
-    await Promise.all(batch.map(async p=>{
-      try{
-        const r=await fetch('https://pokeapi.co/api/v2/pokemon-species/'+p.id+'/');
-        const d=await r.json();
-        const jp=d.names.find(n=>n.language.name==='ja-Hrkt')||d.names.find(n=>n.language.name==='ja');
-        if(jp)allPokemon.push({id:p.id,name:p.name,jpName:jp.name});
-      }catch{}
-    }));
-  }
-  if(allPokemon.length===0){showError();return;}
-  easyPokemon=allPokemon.filter(p=>EASY_IDS.has(p.id));
-  hardPokemon=allPokemon.filter(p=>!EASY_IDS.has(p.id));
-  setLoad('じゅんびができたよ！🎉',100);
-  setTimeout(()=>{
-    document.getElementById('loading-screen').style.display='none';
-    document.getElementById('main-area').style.display='block';
-    showTop();
-  },500);
+const BATCH=80;
+for(let i=0;i<baseList.length;i+=BATCH){
+const batch=baseList.slice(i,i+BATCH);
+setLoad(‘なまえをよみこみ中… ‘+Math.round((i/baseList.length)*100)+’%’,10+Math.round((i/baseList.length)*88));
+await Promise.all(batch.map(async function(p){
+try{
+const r=await fetch(‘https://pokeapi.co/api/v2/pokemon-species/’+p.id+’/’);
+const d=await r.json();
+const jp=d.names.find(function(n){return n.language.name===‘ja-Hrkt’;})||d.names.find(function(n){return n.language.name===‘ja’;});
+if(jp)allPokemon.push({id:p.id,name:p.name,jpName:jp.name});
+}catch(e){}
+}));
+}
+if(allPokemon.length===0){showError();return;}
+easyPokemon=allPokemon.filter(function(p){return EASY_IDS.has(p.id);});
+hardPokemon=allPokemon.filter(function(p){return !EASY_IDS.has(p.id);});
+setLoad(‘じゅんびができたよ！🎉’,100);
+setTimeout(function(){
+document.getElementById(‘loading-screen’).style.display=‘none’;
+document.getElementById(‘main-area’).style.display=‘block’;
+showTop();
+},500);
 }
 
 // ===== ユーティリティ =====
-function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function shuffle(arr){const a=[…arr];for(let i=a.length-1;i>0;i–){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function el(tag,cls){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
-function txt(e,t){e.innerHTML=t;return e;}
+function imgUrl(id){return’https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/’+id+’.png’;}
 
-function makeQuestions(){
-  const eRatios={easy:25,normal:15,hard:5};
-  const eCount=eRatios[difficulty];
-  const hCount=30-eCount;
-  const easy=shuffle(easyPokemon).slice(0,Math.min(eCount,easyPokemon.length));
-  const hard=shuffle(hardPokemon).slice(0,Math.min(hCount,hardPokemon.length));
-  return shuffle([...easy,...hard]);
+// ===== 問題生成 =====
+function makeQuizQuestions(){
+const eRatios={easy:25,normal:15,hard:5};
+const eCount=eRatios[difficulty];
+const easy=shuffle(easyPokemon).slice(0,Math.min(eCount,easyPokemon.length));
+const hard=shuffle(hardPokemon).slice(0,Math.min(30-eCount,hardPokemon.length));
+return shuffle([…easy,…hard]).map(function(p){return Object.assign({type:‘quiz’},p);});
 }
-function makeChoices(correct, count){
-  const pool=allPokemon.filter(p=>p.id!==correct.id);
-  return shuffle([correct,...shuffle(pool).slice(0,count-1)]);
+function makeChoices(correct,count){
+return shuffle([correct,…shuffle(allPokemon.filter(function(p){return p.id!==correct.id;})).slice(0,count-1)]);
+}
+function makeMathQ(){
+const op=Math.random()<0.5?’+’:’-’;
+let a,b;
+if(op===’+’){a=Math.floor(Math.random()*8)+1;b=Math.floor(Math.random()*(9-a))+1;}
+else{a=Math.floor(Math.random()*8)+2;b=Math.floor(Math.random()*(a-1))+1;}
+const ans=op===’+’?a+b:a-b;
+const poke1=MATH_POKE[Math.floor(Math.random()*MATH_POKE.length)];
+const poke2=op===’-’?poke1:MATH_POKE[Math.floor(Math.random()*MATH_POKE.length)];
+const wrongPool=[];
+for(let i=1;i<=18;i++){if(Math.abs(i-ans)>=2)wrongPool.push(i);}
+const choices=shuffle([ans,…shuffle(wrongPool).slice(0,2)]);
+return{type:‘math’,op,a,b,ans,poke1,poke2,choices};
 }
 
 // ===== トップ画面 =====
 function showTop(){
-  currentMode='top';
-  const area=document.getElementById('main-area');
-  area.innerHTML='';
-  const wrap=el('div','top-screen');
-  txt(el('div','top-sub'),'なんのポケモンか わかるかな？').then;
+currentMode=‘top’;isRetryMode=false;
+const area=document.getElementById(‘main-area’);area.innerHTML=’’;
+const wrap=el(‘div’,‘top-screen’);
+const sub=el(‘div’,‘top-sub’);sub.textContent=‘なんのポケモンか わかるかな？’;wrap.appendChild(sub);
+const cards=el(‘div’,‘mode-cards’);
+const wrongCount=loadWrong().length;
+const modes=[
+{id:‘normal’,icon:‘🎮’,name:‘つうじょうクイズ’,desc:‘ポケモンのすがたをみて なまえをこたえよう！ 4つからえらんでね’},
+{id:‘silhouette’,icon:‘🌑’,name:‘シルエットクイズ’,desc:‘かげをみて なんのポケモンかあてよう！ 3つからえらんでね’},
+{id:‘math’,icon:‘➕’,name:‘さんすうクイズ’,desc:‘ポケモンをつかった たしざん・ひきざん！ 10もんチャレンジ’},
+];
+if(wrongCount>0)modes.push({id:‘retry’,icon:‘📝’,name:‘まちがいなおし’,desc:‘まちがえた’+wrongCount+‘もんをもういちど！ 正解したら消えるよ’});
 
-  const sub=el('div','top-sub');
-  sub.textContent='なんのポケモンか わかるかな？';
-  wrap.appendChild(sub);
+modes.forEach(function(m){
+const card=el(‘div’,‘mode-card’);
+card.addEventListener(‘click’,function(){startMode(m.id);});
+const icon=el(‘div’,‘mode-icon’);icon.textContent=m.icon;card.appendChild(icon);
+const info=el(‘div’);
+const name=el(‘div’,‘mode-name’);name.textContent=m.name;
+const desc=el(‘div’,‘mode-desc’);desc.textContent=m.desc;
+info.appendChild(name);info.appendChild(desc);card.appendChild(info);
+if(m.id!==‘retry’){
+const diffKey=m.id===‘math’?‘all’:difficulty;
+const t=getTrophy(m.id,diffKey);
+if(t){const tr=el(‘div’,‘mode-trophy’);tr.textContent=trophyIcon(t);card.appendChild(tr);}
+}
+cards.appendChild(card);
+});
+wrap.appendChild(cards);
 
-  const cards=el('div','mode-cards');
-
-  const modes=[
-    {id:'normal',icon:'🎮',name:'つうじょうクイズ',desc:'ポケモンのすがたを みて なまえを こたえよう！\n4つから えらんでね'},
-    {id:'silhouette',icon:'🌑',name:'シルエットクイズ',desc:'かげをみて なんのポケモンか あてよう！\n3つから えらんでね'},
-  ];
-  modes.forEach(function(m){
-    const card=el('div','mode-card');
-    card.addEventListener('click',function(){startMode(m.id);});
-    const icon=el('div','mode-icon');
-    icon.textContent=m.icon;
-    card.appendChild(icon);
-    const info=el('div','mode-info');
-    const name=el('div','mode-name');
-    name.textContent=m.name;
-    const desc=el('div','mode-desc');
-    desc.textContent=m.desc;
-    info.appendChild(name);
-    info.appendChild(desc);
-    card.appendChild(info);
-    cards.appendChild(card);
-  });
-  wrap.appendChild(cards);
-  area.appendChild(wrap);
+// トロフィー一覧
+const trophies=loadTrophies();
+if(Object.keys(trophies).length>0){
+const ts=el(‘div’,‘trophy-section’);
+const tTitle=el(‘div’,‘trophy-section-title’);tTitle.textContent=‘🏆 これまでのトロフィー’;ts.appendChild(tTitle);
+const tg=el(‘div’,‘trophy-grid’);
+const mL={normal:‘つうじょう’,silhouette:‘シルエット’,math:‘さんすう’};
+const dL={easy:‘かんたん’,normal:‘ふつう’,hard:‘むずかしい’,all:‘ぜんぶ’};
+Object.keys(trophies).forEach(function(key){
+const idx=key.lastIndexOf(’_’);
+const mk=key.substring(0,idx),dk=key.substring(idx+1);
+const cell=el(‘div’,‘trophy-cell’);
+const cm=el(‘div’,‘trophy-cell-mode’);cm.textContent=mL[mk]||mk;
+const cd=el(‘div’,‘trophy-cell-diff’);cd.textContent=dL[dk]||dk;
+const ci=el(‘div’,‘trophy-cell-icon’);ci.textContent=trophyIcon(trophies[key]);
+cell.appendChild(cm);cell.appendChild(cd);cell.appendChild(ci);tg.appendChild(cell);
+});
+ts.appendChild(tg);wrap.appendChild(ts);
+}
+area.appendChild(wrap);
 }
 
-// ===== クイズ開始 =====
+// ===== モード開始 =====
 function startMode(mode){
-  currentMode=mode;
-  questions=makeQuestions();
-  current=0;score=0;answered=false;
-  renderQuiz();
+currentMode=mode;answered=false;
+if(mode===‘retry’){
+isRetryMode=true;
+const stored=loadWrong();
+if(stored.length===0){showTop();return;}
+questions=shuffle(stored);current=0;score=0;renderQuestion();return;
+}
+isRetryMode=false;
+if(mode===‘math’){questions=Array.from({length:10},makeMathQ);}
+else{questions=makeQuizQuestions();}
+current=0;score=0;renderQuestion();
 }
 
-// ===== クイズ描画 =====
-function renderQuiz(){
-  const area=document.getElementById('main-area');
-  area.innerHTML='';
-  if(current>=questions.length){showScore();return;}
-  const q=questions[current];
-  const isSilhouette=(currentMode==='silhouette');
-  const choiceCount=isSilhouette?3:4;
-  const choices=makeChoices(q,choiceCount);
-  const imgUrl='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/'+q.id+'.png';
+// ===== 問題描画 =====
+function renderQuestion(){
+const area=document.getElementById(‘main-area’);area.innerHTML=’’;
+if(current>=questions.length){showScore();return;}
+const q=questions[current];
 
-  // 戻るボタン
-  const backBtn=el('button','back-btn');
-  backBtn.textContent='← もどる';
-  backBtn.addEventListener('click',function(){showTop();});
-  area.appendChild(backBtn);
+const backBtn=el(‘button’,‘back-btn’);backBtn.textContent=‘← もどる’;
+backBtn.addEventListener(‘click’,showTop);area.appendChild(backBtn);
 
-  // ステータスバー
-  const statusBar=el('div','status-bar');
-  const qBadge=el('span','q-badge');
-  qBadge.textContent='もんだい '+(current+1)+'/'+questions.length;
-  statusBar.appendChild(qBadge);
-  const modeBadge=el('span','mode-badge '+(isSilhouette?'silhouette':'normal'));
-  modeBadge.textContent=isSilhouette?'🌑 シルエット':'🎮 つうじょう';
-  statusBar.appendChild(modeBadge);
-  const pw=el('div','progress-wrap');
-  const pb=el('div','progress-bar');
-  const pf=el('div','progress-fill');
-  pf.style.width=(current/questions.length*100)+'%';
-  pb.appendChild(pf);pw.appendChild(pb);statusBar.appendChild(pw);
-  const scoreBadge=el('span','score-badge');
-  scoreBadge.textContent='⭐ '+score+'せいかい';
-  statusBar.appendChild(scoreBadge);
-  area.appendChild(statusBar);
+// ステータスバー
+const sb=el(‘div’,‘status-bar’);
+const qb=el(‘span’,‘q-badge’);qb.textContent=‘もんだい ‘+(current+1)+’/’+questions.length;sb.appendChild(qb);
+let badgeCls=‘mode-badge ‘,badgeTxt=’’;
+if(isRetryMode){badgeCls+=‘retry’;badgeTxt=‘📝 まちがいなおし’;}
+else if(q.type===‘math’){badgeCls+=‘math’;badgeTxt=‘➕ さんすう’;}
+else if(currentMode===‘silhouette’){badgeCls+=‘silhouette’;badgeTxt=‘🌑 シルエット’;}
+else{badgeCls+=‘normal’;badgeTxt=‘🎮 つうじょう’;}
+const mb=el(‘span’,badgeCls);mb.textContent=badgeTxt;sb.appendChild(mb);
+const pw=el(‘div’,‘progress-wrap’);const pb=el(‘div’,‘progress-bar’);const pf=el(‘div’,‘progress-fill’);
+pf.style.width=(current/questions.length*100)+’%’;pb.appendChild(pf);pw.appendChild(pb);sb.appendChild(pw);
+const scoreBadge=el(‘span’,‘score-badge’);scoreBadge.textContent=’⭐ ’+score+‘せいかい’;sb.appendChild(scoreBadge);
+area.appendChild(sb);
 
-  // 画像カード
-  const imgCard=el('div','img-card');
-  const img=document.createElement('img');
-  img.id='poke-img';
-  img.src=imgUrl;
-  img.alt='ポケモン';
-  if(isSilhouette){
-    img.className='poke-img silhouette';
-  }else{
-    img.className='poke-img';
-  }
-  imgCard.appendChild(img);
-  area.appendChild(imgCard);
-
-  // ヒント
-  const hintBox=el('div','hint-box');
-  const hintLabel=el('div','hint-label');
-  hintLabel.textContent='ヒント';
-  hintBox.appendChild(hintLabel);
-  const hintText=el('div','hint-text');
-  hintText.innerHTML=getHint(q.id);
-  hintBox.appendChild(hintText);
-  area.appendChild(hintBox);
-
-  // 選択肢
-  const cw=el('div','choices '+(choiceCount===3?'col3':'col2'));
-  choices.forEach(function(c){
-    const btn=el('button','choice-btn');
-    btn.textContent=c.jpName;
-    (function(chosen,correct){
-      btn.addEventListener('click',function(){pickAnswer(btn,chosen,correct,isSilhouette);});
-    })(c.jpName,q.jpName);
-    cw.appendChild(btn);
-  });
-  area.appendChild(cw);
-
-  // 結果バナー
-  const rb=el('div','result-banner');
-  rb.id='rb';
-  area.appendChild(rb);
-
-  // 次へボタン
-  const nb=el('button','next-btn');
-  nb.id='nb';
-  nb.textContent=current+1<questions.length?'つぎのもんだい ▶':'けっかをみる 🎉';
-  nb.style.display='none';
-  nb.addEventListener('click',nextQuestion);
-  area.appendChild(nb);
+if(q.type===‘math’){
+renderMathQuestion(area,q);
+}else{
+renderQuizQuestion(area,q);
+}
 }
 
-// ===== 回答処理 =====
-function pickAnswer(btn,chosen,correct,isSilhouette){
-  if(answered)return;
-  answered=true;
-  document.querySelectorAll('.choice-btn').forEach(function(b){
-    b.style.pointerEvents='none';
-    if(b.textContent===correct)b.classList.add('correct');
-  });
-  const rb=document.getElementById('rb');
-  const img=document.getElementById('poke-img');
-  if(chosen===correct){
-    btn.classList.add('correct');
-    rb.className='result-banner correct';
-    rb.textContent='🎉 せいかい！すごい！';
-    score++;
-    if(img){
-      if(isSilhouette){
-        img.className='reveal-img';
-      }else{
-        img.style.animation='none';void img.offsetWidth;img.style.animation='bouncePoke 0.5s ease forwards';
-      }
-    }
-  }else{
-    btn.classList.add('wrong');
-    rb.className='result-banner wrong';
-    rb.textContent='😢 ざんねん… こたえは「'+correct+'」だよ！';
-    if(img){
-      if(isSilhouette){
-        img.className='reveal-img';
-      }else{
-        img.style.animation='none';void img.offsetWidth;img.style.animation='shakePoke 0.4s ease forwards';
-      }
-    }
-  }
-  document.getElementById('nb').style.display='block';
+function renderQuizQuestion(area,q){
+const isSilhouette=(currentMode===‘silhouette’&&!isRetryMode)||(isRetryMode&&q.mode===‘silhouette’);
+const imgCard=el(‘div’,‘img-card’);
+const img=document.createElement(‘img’);
+img.id=‘poke-img’;img.src=imgUrl(q.id);img.alt=‘ポケモン’;
+img.className=‘poke-img’+(isSilhouette?’ silhouette’:’’);
+imgCard.appendChild(img);area.appendChild(imgCard);
+
+const hintBox=el(‘div’,‘hint-box’);
+const hintLabel=el(‘div’,‘hint-label’);hintLabel.textContent=‘ヒント’;hintBox.appendChild(hintLabel);
+const hintText=el(‘div’,‘hint-text’);hintText.innerHTML=getHint(q.id);hintBox.appendChild(hintText);
+area.appendChild(hintBox);
+
+const choiceCount=isSilhouette?3:4;
+const choices=makeChoices(q,choiceCount);
+const cw=el(‘div’,’choices ’+(choiceCount===3?‘col3’:‘col2’));
+choices.forEach(function(c){
+const btn=el(‘button’,‘choice-btn’);btn.textContent=c.jpName;
+(function(chosen,correct){
+btn.addEventListener(‘click’,function(){pickQuiz(btn,chosen,correct,isSilhouette,q);});
+})(c.jpName,q.jpName);
+cw.appendChild(btn);
+});
+area.appendChild(cw);
+appendResultAndNext(area);
 }
 
-function nextQuestion(){current++;answered=false;renderQuiz();}
+function renderMathQuestion(area,q){
+const mc=el(‘div’,‘math-card’);
+const row=el(‘div’,‘math-row’);
+
+function makePokeCol(pokeData,count){
+const col=el(‘div’,‘math-poke’);
+const img=document.createElement(‘img’);
+img.src=imgUrl(pokeData.id);img.alt=pokeData.name;
+col.appendChild(img);
+const cnt=el(‘div’,‘math-poke-count’);cnt.textContent=count+‘ひき’;col.appendChild(cnt);
+return col;
+}
+
+if(q.op===’+’){
+row.appendChild(makePokeCol(q.poke1,q.a));
+const op=el(‘div’,‘math-op’);op.textContent=’+’;row.appendChild(op);
+row.appendChild(makePokeCol(q.poke2,q.b));
+}else{
+row.appendChild(makePokeCol(q.poke1,q.a));
+const op=el(‘div’,‘math-op’);op.textContent=‘−’;row.appendChild(op);
+const col2=el(‘div’,‘math-poke’);
+const img2=document.createElement(‘img’);img2.src=imgUrl(q.poke1.id);img2.alt=q.poke1.name;
+col2.appendChild(img2);
+const cnt2=el(‘div’,‘math-poke-count’);cnt2.textContent=q.b+‘ひき’;col2.appendChild(cnt2);
+row.appendChild(col2);
+}
+const eq=el(‘div’,‘math-eq’);eq.textContent=‘＝’;row.appendChild(eq);
+const qmark=el(‘div’,‘math-q’);qmark.textContent=’？’;row.appendChild(qmark);
+mc.appendChild(row);area.appendChild(mc);
+
+const cw=el(‘div’,‘choices col3’);
+q.choices.forEach(function(c){
+const btn=el(‘button’,‘choice-btn’);btn.textContent=c+‘ひき’;
+(function(chosen){
+btn.addEventListener(‘click’,function(){pickMath(btn,chosen,q);});
+})(c);
+cw.appendChild(btn);
+});
+area.appendChild(cw);
+appendResultAndNext(area);
+}
+
+function appendResultAndNext(area){
+const rb=el(‘div’,‘result-banner’);rb.id=‘rb’;area.appendChild(rb);
+const nb=el(‘button’,‘next-btn’);nb.id=‘nb’;
+nb.textContent=current+1<questions.length?‘つぎのもんだい ▶’:‘けっかをみる 🎉’;
+nb.style.display=‘none’;
+nb.addEventListener(‘click’,nextQuestion);
+area.appendChild(nb);
+}
+
+// ===== 回答処理（クイズ）=====
+function pickQuiz(btn,chosen,correct,isSilhouette,q){
+if(answered)return;answered=true;
+document.querySelectorAll(’.choice-btn’).forEach(function(b){
+b.style.pointerEvents=‘none’;if(b.textContent===correct)b.classList.add(‘correct’);
+});
+const rb=document.getElementById(‘rb’);
+const img=document.getElementById(‘poke-img’);
+if(chosen===correct){
+btn.classList.add(‘correct’);
+rb.className=‘result-banner correct’;rb.textContent=‘🎉 せいかい！すごい！’;score++;
+if(img){if(isSilhouette)img.className=‘reveal-img’;else{img.style.animation=‘none’;void img.offsetWidth;img.style.animation=‘bouncePoke 0.5s ease forwards’;}}
+if(isRetryMode)removeWrong(q); // ✅ 正解したら削除
+}else{
+btn.classList.add(‘wrong’);
+rb.className=‘result-banner wrong’;rb.textContent=‘😢 ざんねん… こたえは「’+correct+’」だよ！’;
+if(img){if(isSilhouette)img.className=‘reveal-img’;else{img.style.animation=‘none’;void img.offsetWidth;img.style.animation=‘shakePoke 0.4s ease forwards’;}}
+if(!isRetryMode)addWrong(Object.assign({},q,{mode:currentMode})); // 間違えたら保存
+}
+document.getElementById(‘nb’).style.display=‘block’;
+}
+
+// ===== 回答処理（算数）=====
+function pickMath(btn,chosen,q){
+if(answered)return;answered=true;
+document.querySelectorAll(’.choice-btn’).forEach(function(b){
+b.style.pointerEvents=‘none’;
+if(parseInt(b.textContent)===q.ans)b.classList.add(‘correct’);
+});
+const rb=document.getElementById(‘rb’);
+if(chosen===q.ans){
+btn.classList.add(‘correct’);
+rb.className=‘result-banner correct’;rb.textContent=‘🎉 せいかい！すごい！’;score++;
+if(isRetryMode)removeWrong(q);
+}else{
+btn.classList.add(‘wrong’);
+rb.className=‘result-banner wrong’;
+rb.textContent=‘😢 ざんねん… こたえは「’+q.ans+‘ひき」だよ！’;
+if(!isRetryMode)addWrong(q);
+}
+document.getElementById(‘nb’).style.display=‘block’;
+}
+
+function nextQuestion(){current++;answered=false;renderQuestion();}
 
 // ===== スコア画面 =====
 function showScore(){
-  const pct=Math.round((score/questions.length)*100);
-  let stars='⭐',msg='またチャレンジしてみよう！💪';
-  if(pct>=90){stars='🏆🌟🏆';msg='かんぺき！ポケモンマスター！';}
-  else if(pct>=70){stars='🎉🎊🎉';msg='すごい！よくできたね！';}
-  else if(pct>=50){stars='👏😊👏';msg='がんばったね！もう一かいどうぞ！';}
-  launchConfetti();
-  const area=document.getElementById('main-area');
-  area.innerHTML='';
-  const sc=el('div','score-screen');
-  const ss=el('div','score-stars');ss.textContent=stars;sc.appendChild(ss);
-  const sb=el('div','score-big');
-  sb.textContent=score;
-  const sd=el('span','score-denom');sd.textContent='/'+questions.length;
-  sb.appendChild(sd);sc.appendChild(sb);
-  const sp=el('div','score-pct');sp.textContent=pct+'%せいかい';sc.appendChild(sp);
-  const sm=el('div','score-msg');sm.textContent=msg;sc.appendChild(sm);
-  const btns=el('div','score-btns');
-  const rb=el('button','restart-btn');
-  rb.textContent='🔄 もういちどあそぶ';
-  rb.addEventListener('click',function(){startMode(currentMode);});
-  btns.appendChild(rb);
-  const tb=el('button','top-btn');
-  tb.textContent='🏠 モードをえらびなおす';
-  tb.addEventListener('click',showTop);
-  btns.appendChild(tb);
-  sc.appendChild(btns);
-  area.appendChild(sc);
+const pct=Math.round((score/questions.length)*100);
+const medal=calcMedal(pct);
+const diffKey=currentMode===‘math’?‘all’:difficulty;
+if(!isRetryMode)saveTrophy(currentMode,diffKey,medal);
+
+let stars=‘⭐’,msg=‘またチャレンジしてみよう！💪’;
+if(pct===100){stars=‘🏆🌟🏆’;msg=‘かんぺき！ポケモンマスター！’;}
+else if(pct>=80){stars=‘🎉🎊🎉’;msg=‘すごい！よくできたね！’;}
+else if(pct>=50){stars=‘👏😊👏’;msg=‘がんばったね！もう一かいどうぞ！’;}
+
+if(pct>0)launchConfetti();
+const area=document.getElementById(‘main-area’);area.innerHTML=’’;
+const sc=el(‘div’,‘score-screen’);
+const ss=el(‘div’,‘score-stars’);ss.textContent=stars;sc.appendChild(ss);
+const sbig=el(‘div’,‘score-big’);sbig.textContent=score;
+const sd=el(‘span’,‘score-denom’);sd.textContent=’/’+questions.length;sbig.appendChild(sd);sc.appendChild(sbig);
+const sp=el(‘div’,‘score-pct’);sp.textContent=pct+’%せいかい’;sc.appendChild(sp);
+
+if(!isRetryMode){
+const te=el(‘div’,‘score-trophy-earned’);te.textContent=trophyIcon(medal)+’  ゲット！’;sc.appendChild(te);
+}
+
+const sm=el(‘div’,‘score-msg’);sm.textContent=msg;sc.appendChild(sm);
+const btns=el(‘div’,‘score-btns’);
+
+const rb=el(‘button’,‘restart-btn’);rb.textContent=‘🔄 もういちどあそぶ’;
+rb.addEventListener(‘click’,function(){startMode(currentMode);});btns.appendChild(rb);
+
+const wrongCount=loadWrong().length;
+if(wrongCount>0&&!isRetryMode){
+const retryBtn=el(‘button’,‘retry-btn’);retryBtn.textContent=‘📝 まちがいなおし（’+wrongCount+‘もん）’;
+retryBtn.addEventListener(‘click’,function(){startMode(‘retry’);});btns.appendChild(retryBtn);
+}
+
+const tb=el(‘button’,‘top-btn’);tb.textContent=‘🏠 モードをえらびなおす’;
+tb.addEventListener(‘click’,showTop);btns.appendChild(tb);
+sc.appendChild(btns);area.appendChild(sc);
 }
 
 // ===== 設定パネル =====
-document.getElementById('gear-btn').addEventListener('click',openSettings);
+document.getElementById(‘gear-btn’).addEventListener(‘click’,openSettings);
 function openSettings(){
-  const overlay=el('div','settings-overlay');
-  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
-  const panel=el('div','settings-panel');
-  const handle=el('div','settings-handle');panel.appendChild(handle);
-  const title=el('div','settings-title');title.textContent='⚙️ せってい';panel.appendChild(title);
-
-  const row=el('div','settings-row');
-  const label=el('div','settings-label');label.textContent='むずかしさ';row.appendChild(label);
-  const diffBtns=el('div','diff-btns');
-  [['easy','かんたん'],['normal','ふつう'],['hard','むずかしい']].forEach(function(d){
-    const btn=el('button','diff-btn'+(difficulty===d[0]?' active':''));
-    btn.textContent=d[1];
-    btn.addEventListener('click',function(){
-      difficulty=d[0];
-      diffBtns.querySelectorAll('.diff-btn').forEach(function(b){b.className='diff-btn';});
-      btn.className='diff-btn active';
-    });
-    diffBtns.appendChild(btn);
-  });
-  row.appendChild(diffBtns);
-  panel.appendChild(row);
-
-  const closeBtn=el('button','settings-close');
-  closeBtn.textContent='とじる ✕';
-  closeBtn.addEventListener('click',function(){overlay.remove();});
-  panel.appendChild(closeBtn);
-  overlay.appendChild(panel);
-  document.body.appendChild(overlay);
+const overlay=el(‘div’,‘settings-overlay’);
+overlay.addEventListener(‘click’,function(e){if(e.target===overlay)overlay.remove();});
+const panel=el(‘div’,‘settings-panel’);
+const handle=el(‘div’,‘settings-handle’);panel.appendChild(handle);
+const title=el(‘div’,‘settings-title’);title.textContent=‘⚙️ せってい’;panel.appendChild(title);
+const row=el(‘div’,‘settings-row’);
+const label=el(‘div’,‘settings-label’);label.textContent=‘むずかしさ（クイズ・シルエット）’;row.appendChild(label);
+const diffBtns=el(‘div’,‘diff-btns’);
+[[‘easy’,‘かんたん’],[‘normal’,‘ふつう’],[‘hard’,‘むずかしい’]].forEach(function(d){
+const btn=el(‘button’,‘diff-btn’+(difficulty===d[0]?’ active’:’’));btn.textContent=d[1];
+btn.addEventListener(‘click’,function(){
+difficulty=d[0];
+diffBtns.querySelectorAll(’.diff-btn’).forEach(function(b){b.className=‘diff-btn’;});
+btn.className=‘diff-btn active’;
+});
+diffBtns.appendChild(btn);
+});
+row.appendChild(diffBtns);panel.appendChild(row);
+const closeBtn=el(‘button’,‘settings-close’);closeBtn.textContent=‘とじる ✕’;
+closeBtn.addEventListener(‘click’,function(){overlay.remove();});
+panel.appendChild(closeBtn);overlay.appendChild(panel);document.body.appendChild(overlay);
 }
 
 // ===== 紙吹雪 =====
 function launchConfetti(){
-  const wrap=document.createElement('div');
-  wrap.className='confetti-wrap';
-  document.body.appendChild(wrap);
-  const cols=['#E3350D','#FFCB05','#3B4CCA','#2ecc71','#e74c3c','#fff','#ff69b4'];
-  for(let i=0;i<70;i++){
-    const c=document.createElement('div');
-    c.className='confetti';
-    c.style.cssText='left:'+Math.random()*100+'%;background:'+cols[i%cols.length]+';animation-duration:'+(1.5+Math.random()*2)+'s;animation-delay:'+Math.random()*0.8+'s;width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;border-radius:'+(Math.random()>0.5?'50%':'2px')+';';
-    wrap.appendChild(c);
-  }
-  setTimeout(function(){wrap.remove();},4000);
+const wrap=document.createElement(‘div’);wrap.className=‘confetti-wrap’;document.body.appendChild(wrap);
+const cols=[’#E3350D’,’#FFCB05’,’#3B4CCA’,’#2ecc71’,’#e74c3c’,’#fff’,’#ff69b4’];
+for(let i=0;i<70;i++){
+const c=document.createElement(‘div’);c.className=‘confetti’;
+c.style.cssText=‘left:’+Math.random()*100+’%;background:’+cols[i%cols.length]+’;animation-duration:’+(1.5+Math.random()*2)+‘s;animation-delay:’+Math.random()*0.8+‘s;width:’+(6+Math.random()*8)+‘px;height:’+(6+Math.random()*8)+‘px;border-radius:’+(Math.random()>0.5?‘50%’:‘2px’)+’;’;
+wrap.appendChild(c);
+}
+setTimeout(function(){wrap.remove();},4000);
 }
 
 loadPokemon();
 </script>
+
 </body>
 </html>
