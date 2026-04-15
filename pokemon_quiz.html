@@ -261,9 +261,14 @@ function render(){
     </div>
     <div class="img-card"><img class="poke-img" id="poke-img" src="${imgUrl}" alt="ポケモン"/></div>
     <div class="hint-box"><div class="hint-label">ヒント</div><div class="hint-text">${getHint(q.id)}</div></div>
-    <div class="choices">${choices.map(c=>`<button class="choice-btn" onclick="pick(this,${JSON.stringify(c.jpName)},${JSON.stringify(q.jpName)})">${c.jpName}</button>`).join('')}</div>
+    <div class="choices" id="choices-wrap">${choices.map(c=>`<button class="choice-btn" data-chosen="${encodeURIComponent(c.jpName)}" data-correct="${encodeURIComponent(q.jpName)}">${c.jpName}</button>`).join('')}</div>
     <div class="result-banner" id="rb"></div>
     <button class="next-btn" id="nb" style="display:none" onclick="next()">${current+1<questions.length?'つぎのもんだい ▶':'けっかをみる 🎉'}</button>`;
+  document.getElementById('choices-wrap').addEventListener('click',function(e){
+    const btn=e.target.closest('.choice-btn');
+    if(!btn)return;
+    pick(btn,decodeURIComponent(btn.dataset.chosen),decodeURIComponent(btn.dataset.correct));
+  });
 }
 
 function pick(btn,chosen,correct){
