@@ -76,13 +76,13 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 .reveal-img{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.12));position:relative;z-index:1;animation:bouncePoke 0.5s ease;}
 
 .math-card{background:rgba(255,255,255,0.88);border-radius:18px;padding:1.25rem 0.75rem;text-align:center;margin-bottom:0.85rem;border:2px solid rgba(255,255,255,0.95);box-shadow:0 4px 14px rgba(0,0,0,0.1);}
-.math-top-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:0.5rem;}
+.math-top-row{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:nowrap;margin-bottom:0.5rem;overflow-x:auto;}
 .math-eq-row{display:flex;align-items:center;justify-content:center;gap:8px;}
-.math-poke-group{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.math-poke-imgs{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:150px;}
-.math-poke-single{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));}
+.math-poke-group{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.math-poke-imgs{display:flex;flex-wrap:nowrap;justify-content:center;gap:2px;}
+.math-poke-single{width:40px;height:40px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));}
 .math-poke-group .math-poke-single{display:inline-block;}
-.math-poke-label{font-size:11px;color:#555;margin-top:3px;font-weight:700;}
+.math-poke-label{font-size:16px;color:#333;margin-top:2px;font-weight:900;}
 .math-op{font-size:26px;font-weight:900;color:#E3350D;padding:0 4px;}
 .math-eq{font-size:28px;font-weight:900;color:#333;}
 .math-q{font-size:38px;font-weight:900;color:#E3350D;}
