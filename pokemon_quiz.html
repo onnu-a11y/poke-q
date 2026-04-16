@@ -149,6 +149,8 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 @keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
 
 /* ===== なぞりモード ===== */
+.kana-rand-card{background:rgba(255,255,255,0.88);border:2px solid rgba(255,255,255,0.95);border-radius:18px;padding:1.1rem 1.25rem;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all 0.15s;text-align:left;display:flex;align-items:center;gap:1rem;box-shadow:0 3px 10px rgba(0,0,0,0.1);margin-bottom:12px;}
+.kana-rand-card:hover{border-color:#5bb8f5;transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.15);}
 .kana-select-title{font-size:22px;font-weight:900;color:#E3350D;text-align:center;margin-bottom:0.5rem;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff;}
 .kana-section-label{font-size:13px;font-weight:700;color:#1a5276;margin:0.75rem 0 0.4rem;letter-spacing:1px;}
 .kana-row-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:0.5rem;}
@@ -698,6 +700,9 @@ let kanaAnimFrame = null;
 
 function startKanaMode() {
   currentMode = 'kana';
+  kanaQueue = []; // 前回の残骸をリセット
+  kanaIndex = 0;
+  kanaCleared = false;
   const area = document.getElementById('main-area');
   area.innerHTML = '';
 
@@ -721,7 +726,7 @@ function startKanaMode() {
    {id:'rand_kata',icon:'🎯',name:'カタカナランダム',desc:'カタカナ50音からランダム！'},
    {id:'rand_both',icon:'🌟',name:'ぜんぶランダム',   desc:'ひらがな＆カタカナ まぜこぜ！'},
   ].forEach(function(rm){
-    const rc=el('div','mode-card');
+    const rc=el('div','kana-rand-card');
     rc.addEventListener('click',function(){startKanaPlay(rm.id,'');});
     const ri2=el('div','mode-icon');ri2.textContent=rm.icon;rc.appendChild(ri2);
     const rInfo=el('div');
