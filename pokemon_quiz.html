@@ -100,17 +100,20 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 .choices.col3 .choice-btn{font-size:15px;padding:0.75rem 0.25rem;min-height:56px;}
 .choice-btn:hover:not(:disabled){border-color:#E3350D;color:#E3350D;transform:translateY(-2px);box-shadow:0 5px 14px rgba(227,53,13,0.18);}
 .choice-btn:active:not(:disabled){transform:scale(0.97);}
-.choice-btn.correct{background:#e6f9ed;border-color:#27ae60;color:#1a6b3a;animation:correctPop 0.3s ease;}
+.choice-btn.correct{background:#e6f9ed;border-color:#27ae60;color:#1a6b3a;animation:correctPop 0.3s ease;position:relative;}
+.choice-btn.correct::after{content:'⭕';position:absolute;top:-10px;right:-6px;font-size:20px;line-height:1;}
 @keyframes correctPop{0%{transform:scale(0.95);}60%{transform:scale(1.05);}100%{transform:scale(1);}}
-.choice-btn.wrong{background:#fde8e8;border-color:#e74c3c;color:#a01010;}
+.choice-btn.wrong{background:#fde8e8;border-color:#e74c3c;color:#a01010;position:relative;}
+.choice-btn.wrong::after{content:'❌';position:absolute;top:-10px;right:-6px;font-size:16px;line-height:1;}
 
-.result-banner{text-align:center;padding:0.7rem 1rem;border-radius:12px;font-size:16px;font-weight:700;margin-bottom:0.85rem;min-height:46px;line-height:1.4;}
-.result-banner.correct{background:#e6f9ed;border:1.5px solid #27ae60;color:#1a6b3a;animation:bannerIn 0.25s ease;}
-.result-banner.wrong{background:#fde8e8;border:1.5px solid #e74c3c;color:#a01010;animation:bannerIn 0.25s ease;}
+.result-banner{text-align:center;padding:0.75rem 1rem;border-radius:12px;font-size:15px;font-weight:700;margin-bottom:0.85rem;min-height:52px;line-height:1.5;display:flex;align-items:center;justify-content:center;gap:8px;}
+.result-banner.correct{background:#e6f9ed;border:2px solid #27ae60;color:#1a6b3a;animation:bannerIn 0.25s ease;}
+.result-banner.wrong{background:#fde8e8;border:2px solid #e74c3c;color:#a01010;animation:bannerIn 0.25s ease;}
+.result-banner .mark{font-size:28px;line-height:1;}
 @keyframes bannerIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-.next-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;padding:1rem;font-size:17px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;border-radius:12px;background:linear-gradient(135deg,#E3350D,#ff5722);color:#fff;border:none;cursor:pointer;transition:all 0.15s;box-shadow:0 4px 14px rgba(227,53,13,0.32);}
-.next-btn:hover{background:linear-gradient(135deg,#b02a09,#e64a19);transform:translateY(-2px);}
+.next-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;padding:1rem;font-size:17px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;border-radius:12px;background:linear-gradient(135deg,#1a6fc4,#2e8de0);color:#fff;border:none;cursor:pointer;transition:all 0.15s;box-shadow:0 4px 14px rgba(26,111,196,0.35);}
+.next-btn:hover{background:linear-gradient(135deg,#145a9e,#2478c2);transform:translateY(-2px);}
 .next-btn:active{transform:scale(0.98);}
 .back-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:rgba(255,255,255,0.75);border:1.5px solid rgba(255,255,255,0.95);border-radius:12px;color:#555;font-size:13px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;padding:0.5rem 1rem;cursor:pointer;margin-bottom:1rem;display:inline-flex;align-items:center;gap:4px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 
@@ -468,12 +471,18 @@ function pickQuiz(btn,chosen,correct,isSilhouette,q){
   const img=document.getElementById('poke-img');
   if(chosen===correct){
     btn.classList.add('correct');
-    rb.className='result-banner correct';rb.textContent='🎉 せいかい！すごい！';score++;
+    rb.className='result-banner correct';
+    var mk=document.createElement('span');mk.className='mark';mk.textContent='⭕';
+    var tx=document.createElement('span');tx.textContent='せいかい！すごい！';
+    rb.appendChild(mk);rb.appendChild(tx);score++;
     if(img){if(isSilhouette)img.className='reveal-img';else{img.style.animation='none';void img.offsetWidth;img.style.animation='bouncePoke 0.5s ease forwards';}}
     if(isRetryMode)removeWrong(q); // ✅ 正解したら削除
   }else{
     btn.classList.add('wrong');
-    rb.className='result-banner wrong';rb.textContent='😢 ざんねん… こたえは「'+correct+'」だよ！';
+    rb.className='result-banner wrong';
+    var mk2=document.createElement('span');mk2.className='mark';mk2.textContent='❌';
+    var tx2=document.createElement('span');tx2.textContent='ざんねん… こたえは「'+correct+'」だよ！';
+    rb.appendChild(mk2);rb.appendChild(tx2);
     if(img){if(isSilhouette)img.className='reveal-img';else{img.style.animation='none';void img.offsetWidth;img.style.animation='shakePoke 0.4s ease forwards';}}
     if(!isRetryMode)addWrong(Object.assign({},q,{mode:currentMode})); // 間違えたら保存
   }
@@ -490,12 +499,17 @@ function pickMath(btn,chosen,q){
   const rb=document.getElementById('rb');
   if(chosen===q.ans){
     btn.classList.add('correct');
-    rb.className='result-banner correct';rb.textContent='🎉 せいかい！すごい！';score++;
+    rb.className='result-banner correct';
+    var mk=document.createElement('span');mk.className='mark';mk.textContent='⭕';
+    var tx=document.createElement('span');tx.textContent='せいかい！すごい！';
+    rb.appendChild(mk);rb.appendChild(tx);score++;
     if(isRetryMode)removeWrong(q);
   }else{
     btn.classList.add('wrong');
     rb.className='result-banner wrong';
-    rb.textContent='😢 ざんねん… こたえは「'+q.ans+'ひき」だよ！';
+    var mk4=document.createElement('span');mk4.className='mark';mk4.textContent='❌';
+    var tx4=document.createElement('span');tx4.textContent='ざんねん… こたえは「'+q.ans+'ひき」だよ！';
+    rb.appendChild(mk4);rb.appendChild(tx4);
     if(!isRetryMode)addWrong(q);
   }
   document.getElementById('nb').style.display='block';
