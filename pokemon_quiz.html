@@ -754,9 +754,9 @@ function startKanaPlay(type, row) {
       });
     });
   } else {
-    kanaQueue = KANA_DATA[type][row].slice();
+    kanaQueue = KANA_DATA[type][row].slice(); // 順番通り（シャッフルしない）
   }
-  kanaQueue = shuffle(kanaQueue);
+  // ランダムモードのみシャッフル
   kanaIndex = 0;
   showKanaQuestion();
 }
@@ -1023,9 +1023,9 @@ const MAZE_POKE = [
 
 // 難易度別迷路生成パラメータ
 const MAZE_DIFF = {
-  easy:   {cols:7,  rows:9,  extra:2},
-  normal: {cols:9,  rows:13, extra:5},
-  hard:   {cols:13, rows:17, extra:10},
+  easy:   {cols:7,  rows:9,  extra:0},
+  normal: {cols:9,  rows:13, extra:0},
+  hard:   {cols:13, rows:17, extra:0},
 };
 
 let mazePoke = null;
@@ -1087,21 +1087,6 @@ function generateMaze(cols, rows, extraWalls) {
       visitedCount++;
     } else {
       stack.pop();
-    }
-  }
-
-  // extra壁追加でランダム行き止まりを増やす（難易度調整）
-  for (let i = 0; i < extraWalls; i++) {
-    const r = 1 + Math.floor(Math.random() * (rows-2));
-    const c = 1 + Math.floor(Math.random() * (cols-2));
-    const dirs = ['top','right','bottom','left'];
-    const dir = dirs[Math.floor(Math.random()*4)];
-    const opp = {top:'bottom',bottom:'top',left:'right',right:'left'};
-    const nc = c + (dir==='right'?1:dir==='left'?-1:0);
-    const nr = r + (dir==='bottom'?1:dir==='top'?-1:0);
-    if (nc>=0&&nc<cols&&nr>=0&&nr<rows) {
-      cells[r][c].walls[dir] = true;
-      cells[nr][nc].walls[opp[dir]] = true;
     }
   }
 
@@ -1238,22 +1223,28 @@ function drawMazeGrid() {
   ctx.clearRect(0, 0, W, H);
 
   // 背景
-  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fillStyle = '#f0f8ff';
   ctx.fillRect(0, 0, W, H);
 
-  // 通過済みセルを塗る
-  mazePath.forEach(function(cell) {
-    ctx.fillStyle = 'rgba(91,184,245,0.35)';
-    ctx.fillRect(cell.c*S+2, cell.r*S+2, S-4, S-4);
+  // 通過済みセルを塗る（鮮やかな青）
+  mazePath.forEach(function(cell, idx) {
+    const alpha = 0.25 + (idx / mazePath.length) * 0.35;
+    ctx.fillStyle = 'rgba(91,184,245,' + alpha + ')';
+    ctx.fillRect(cell.c*S+1, cell.r*S+1, S-2, S-2);
   });
 
-  // ゴール
-  ctx.fillStyle = 'rgba(255,203,5,0.4)';
-  ctx.fillRect(mazeGoal.c*S+2, mazeGoal.r*S+2, S-4, S-4);
+  // ゴールセル（黄色）
+  ctx.fillStyle = 'rgba(255,203,5,0.55)';
+  ctx.fillRect(mazeGoal.c*S+1, mazeGoal.r*S+1, S-2, S-2);
 
-  // 壁を描画
-  ctx.strokeStyle = '#2a6496';
-  ctx.lineWidth = 2;
+  // スタートセル（薄い赤）
+  ctx.fillStyle = 'rgba(227,53,13,0.15)';
+  ctx.fillRect(mazeStart.c*S+1, mazeStart.r*S+1, S-2, S-2);
+
+  // 壁を描画（濃いめ）
+  ctx.strokeStyle = '#1a4a7a';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'square';
   for (let r = 0; r < mazeRows; r++) {
     for (let c = 0; c < mazeCols; c++) {
       const cell = mazeGrid[r][c];
@@ -1268,69 +1259,107 @@ function drawMazeGrid() {
     }
   }
 
-  // スタートマーク
-  ctx.fillStyle = '#E3350D';
-  ctx.font = 'bold ' + Math.max(12, S-6) + 'px sans-serif';
+  // スタートラベル「スタート」
+  var startFontSize = Math.max(7, Math.floor(S * 0.38));
+  ctx.font = 'bold ' + startFontSize + 'px sans-serif';
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('S', mazeStart.c*S + S/2, mazeStart.r*S + S/2);
-
-  // ゴールマーク（モンスターボール風）
-  const gx = mazeGoal.c*S + S/2;
-  const gy = mazeGoal.r*S + S/2;
-  const gr = S/2 - 3;
-  ctx.beginPath();
-  ctx.arc(gx, gy, gr, 0, Math.PI);
+  ctx.textBaseline = 'top';
   ctx.fillStyle = '#E3350D';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(gx, gy, gr, Math.PI, Math.PI*2);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(gx, gy, gr, 0, Math.PI*2);
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(gx, gy, gr/3, 0, Math.PI*2);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  ctx.stroke();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2.5;
+  ctx.strokeText('スタート', mazeStart.c*S + S/2, mazeStart.r*S + 2);
+  ctx.fillText('スタート', mazeStart.c*S + S/2, mazeStart.r*S + 2);
 
-  // 現在地にポケモンアイコン
+  // ゴールラベル「ゴール」＋モンスターボール
+  var goalFontSize = Math.max(7, Math.floor(S * 0.38));
+  ctx.font = 'bold ' + goalFontSize + 'px sans-serif';
+  ctx.textBaseline = 'bottom';
+  ctx.fillStyle = '#c9a000';
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2.5;
+  ctx.strokeText('ゴール', mazeGoal.c*S + S/2, mazeGoal.r*S + S - 2);
+  ctx.fillText('ゴール', mazeGoal.c*S + S/2, mazeGoal.r*S + S - 2);
+
+  // モンスターボール（ゴール中央）
+  const gx = mazeGoal.c*S + S/2;
+  const gy = mazeGoal.r*S + S/2 - goalFontSize/2;
+  const gr = Math.max(5, S/2 - 6);
+  ctx.beginPath(); ctx.arc(gx, gy, gr, 0, Math.PI);
+  ctx.fillStyle = '#E3350D'; ctx.fill();
+  ctx.beginPath(); ctx.arc(gx, gy, gr, Math.PI, Math.PI*2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(gx, gy, gr, 0, Math.PI*2);
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(gx, gy, gr/3, 0, Math.PI*2);
+  ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+
+  // 現在地ポケモン（白い円背景付きで見やすく、大きめに）
   const cur = mazePath[mazePath.length-1];
   const px = cur.c*S + S/2;
   const py = cur.r*S + S/2;
-  const pokeSize = S - 4;
+  const pokeR = Math.floor(S * 0.52);
+  // 白い丸の背景
+  ctx.beginPath();
+  ctx.arc(px, py, pokeR, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fill();
+  ctx.strokeStyle = '#FFCB05';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // ポケモン画像
+  const pokeSize = pokeR * 2 - 2;
   if (mazePoke._img && mazePoke._img.complete) {
     ctx.drawImage(mazePoke._img, px - pokeSize/2, py - pokeSize/2, pokeSize, pokeSize);
   } else {
-    // 画像未ロードなら丸で代替
-    ctx.beginPath();
-    ctx.arc(px, py, S/2-2, 0, Math.PI*2);
-    ctx.fillStyle = '#FFCB05';
-    ctx.fill();
+    ctx.font = 'bold ' + Math.floor(pokeR) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#E3350D';
+    ctx.fillText('?', px, py);
   }
+}
+
+// セルの「分岐点」かどうか判定（通れる方向が2方向以上ある）
+function isBranchCell(c, r) {
+  var cell = mazeGrid[r][c];
+  var open = 0;
+  if (!cell.walls.top)    open++;
+  if (!cell.walls.bottom) open++;
+  if (!cell.walls.left)   open++;
+  if (!cell.walls.right)  open++;
+  return open >= 3; // 3方向以上開いていれば分岐
+}
+
+// 最後の分岐点（またはスタート）までpathを巻き戻す
+function rollbackToBranch() {
+  if (mazePath.length <= 1) return;
+  mazePath.pop(); // まず今いるセルを除く
+  while (mazePath.length > 1) {
+    var cell = mazePath[mazePath.length - 1];
+    if (isBranchCell(cell.c, cell.r)) break;
+    mazePath.pop();
+  }
+  drawMazeGrid();
 }
 
 function setupMazeEvents() {
   // ポケモン画像を事前ロード
   if (!mazePoke._img) {
-    const img = new Image();
+    var img = new Image();
     img.src = imgUrl(mazePoke.id);
     img.onload = function() { mazePoke._img = img; drawMazeGrid(); };
     mazePoke._img = img;
   }
 
-  const canvas = mazeCanvas;
-  const S = mazeCellSize;
+  var canvas = mazeCanvas;
+  var S = mazeCellSize;
+  var lastCell = null; // 最後に処理したセル（重複処理防止）
 
   function getCellFromPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    let cx, cy;
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var cx, cy;
     if (e.touches) {
       cx = (e.touches[0].clientX - rect.left) * scaleX;
       cy = (e.touches[0].clientY - rect.top) * scaleY;
@@ -1338,64 +1367,77 @@ function setupMazeEvents() {
       cx = (e.clientX - rect.left) * scaleX;
       cy = (e.clientY - rect.top) * scaleY;
     }
-    return { c: Math.floor(cx / S), r: Math.floor(cy / S) };
+    // セルの中心寄り判定（端っこの誤判定を減らす）
+    var c = Math.floor(cx / S);
+    var r = Math.floor(cy / S);
+    c = Math.max(0, Math.min(mazeCols-1, c));
+    r = Math.max(0, Math.min(mazeRows-1, r));
+    return {c: c, r: r};
   }
 
   function canMove(from, to) {
     if (to.c < 0 || to.c >= mazeCols || to.r < 0 || to.r >= mazeRows) return false;
-    const cell = mazeGrid[from.r][from.c];
-    const dc = to.c - from.c;
-    const dr = to.r - from.r;
+    var cell = mazeGrid[from.r][from.c];
+    var dc = to.c - from.c;
+    var dr = to.r - from.r;
     if (Math.abs(dc) + Math.abs(dr) !== 1) return false;
-    if (dc === 1 && cell.walls.right) return false;
-    if (dc === -1 && cell.walls.left) return false;
-    if (dr === 1 && cell.walls.bottom) return false;
-    if (dr === -1 && cell.walls.top) return false;
+    if (dc === 1  && cell.walls.right)  return false;
+    if (dc === -1 && cell.walls.left)   return false;
+    if (dr === 1  && cell.walls.bottom) return false;
+    if (dr === -1 && cell.walls.top)    return false;
     return true;
   }
 
   function handleMove(e) {
     if (mazeSolved) return;
     e.preventDefault();
-    const pos = getCellFromPos(e);
-    const cur = mazePath[mazePath.length - 1];
-    if (pos.c === cur.c && pos.r === cur.r) return;
+    var pos = getCellFromPos(e);
+    var cur = mazePath[mazePath.length - 1];
 
-    // 戻る（1つ前のセルに戻ろうとしている）
-    if (mazePath.length >= 2) {
-      const prev = mazePath[mazePath.length - 2];
-      if (pos.c === prev.c && pos.r === prev.r) {
-        mazePath.pop();
-        drawMazeGrid();
-        return;
-      }
+    // 同じセルなら何もしない
+    if (pos.c === cur.c && pos.r === cur.r) return;
+    // 前回と同じセルなら何もしない（高速スワイプでの重複処理防止）
+    if (lastCell && pos.c === lastCell.c && pos.r === lastCell.r) return;
+    lastCell = pos;
+
+    // 隣接セルでない場合は無視（指が飛んだ場合）
+    if (Math.abs(pos.c - cur.c) + Math.abs(pos.r - cur.r) > 1) return;
+
+    // すでに通ったパスに戻る場合は自然に巻き戻し
+    var existIdx = mazePath.findIndex(function(p) { return p.c===pos.c && p.r===pos.r; });
+    if (existIdx >= 0) {
+      mazePath = mazePath.slice(0, existIdx + 1);
+      drawMazeGrid();
+      return;
     }
 
     // 前進できるか
     if (canMove(cur, pos)) {
-      // すでに通ったパスに戻る場合は巻き戻し
-      const existIdx = mazePath.findIndex(function(p) { return p.c===pos.c && p.r===pos.r; });
-      if (existIdx >= 0) {
-        mazePath = mazePath.slice(0, existIdx + 1);
-      } else {
-        mazePath.push({c: pos.c, r: pos.r});
-      }
+      mazePath.push({c: pos.c, r: pos.r});
       drawMazeGrid();
-
       // ゴール判定
       if (pos.c === mazeGoal.c && pos.r === mazeGoal.r) {
         mazeSolved = true;
         setTimeout(function() { showMazeClear(); }, 300);
       }
+    } else {
+      // 壁に当たった → 自動で直前の分岐点まで戻す（案C）
+      rollbackToBranch();
+      lastCell = null;
     }
   }
 
-  canvas.addEventListener('mousedown', function(e) { mazeDrawing = true; handleMove(e); });
-  canvas.addEventListener('mousemove', function(e) { if (mazeDrawing) handleMove(e); });
-  canvas.addEventListener('mouseup', function() { mazeDrawing = false; });
-  canvas.addEventListener('touchstart', function(e) { mazeDrawing = true; handleMove(e); }, {passive:false});
-  canvas.addEventListener('touchmove', function(e) { if (mazeDrawing) handleMove(e); }, {passive:false});
-  canvas.addEventListener('touchend', function() { mazeDrawing = false; });
+  function onStart(e) { mazeDrawing = true; lastCell = null; handleMove(e); }
+  function onMove(e)  { if (mazeDrawing) handleMove(e); }
+  function onEnd()    { mazeDrawing = false; lastCell = null; }
+
+  canvas.addEventListener('mousedown',  onStart);
+  canvas.addEventListener('mousemove',  onMove);
+  canvas.addEventListener('mouseup',    onEnd);
+  canvas.addEventListener('mouseleave', onEnd);
+  canvas.addEventListener('touchstart', onStart, {passive:false});
+  canvas.addEventListener('touchmove',  onMove,  {passive:false});
+  canvas.addEventListener('touchend',   onEnd);
 }
 
 function showMazeClear() {
