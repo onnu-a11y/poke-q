@@ -76,12 +76,16 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 @keyframes bouncePoke{0%,100%{transform:scale(1);}30%{transform:scale(1.15);}60%{transform:scale(0.95);}}
 .reveal-img{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(255,203,5,0.25));position:relative;z-index:1;animation:bouncePoke 0.5s ease;}
 
-.math-card{background:#252b52;border-radius:18px;padding:1.5rem 1rem;text-align:center;margin-bottom:0.85rem;border:1.5px solid rgba(46,204,113,0.2);}
-.math-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
-.math-poke{display:flex;flex-direction:column;align-items:center;gap:2px;}
-.math-poke img{width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(255,203,5,0.2));}
-.math-poke-count{font-size:18px;font-weight:900;color:#FFCB05;}
-.math-op{font-size:28px;font-weight:900;color:#9ba3d4;}
+.math-card{background:#252b52;border-radius:18px;padding:1.25rem 0.75rem;text-align:center;margin-bottom:0.85rem;border:1.5px solid rgba(46,204,113,0.2);}
+.math-top-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:0.5rem;}
+.math-eq-row{display:flex;align-items:center;justify-content:center;gap:8px;}
+.math-poke-group{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.math-poke-imgs{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:150px;}
+.math-poke-single{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(255,203,5,0.2));}
+.math-poke-group .math-poke-single{display:inline-block;}
+
+.math-poke-label{font-size:11px;color:#9ba3d4;margin-top:3px;}
+.math-op{font-size:26px;font-weight:900;color:#9ba3d4;padding:0 4px;}
 .math-eq{font-size:28px;font-weight:900;color:#9ba3d4;}
 .math-q{font-size:38px;font-weight:900;color:#FFCB05;}
 
@@ -185,6 +189,7 @@ let allPokemon=[],easyPokemon=[],hardPokemon=[];
 let currentMode='top',difficulty='normal';
 let questions=[],current=0,score=0,answered=false;
 let isRetryMode=false;
+let mathMode='both'; // 'plus' | 'minus' | 'both'
 
 // ===== localStorage =====
 const LS_TROPHY='poke_trophies';
@@ -253,13 +258,23 @@ function makeChoices(correct,count){
   return shuffle([correct,...shuffle(allPokemon.filter(function(p){return p.id!==correct.id;})).slice(0,count-1)]);
 }
 function makeMathQ(){
-  const op=Math.random()<0.5?'+':'-';
+  let op;
+  if(mathMode==='plus')op='+';
+  else if(mathMode==='minus')op='-';
+  else op=Math.random()<0.5?'+':'-';
   let a,b;
   if(op==='+'){a=Math.floor(Math.random()*8)+1;b=Math.floor(Math.random()*(9-a))+1;}
   else{a=Math.floor(Math.random()*8)+2;b=Math.floor(Math.random()*(a-1))+1;}
   const ans=op==='+'?a+b:a-b;
   const poke1=MATH_POKE[Math.floor(Math.random()*MATH_POKE.length)];
-  const poke2=op==='-'?poke1:MATH_POKE[Math.floor(Math.random()*MATH_POKE.length)];
+  // 足し算は必ず別のポケモン、引き算は同じポケモン
+  let poke2;
+  if(op==='-'){
+    poke2=poke1;
+  }else{
+    const others=MATH_POKE.filter(function(p){return p.id!==poke1.id;});
+    poke2=others[Math.floor(Math.random()*others.length)];
+  }
   const wrongPool=[];
   for(let i=1;i<=18;i++){if(Math.abs(i-ans)>=2)wrongPool.push(i);}
   const choices=shuffle([ans,...shuffle(wrongPool).slice(0,2)]);
@@ -392,35 +407,37 @@ function renderQuizQuestion(area,q){
   appendResultAndNext(area);
 }
 
-function renderMathQuestion(area,q){
-  const mc=el('div','math-card');
-  const row=el('div','math-row');
-
-  function makePokeCol(pokeData,count){
-    const col=el('div','math-poke');
+function makePokeLine(pokeData,count){
+  // 1匹ずつのポケモン画像をcount個横並びにしたグループを返す
+  const grp=el('div','math-poke-group');
+  for(let i=0;i<count;i++){
     const img=document.createElement('img');
     img.src=imgUrl(pokeData.id);img.alt=pokeData.name;
-    col.appendChild(img);
-    const cnt=el('div','math-poke-count');cnt.textContent=count+'ひき';col.appendChild(cnt);
-    return col;
+    img.className='math-poke-single';
+    grp.appendChild(img);
   }
+  const lbl=el('div','math-poke-label');lbl.textContent=pokeData.name+'×'+count+'ひき';
+  grp.appendChild(lbl);
+  return grp;
+}
 
-  if(q.op==='+'){
-    row.appendChild(makePokeCol(q.poke1,q.a));
-    const op=el('div','math-op');op.textContent='+';row.appendChild(op);
-    row.appendChild(makePokeCol(q.poke2,q.b));
-  }else{
-    row.appendChild(makePokeCol(q.poke1,q.a));
-    const op=el('div','math-op');op.textContent='−';row.appendChild(op);
-    const col2=el('div','math-poke');
-    const img2=document.createElement('img');img2.src=imgUrl(q.poke1.id);img2.alt=q.poke1.name;
-    col2.appendChild(img2);
-    const cnt2=el('div','math-poke-count');cnt2.textContent=q.b+'ひき';col2.appendChild(cnt2);
-    row.appendChild(col2);
-  }
-  const eq=el('div','math-eq');eq.textContent='＝';row.appendChild(eq);
-  const qmark=el('div','math-q');qmark.textContent='？';row.appendChild(qmark);
-  mc.appendChild(row);area.appendChild(mc);
+function renderMathQuestion(area,q){
+  const mc=el('div','math-card');
+
+  // 1行目：左辺の絵
+  const topRow=el('div','math-top-row');
+  topRow.appendChild(makePokeLine(q.poke1,q.a));
+  const opDiv=el('div','math-op');opDiv.textContent=q.op==='+'?'＋':'－';topRow.appendChild(opDiv);
+  topRow.appendChild(makePokeLine(q.poke2,q.b));
+  mc.appendChild(topRow);
+
+  // 2行目：＝？
+  const eqRow=el('div','math-eq-row');
+  const eq=el('div','math-eq');eq.textContent='＝';eqRow.appendChild(eq);
+  const qmark=el('div','math-q');qmark.textContent='？';eqRow.appendChild(qmark);
+  mc.appendChild(eqRow);
+
+  area.appendChild(mc);
 
   const cw=el('div','choices col3');
   q.choices.forEach(function(c){
@@ -550,6 +567,21 @@ function openSettings(){
     diffBtns.appendChild(btn);
   });
   row.appendChild(diffBtns);panel.appendChild(row);
+  // 算数モード設定
+  const mathRow=el('div','settings-row');
+  const mathLabel=el('div','settings-label');mathLabel.textContent='さんすうのしゅるい';mathRow.appendChild(mathLabel);
+  const mathBtns=el('div','diff-btns');
+  [['plus','たしざん'],['minus','ひきざん'],['both','りょうほう']].forEach(function(d){
+    const btn=el('button','diff-btn'+(mathMode===d[0]?' active':''));btn.textContent=d[1];
+    btn.addEventListener('click',function(){
+      mathMode=d[0];
+      mathBtns.querySelectorAll('.diff-btn').forEach(function(b){b.className='diff-btn';});
+      btn.className='diff-btn active';
+    });
+    mathBtns.appendChild(btn);
+  });
+  mathRow.appendChild(mathBtns);panel.appendChild(mathRow);
+
   const closeBtn=el('button','settings-close');closeBtn.textContent='とじる ✕';
   closeBtn.addEventListener('click',function(){overlay.remove();});
   panel.appendChild(closeBtn);overlay.appendChild(panel);document.body.appendChild(overlay);
