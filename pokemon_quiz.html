@@ -82,7 +82,8 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 .math-poke-imgs{display:flex;flex-wrap:nowrap;justify-content:center;gap:2px;}
 .math-poke-single{width:40px;height:40px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));}
 .math-poke-group .math-poke-single{display:inline-block;}
-.math-poke-label{font-size:16px;color:#333;margin-top:2px;font-weight:900;}
+.math-poke-label{font-size:14px;color:#333;margin-top:3px;font-weight:900;text-align:center;}
+.math-poke-num{font-size:22px;color:#E3350D;font-weight:900;margin-right:2px;}
 .math-op{font-size:26px;font-weight:900;color:#E3350D;padding:0 4px;}
 .math-eq{font-size:28px;font-weight:900;color:#333;}
 .math-q{font-size:38px;font-weight:900;color:#E3350D;}
@@ -163,9 +164,9 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 .kana-canvas-wrap{display:flex;justify-content:center;}
 .kana-canvas{border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.12);cursor:crosshair;touch-action:none;max-width:100%;width:280px;height:280px;}
 .kana-clear-banner{background:#e6f9ed;border:2px solid #27ae60;border-radius:12px;padding:0.75rem 1rem;text-align:center;font-size:18px;font-weight:900;color:#1a6b3a;margin-top:0.75rem;animation:bannerIn 0.3s ease;}
-.kana-celeb-wrap{position:fixed;bottom:0;left:0;right:0;height:160px;pointer-events:none;z-index:50;display:flex;align-items:flex-end;justify-content:center;}
-.kana-celeb-poke{position:absolute;bottom:0;width:70px;height:70px;object-fit:contain;animation:pokeJump 0.6s ease both;}
-@keyframes pokeJump{0%{transform:translateY(80px) scale(0.5);opacity:0;}60%{transform:translateY(-20px) scale(1.1);}100%{transform:translateY(0) scale(1);opacity:1;}}
+.kana-celeb-wrap{position:fixed;top:0;left:0;right:0;height:100vh;pointer-events:none;z-index:50;overflow:hidden;}
+.kana-celeb-poke{position:absolute;top:-80px;width:70px;height:70px;object-fit:contain;animation:pokeFall 1.2s cubic-bezier(0.25,0.46,0.45,0.94) both;}
+@keyframes pokeFall{0%{transform:translateY(0) rotate(-15deg) scale(0.6);opacity:0;}30%{opacity:1;}80%{transform:translateY(100vh) rotate(20deg) scale(1.1);}100%{transform:translateY(110vh) rotate(10deg) scale(1);opacity:0;}}
 .kana-celeb-msg{position:absolute;top:0;left:0;right:0;text-align:center;font-size:20px;font-weight:900;color:#E3350D;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff;animation:starPop 0.4s ease;}
 
 /* ===== 迷路モード ===== */
@@ -304,13 +305,13 @@ function makeMathQ(){
   else{a=Math.floor(Math.random()*8)+2;b=Math.floor(Math.random()*(a-1))+1;}
   const ans=op==='+'?a+b:a-b;
   const poke1=MATH_POKE[Math.floor(Math.random()*MATH_POKE.length)];
-  // 足し算は必ず別のポケモン、引き算は同じポケモン
+  // 足し算は別ポケモン、引き算は同じポケモン（にげちゃった表現）
   let poke2;
   if(op==='-'){
     poke2=poke1;
   }else{
-    const others=MATH_POKE.filter(function(p){return p.id!==poke1.id;});
-    poke2=others[Math.floor(Math.random()*others.length)];
+    const mathOthers=MATH_POKE.filter(function(p){return p.id!==poke1.id;});
+    poke2=mathOthers[Math.floor(Math.random()*mathOthers.length)];
   }
   const wrongPool=[];
   for(let i=1;i<=18;i++){if(Math.abs(i-ans)>=2)wrongPool.push(i);}
@@ -457,7 +458,10 @@ function makePokeLine(pokeData,count){
     img.className='math-poke-single';
     grp.appendChild(img);
   }
-  const lbl=el('div','math-poke-label');lbl.textContent=pokeData.name+'×'+count+'ひき';
+  const lbl=el('div','math-poke-label');
+  var numSpan=document.createElement('span');numSpan.className='math-poke-num';numSpan.textContent=count;
+  var txtSpan=document.createElement('span');txtSpan.textContent='ひき';
+  lbl.appendChild(numSpan);lbl.appendChild(txtSpan);
   grp.appendChild(lbl);
   return grp;
 }
@@ -712,16 +716,20 @@ function startKanaMode() {
   sub.textContent = 'れんしゅうしたいもじをえらんでね';
   wrap.appendChild(sub);
 
-  // ランダムモードカード
-  const randomCard = el('div', 'mode-card');
-  randomCard.addEventListener('click', function() { startKanaPlay('random', 'both'); });
-  const ri = el('div', 'mode-icon'); ri.textContent = '🎲';
-  const rInfo = el('div');
-  const rn = el('div', 'mode-name'); rn.textContent = 'ランダム';
-  const rd = el('div', 'mode-desc'); rd.textContent = 'ひらがな・カタカナ まぜこぜでれんしゅう！';
-  rInfo.appendChild(rn); rInfo.appendChild(rd);
-  randomCard.appendChild(ri); randomCard.appendChild(rInfo);
-  wrap.appendChild(randomCard);
+  // ランダムモードカード（3種）
+  [{id:'rand_hira',icon:'🎲',name:'ひらがなランダム',desc:'ひらがな50音からランダム！'},
+   {id:'rand_kata',icon:'🎯',name:'カタカナランダム',desc:'カタカナ50音からランダム！'},
+   {id:'rand_both',icon:'🌟',name:'ぜんぶランダム',   desc:'ひらがな＆カタカナ まぜこぜ！'},
+  ].forEach(function(rm){
+    const rc=el('div','mode-card');
+    rc.addEventListener('click',function(){startKanaPlay(rm.id,'');});
+    const ri2=el('div','mode-icon');ri2.textContent=rm.icon;rc.appendChild(ri2);
+    const rInfo=el('div');
+    const rn2=el('div','mode-name');rn2.textContent=rm.name;
+    const rd2=el('div','mode-desc');rd2.textContent=rm.desc;
+    rInfo.appendChild(rn2);rInfo.appendChild(rd2);rc.appendChild(rInfo);
+    wrap.appendChild(rc);
+  });
 
   // ひらがな・カタカナ セクション
   ['hiragana', 'katakana'].forEach(function(type) {
@@ -745,18 +753,19 @@ function startKanaMode() {
 }
 
 function startKanaPlay(type, row) {
-  if (type === 'random') {
-    // ひらがな＋カタカナ全部
-    kanaQueue = [];
-    ['hiragana', 'katakana'].forEach(function(t) {
-      Object.values(KANA_DATA[t]).forEach(function(chars) {
-        chars.forEach(function(c) { kanaQueue.push(c); });
-      });
-    });
+  kanaQueue = [];
+  if (type === 'rand_hira') {
+    Object.values(KANA_DATA.hiragana).forEach(function(chars){chars.forEach(function(c){kanaQueue.push(c);});});
+    kanaQueue = shuffle(kanaQueue);
+  } else if (type === 'rand_kata') {
+    Object.values(KANA_DATA.katakana).forEach(function(chars){chars.forEach(function(c){kanaQueue.push(c);});});
+    kanaQueue = shuffle(kanaQueue);
+  } else if (type === 'rand_both') {
+    ['hiragana','katakana'].forEach(function(t){Object.values(KANA_DATA[t]).forEach(function(chars){chars.forEach(function(c){kanaQueue.push(c);});});});
+    kanaQueue = shuffle(kanaQueue);
   } else {
-    kanaQueue = KANA_DATA[type][row].slice(); // 順番通り（シャッフルしない）
+    kanaQueue = KANA_DATA[type][row].slice(); // 行選択は順番通り
   }
-  // ランダムモードのみシャッフル
   kanaIndex = 0;
   showKanaQuestion();
 }
@@ -833,6 +842,10 @@ function showKanaQuestion() {
   setupKanaEvents(char);
 }
 
+// なぞり判定用：累積ストローク距離
+let kanaStrokeLen = 0;
+const KANA_CLEAR_DIST = 180; // この距離なぞったらクリア（px）
+
 function drawKanaGuide(char) {
   const ctx = kanaCtx;
   const W = kanaCanvas.width;
@@ -840,33 +853,30 @@ function drawKanaGuide(char) {
   ctx.clearRect(0, 0, W, H);
 
   // 背景
-  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.fillStyle = 'rgba(255,255,255,0.97)';
   ctx.beginPath();
   ctx.roundRect(0, 0, W, H, 16);
   ctx.fill();
 
   // ガイド線（薄い格子）
-  ctx.strokeStyle = 'rgba(100,160,220,0.2)';
+  ctx.strokeStyle = 'rgba(100,160,220,0.15)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(W/2, 10); ctx.lineTo(W/2, H-10);
   ctx.moveTo(10, H/2); ctx.lineTo(W-10, H/2);
   ctx.stroke();
 
-  // ガイド文字（薄く）
+  // ガイド文字（しっかり薄く表示）
   ctx.font = 'bold 200px "Zen Maru Gothic", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(180,210,240,0.5)';
+  ctx.fillStyle = 'rgba(150,200,240,0.45)';
   ctx.fillText(char, W/2, H/2 + 10);
 
-  // ガイド文字のピクセルを記録（塗り判定用）
-  const imageData = ctx.getImageData(0, 0, W, H);
-  kanaTotalPixels = 0;
-  for (let i = 3; i < imageData.data.length; i += 4) {
-    if (imageData.data[i] > 30) kanaTotalPixels++;
-  }
+  // ストローク距離リセット
+  kanaStrokeLen = 0;
   kanaFilledPixels = 0;
+  kanaTotalPixels = 1; // ゼロ除算防止
 }
 
 function setupKanaEvents(char) {
@@ -893,16 +903,18 @@ function setupKanaEvents(char) {
     if (kanaCleared) return;
     e.preventDefault();
     kanaIsDrawing = true;
+    lastPos = null;
     const pos = getPos(e);
     kanaCtx.beginPath();
     kanaCtx.moveTo(pos.x, pos.y);
   }
 
+  let lastPos = null;
   function draw(e) {
     if (!kanaIsDrawing || kanaCleared) return;
     e.preventDefault();
     const pos = getPos(e);
-    kanaCtx.lineWidth = 28;
+    kanaCtx.lineWidth = 30;
     kanaCtx.lineCap = 'round';
     kanaCtx.lineJoin = 'round';
     kanaCtx.strokeStyle = '#E3350D';
@@ -911,7 +923,17 @@ function setupKanaEvents(char) {
     kanaCtx.stroke();
     kanaCtx.beginPath();
     kanaCtx.moveTo(pos.x, pos.y);
-    checkKanaCoverage(char);
+    // 距離を累積
+    if (lastPos) {
+      var dx = pos.x - lastPos.x;
+      var dy = pos.y - lastPos.y;
+      kanaStrokeLen += Math.sqrt(dx*dx + dy*dy);
+    }
+    lastPos = pos;
+    if (kanaStrokeLen >= KANA_CLEAR_DIST && !kanaCleared) {
+      kanaCleared = true;
+      showKanaClear(char);
+    }
   }
 
   function stopDraw(e) {
@@ -929,26 +951,7 @@ function setupKanaEvents(char) {
   canvas.addEventListener('touchend', stopDraw);
 }
 
-function checkKanaCoverage(char) {
-  if (kanaCleared || !kanaTotalPixels) return;
-  const imageData = kanaCtx.getImageData(0, 0, kanaCanvas.width, kanaCanvas.height);
-  let redPixels = 0;
-  for (let i = 0; i < imageData.data.length; i += 4) {
-    const r = imageData.data[i];
-    const g = imageData.data[i+1];
-    const b = imageData.data[i+2];
-    const a = imageData.data[i+3];
-    // 赤っぽいピクセルをカウント
-    if (a > 50 && r > 150 && r > g * 1.8 && r > b * 1.8) {
-      redPixels++;
-    }
-  }
-  const coverage = redPixels / (kanaTotalPixels * 0.3); // 文字エリアの30%で判定
-  if (coverage >= 1.0 && !kanaCleared) {
-    kanaCleared = true;
-    showKanaClear(char);
-  }
-}
+function checkKanaCoverage(char) { /* 距離判定に変更したため未使用 */ }
 
 function showKanaClear(char) {
   const area = document.getElementById('main-area');
@@ -973,21 +976,24 @@ function showKanaClear(char) {
 }
 
 function showKanaCelebration() {
-  const area = document.getElementById('main-area');
   const celebWrap = el('div', 'kana-celeb-wrap');
-  const celebIds = shuffle(MATH_POKE.map(function(p) { return p.id; })).slice(0, 6);
+  const celebIds = shuffle(MATH_POKE.map(function(p) { return p.id; })).slice(0, 8);
   celebIds.forEach(function(id, i) {
     const img = document.createElement('img');
     img.src = imgUrl(id);
     img.className = 'kana-celeb-poke';
-    img.style.animationDelay = (i * 0.08) + 's';
-    img.style.left = (10 + i * 14) + '%';
+    img.style.animationDelay = (i * 0.12) + 's';
+    img.style.left = (5 + i * 12) + '%';
+    img.style.top = '-80px';
     celebWrap.appendChild(img);
   });
   const msg = el('div', 'kana-celeb-msg');
   msg.textContent = 'やったね！すごい！🎉';
+  msg.style.top = '40%';
+  msg.style.fontSize = '24px';
   celebWrap.appendChild(msg);
-  area.appendChild(celebWrap);
+  document.body.appendChild(celebWrap);
+  setTimeout(function(){if(celebWrap.parentNode)celebWrap.parentNode.removeChild(celebWrap);}, 2500);
 }
 
 function showKanaComplete() {
@@ -1044,49 +1050,70 @@ let mazeDifficulty = 'easy'; // easy|normal|hard
 
 // セル定義: walls = {top,right,bottom,left}
 function generateMaze(cols, rows, extraWalls) {
-  // Wilson's algorithm でランダム迷路生成
-  const cells = [];
-  for (let r = 0; r < rows; r++) {
+  // Recursive Backtracker (DFS) で迷路生成
+  // 必ず解が存在し、全セルが連結される
+  var cells = [];
+  var r, c;
+  for (r = 0; r < rows; r++) {
     cells[r] = [];
-    for (let c = 0; c < cols; c++) {
+    for (c = 0; c < cols; c++) {
       cells[r][c] = {walls:{top:true,right:true,bottom:true,left:true}, visited:false};
     }
   }
 
-  function neighbors(c, r) {
-    const n = [];
-    if (r > 0) n.push({c, r: r-1, dir:'top'});
-    if (r < rows-1) n.push({c, r: r+1, dir:'bottom'});
-    if (c > 0) n.push({c: c-1, r, dir:'left'});
-    if (c < cols-1) n.push({c: c+1, r, dir:'right'});
-    return n;
-  }
-
   function removeWall(c1, r1, c2, r2) {
-    if (r2 < r1) { cells[r1][c1].walls.top = false; cells[r2][c2].walls.bottom = false; }
-    else if (r2 > r1) { cells[r1][c1].walls.bottom = false; cells[r2][c2].walls.top = false; }
-    else if (c2 < c1) { cells[r1][c1].walls.left = false; cells[r2][c2].walls.right = false; }
-    else { cells[r1][c1].walls.right = false; cells[r2][c2].walls.left = false; }
+    if (r2 < r1) { cells[r1][c1].walls.top=false; cells[r2][c2].walls.bottom=false; }
+    else if (r2 > r1) { cells[r1][c1].walls.bottom=false; cells[r2][c2].walls.top=false; }
+    else if (c2 < c1) { cells[r1][c1].walls.left=false; cells[r2][c2].walls.right=false; }
+    else { cells[r1][c1].walls.right=false; cells[r2][c2].walls.left=false; }
   }
 
-  // DFS で迷路生成
-  const stack = [];
-  cells[0][0].visited = true;
-  stack.push({c:0, r:0});
-  let visitedCount = 1;
-  const total = cols * rows;
+  function getUnvisitedNeighbors(c, r) {
+    var ns = [];
+    if (r > 0 && !cells[r-1][c].visited) ns.push({c:c, r:r-1});
+    if (r < rows-1 && !cells[r+1][c].visited) ns.push({c:c, r:r+1});
+    if (c > 0 && !cells[r][c-1].visited) ns.push({c:c-1, r:r});
+    if (c < cols-1 && !cells[r][c+1].visited) ns.push({c:c+1, r:r});
+    return ns;
+  }
 
-  while (visitedCount < total) {
-    const cur = stack[stack.length-1];
-    const unvisited = neighbors(cur.c, cur.r).filter(n => !cells[n.r][n.c].visited);
-    if (unvisited.length > 0) {
-      const next = unvisited[Math.floor(Math.random() * unvisited.length)];
+  // DFSで全セルを訪問
+  var stack = [{c:0, r:0}];
+  cells[0][0].visited = true;
+  var visited = 1;
+  var total = cols * rows;
+
+  while (visited < total) {
+    var cur = stack[stack.length-1];
+    var ns = getUnvisitedNeighbors(cur.c, cur.r);
+    if (ns.length > 0) {
+      // ランダムな隣接セルを選ぶ
+      var next = ns[Math.floor(Math.random() * ns.length)];
       removeWall(cur.c, cur.r, next.c, next.r);
       cells[next.r][next.c].visited = true;
       stack.push(next);
-      visitedCount++;
+      visited++;
     } else {
       stack.pop();
+    }
+  }
+
+  // 難易度に応じてループを追加（分岐を増やす）
+  // やさしい:4本、ふつう:8本、むずかしい:16本のループ追加
+  var loopCount = (mazeDifficulty==='easy')?4:(mazeDifficulty==='normal')?8:16;
+  var attempts = 0;
+  var added = 0;
+  while (added < loopCount && attempts < loopCount * 10) {
+    attempts++;
+    var lr = 1 + Math.floor(Math.random()*(rows-2));
+    var lc = 1 + Math.floor(Math.random()*(cols-2));
+    var dirs = [{dr:0,dc:1,w:'right',ow:'left'},{dr:1,dc:0,w:'bottom',ow:'top'}];
+    var d = dirs[Math.floor(Math.random()*2)];
+    var nr2 = lr+d.dr, nc2 = lc+d.dc;
+    if (nr2 < rows && nc2 < cols && cells[lr][lc].walls[d.w]) {
+      cells[lr][lc].walls[d.w] = false;
+      cells[nr2][nc2].walls[d.ow] = false;
+      added++;
     }
   }
 
@@ -1367,12 +1394,18 @@ function setupMazeEvents() {
       cx = (e.clientX - rect.left) * scaleX;
       cy = (e.clientY - rect.top) * scaleY;
     }
-    // セルの中心寄り判定（端っこの誤判定を減らす）
-    var c = Math.floor(cx / S);
-    var r = Math.floor(cy / S);
-    c = Math.max(0, Math.min(mazeCols-1, c));
-    r = Math.max(0, Math.min(mazeRows-1, r));
-    return {c: c, r: r};
+    // セル中心からの距離でどのセルか判定（壁際での誤判定を防ぐ）
+    var col = Math.floor(cx / S);
+    var row = Math.floor(cy / S);
+    col = Math.max(0, Math.min(mazeCols-1, col));
+    row = Math.max(0, Math.min(mazeRows-1, row));
+    // セル中心からの距離が45%以内のみ受け付ける（壁際は無視）
+    var cellCenterX = col * S + S / 2;
+    var cellCenterY = row * S + S / 2;
+    var distX = Math.abs(cx - cellCenterX) / S;
+    var distY = Math.abs(cy - cellCenterY) / S;
+    if (distX > 0.45 || distY > 0.45) return null;
+    return {c: col, r: row};
   }
 
   function canMove(from, to) {
@@ -1392,6 +1425,7 @@ function setupMazeEvents() {
     if (mazeSolved) return;
     e.preventDefault();
     var pos = getCellFromPos(e);
+    if (!pos) return; // 壁際は無視
     var cur = mazePath[mazePath.length - 1];
 
     // 同じセルなら何もしない
@@ -1427,6 +1461,19 @@ function setupMazeEvents() {
     }
   }
 
+  var mazePendingDraw = false;
+  var origDraw = drawMazeGrid;
+  function scheduleDraw() {
+    if (!mazePendingDraw) {
+      mazePendingDraw = true;
+      requestAnimationFrame(function() {
+        mazePendingDraw = false;
+        origDraw();
+      });
+    }
+  }
+  // drawMazeGridをrAFで即時実行するようにオーバーライド
+  var _drawMaze = drawMazeGrid;
   function onStart(e) { mazeDrawing = true; lastCell = null; handleMove(e); }
   function onMove(e)  { if (mazeDrawing) handleMove(e); }
   function onEnd()    { mazeDrawing = false; lastCell = null; }
