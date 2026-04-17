@@ -162,13 +162,14 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 .kana-side-img{width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.15));animation:floatPoke 2.5s ease-in-out infinite;}
 .kana-poke-left{animation-delay:0s;}
 .kana-poke-right{animation-delay:-1.2s;}
-.kana-hint{text-align:center;font-size:16px;font-weight:700;color:#1a5276;margin-bottom:0.75rem;}
+.kana-hint{text-align:center;font-size:16px;font-weight:700;color:#1a5276;margin-bottom:0.25rem;}
+.kana-hint-sub{text-align:center;font-size:13px;color:#888;font-weight:700;margin-bottom:0.6rem;letter-spacing:1px;}
 .kana-canvas-wrap{display:flex;justify-content:center;}
 .kana-canvas{border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.12);cursor:crosshair;touch-action:none;max-width:100%;width:280px;height:280px;}
 .kana-clear-banner{background:#e6f9ed;border:2px solid #27ae60;border-radius:12px;padding:0.75rem 1rem;text-align:center;font-size:18px;font-weight:900;color:#1a6b3a;margin-top:0.75rem;animation:bannerIn 0.3s ease;}
 .kana-celeb-wrap{position:fixed;top:0;left:0;right:0;height:100vh;pointer-events:none;z-index:50;overflow:hidden;}
-.kana-celeb-poke{position:absolute;top:-80px;width:70px;height:70px;object-fit:contain;animation:pokeFall 1.2s cubic-bezier(0.25,0.46,0.45,0.94) both;}
-@keyframes pokeFall{0%{transform:translateY(0) rotate(-15deg) scale(0.6);opacity:0;}30%{opacity:1;}80%{transform:translateY(100vh) rotate(20deg) scale(1.1);}100%{transform:translateY(110vh) rotate(10deg) scale(1);opacity:0;}}
+.kana-celeb-poke{position:absolute;width:64px;height:64px;object-fit:contain;animation:pokeFall linear both;}
+@keyframes pokeFall{0%{transform:translateY(-80px) rotate(-20deg) scale(0.7);opacity:0;}15%{opacity:1;}70%{opacity:1;}85%{transform:translateY(88vh) rotate(15deg) scale(1.05);opacity:0.9;}100%{transform:translateY(95vh) rotate(5deg) scale(1);opacity:0;}}
 .kana-celeb-msg{position:absolute;top:0;left:0;right:0;text-align:center;font-size:20px;font-weight:900;color:#E3350D;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff;animation:starPop 0.4s ease;}
 
 /* ===== 迷路モード ===== */
@@ -182,8 +183,11 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 .maze-poke-name{font-size:11px;font-weight:700;color:#333;margin-top:2px;}
 .maze-card{background:rgba(255,255,255,0.88);border-radius:18px;padding:0.75rem;margin-bottom:0.85rem;border:2px solid rgba(255,255,255,0.95);box-shadow:0 4px 14px rgba(0,0,0,0.1);position:relative;overflow:hidden;}
 .maze-sil-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;}
-.maze-sil-img{width:85%;height:85%;object-fit:contain;filter:brightness(0) opacity(0.06);}
+.maze-sil-img{width:80%;height:80%;object-fit:contain;}
+.maze-sil-real{opacity:0.1;filter:saturate(0.5);}
 .maze-canvas{border-radius:12px;cursor:crosshair;touch-action:none;position:relative;z-index:1;display:block;}
+
+.maze-clear-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
 .maze-retry-btn{margin-left:auto;background:rgba(255,255,255,0.88);border:1.5px solid #ccc;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;color:#555;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 </style>
 </head>
@@ -295,7 +299,12 @@ function makeQuizQuestions(){
   return shuffle([...easy,...hard]).map(function(p){return Object.assign({type:'quiz'},p);});
 }
 function makeChoices(correct,count){
-  return shuffle([correct,...shuffle(allPokemon.filter(function(p){return p.id!==correct.id;})).slice(0,count-1)]);
+  // jpNameがある・正解と同じidでない・正解と同じjpNameでない（重複名除外）
+  var pool=allPokemon.filter(function(p){
+    return p.jpName && p.jpName.trim()!=='' && p.id!==correct.id && p.jpName!==correct.jpName;
+  });
+  var wrongs=shuffle(pool).slice(0,count-1);
+  return shuffle([correct].concat(wrongs));
 }
 function makeMathQ(){
   let op;
@@ -511,7 +520,9 @@ function appendResultAndNext(area){
 function pickQuiz(btn,chosen,correct,isSilhouette,q){
   if(answered)return;answered=true;
   document.querySelectorAll('.choice-btn').forEach(function(b){
-    b.style.pointerEvents='none';if(b.textContent===correct)b.classList.add('correct');
+    b.style.pointerEvents='none';
+    // textContentをtrimして確実に比較
+    if(b.textContent.trim()===correct.trim())b.classList.add('correct');
   });
   const rb=document.getElementById('rb');
   const img=document.getElementById('poke-img');
@@ -521,6 +532,7 @@ function pickQuiz(btn,chosen,correct,isSilhouette,q){
     var mk=document.createElement('span');mk.className='mark';mk.textContent='⭕';
     var tx=document.createElement('span');tx.textContent='せいかい！すごい！';
     rb.appendChild(mk);rb.appendChild(tx);score++;
+    showCelebration(MATH_POKE.map(function(p){return p.id;}), 'せいかい！🎉');
     if(img){if(isSilhouette)img.className='reveal-img';else{img.style.animation='none';void img.offsetWidth;img.style.animation='bouncePoke 0.5s ease forwards';}}
     if(isRetryMode)removeWrong(q); // ✅ 正解したら削除
   }else{
@@ -549,6 +561,7 @@ function pickMath(btn,chosen,q){
     var mk=document.createElement('span');mk.className='mark';mk.textContent='⭕';
     var tx=document.createElement('span');tx.textContent='せいかい！すごい！';
     rb.appendChild(mk);rb.appendChild(tx);score++;
+    showCelebration(MATH_POKE.map(function(p){return p.id;}), 'せいかい！🎉');
     if(isRetryMode)removeWrong(q);
   }else{
     btn.classList.add('wrong');
@@ -659,6 +672,7 @@ function launchConfetti(){
 
 // ===== ひらがな・カタカナ なぞりモード =====
 
+const STROKE_ORDER={"あ":[{x:140,y:95},{x:82,y:128},{x:188,y:128}],"い":[{x:92,y:65},{x:188,y:65}],"う":[{x:140,y:72},{x:108,y:178}],"え":[{x:80,y:115},{x:190,y:115}],"お":[{x:140,y:55},{x:82,y:128},{x:182,y:128}],"か":[{x:138,y:68},{x:185,y:155}],"き":[{x:90,y:82},{x:185,y:82},{x:138,y:198}],"く":[{x:155,y:128}],"け":[{x:100,y:58},{x:100,y:172},{x:185,y:112}],"こ":[{x:82,y:98},{x:82,y:178}],"さ":[{x:90,y:78},{x:168,y:78},{x:92,y:158}],"し":[{x:130,y:80}],"す":[{x:140,y:58},{x:165,y:155}],"せ":[{x:140,y:62},{x:82,y:130},{x:82,y:198}],"そ":[{x:138,y:78},{x:102,y:162}],"た":[{x:140,y:58},{x:82,y:125},{x:155,y:158},{x:192,y:158}],"ち":[{x:168,y:78},{x:92,y:158}],"つ":[{x:140,y:80}],"て":[{x:138,y:122}],"と":[{x:140,y:58},{x:88,y:162}],"な":[{x:102,y:78},{x:178,y:98},{x:88,y:168},{x:192,y:188}],"に":[{x:88,y:62},{x:178,y:62},{x:132,y:155}],"ぬ":[{x:88,y:82},{x:178,y:165}],"ね":[{x:92,y:78},{x:178,y:78},{x:132,y:148},{x:115,y:198}],"の":[{x:140,y:80}],"は":[{x:88,y:65},{x:88,y:185},{x:175,y:118}],"ひ":[{x:138,y:65},{x:88,y:185}],"ふ":[{x:140,y:55},{x:88,y:115},{x:168,y:148},{x:108,y:195}],"へ":[{x:140,y:128}],"ほ":[{x:88,y:62},{x:88,y:182},{x:178,y:62},{x:158,y:185}],"ま":[{x:88,y:108},{x:188,y:108},{x:128,y:175}],"み":[{x:88,y:88},{x:175,y:115},{x:125,y:185}],"む":[{x:82,y:95},{x:158,y:75},{x:192,y:178}],"め":[{x:88,y:108},{x:165,y:165}],"も":[{x:88,y:108},{x:178,y:108},{x:132,y:162}],"や":[{x:85,y:82},{x:188,y:82}],"ゆ":[{x:82,y:108},{x:178,y:108}],"よ":[{x:92,y:108},{x:182,y:108}],"ら":[{x:158,y:78},{x:92,y:178}],"り":[{x:92,y:62},{x:185,y:62}],"る":[{x:175,y:78},{x:95,y:195}],"れ":[{x:92,y:62},{x:92,y:178},{x:178,y:125}],"ろ":[{x:130,y:80}],"わ":[{x:88,y:62},{x:178,y:62}],"を":[{x:88,y:85},{x:182,y:85},{x:132,y:168}],"ん":[{x:130,y:80}],"ア":[{x:88,y:82},{x:138,y:152}],"イ":[{x:92,y:62},{x:188,y:62}],"ウ":[{x:140,y:52},{x:88,y:118},{x:192,y:188}],"エ":[{x:88,y:122},{x:188,y:122},{x:138,y:62},{x:138,y:182}],"オ":[{x:138,y:55},{x:82,y:122},{x:182,y:125}],"カ":[{x:138,y:58},{x:188,y:158}],"キ":[{x:88,y:82},{x:185,y:82},{x:138,y:198}],"ク":[{x:188,y:88},{x:98,y:165}],"ケ":[{x:98,y:58},{x:98,y:172},{x:188,y:112}],"コ":[{x:82,y:82},{x:182,y:178}],"サ":[{x:88,y:78},{x:168,y:78},{x:128,y:148}],"シ":[{x:88,y:95},{x:148,y:145},{x:195,y:82}],"ス":[{x:140,y:58},{x:192,y:192}],"セ":[{x:138,y:62},{x:82,y:198}],"ソ":[{x:108,y:78},{x:175,y:138}],"タ":[{x:140,y:58},{x:82,y:118},{x:178,y:158}],"チ":[{x:88,y:82},{x:178,y:82},{x:128,y:148}],"ツ":[{x:88,y:88},{x:148,y:78},{x:198,y:148}],"テ":[{x:88,y:78},{x:188,y:78},{x:138,y:138},{x:138,y:205}],"ト":[{x:118,y:58},{x:88,y:175}],"ナ":[{x:88,y:122},{x:138,y:62}],"ニ":[{x:88,y:108},{x:88,y:178}],"ヌ":[{x:88,y:82},{x:178,y:165}],"ネ":[{x:92,y:78},{x:178,y:78},{x:132,y:148},{x:192,y:198}],"ノ":[{x:175,y:62}],"ハ":[{x:108,y:62},{x:168,y:168}],"ヒ":[{x:88,y:62},{x:88,y:182},{x:188,y:122}],"フ":[{x:88,y:82},{x:175,y:168}],"ヘ":[{x:140,y:128}],"ホ":[{x:88,y:62},{x:88,y:182},{x:88,y:122},{x:175,y:122}],"マ":[{x:88,y:82},{x:188,y:82},{x:138,y:168}],"ミ":[{x:88,y:98},{x:168,y:98},{x:118,y:198}],"ム":[{x:175,y:78},{x:88,y:178}],"メ":[{x:88,y:108},{x:115,y:195}],"モ":[{x:88,y:105},{x:178,y:105},{x:132,y:158}],"ヤ":[{x:85,y:82},{x:188,y:82}],"ユ":[{x:82,y:108},{x:178,y:108}],"ヨ":[{x:92,y:82},{x:92,y:138},{x:92,y:195}],"ラ":[{x:88,y:82},{x:138,y:178}],"リ":[{x:92,y:62},{x:185,y:62}],"ル":[{x:92,y:62},{x:182,y:168}],"レ":[{x:92,y:62}],"ロ":[{x:88,y:82},{x:188,y:82},{x:88,y:182},{x:188,y:182}],"ワ":[{x:88,y:62},{x:188,y:62}],"ヲ":[{x:88,y:85},{x:182,y:85},{x:132,y:168}],"ン":[{x:108,y:78},{x:175,y:155}]};
 const KANA_DATA = {
   hiragana: {
     'あ行': ['あ','い','う','え','お'],
@@ -689,6 +703,8 @@ const KANA_DATA = {
 // なぞりモード状態
 let kanaQueue = [];
 let kanaIndex = 0;
+let kanaCurrentType = ''; // hiragana|katakana|rand_*
+let kanaCurrentRow = '';  // あ行 など
 let kanaCanvas = null;
 let kanaCtx = null;
 let kanaIsDrawing = false;
@@ -758,6 +774,8 @@ function startKanaMode() {
 }
 
 function startKanaPlay(type, row) {
+  kanaCurrentType = type;
+  kanaCurrentRow = row;
   kanaQueue = [];
   if (type === 'rand_hira') {
     Object.values(KANA_DATA.hiragana).forEach(function(chars){chars.forEach(function(c){kanaQueue.push(c);});});
@@ -827,8 +845,15 @@ function showKanaQuestion() {
 
   // ヒントラベル
   const hint = el('div', 'kana-hint');
-  hint.textContent = '「' + char + '」をなぞってね！';
+  hint.innerHTML = '「<span style="font-size:22px;font-weight:900;color:#E3350D;">' + char + '</span>」をなぞってね！';
+  const hintSub = el('div', 'kana-hint-sub');
+  // 画数に応じて番号を動的生成
+  var orders = STROKE_ORDER[char];
+  var strokeCount = orders ? orders.length : 1;
+  var nums = ['①','②','③','④','⑤'].slice(0, strokeCount).join('');
+  hintSub.textContent = nums + 'のじゅんにかいてね！';
   card.appendChild(hint);
+  card.appendChild(hintSub);
 
   // Canvas
   const canvasWrap = el('div', 'kana-canvas-wrap');
@@ -841,6 +866,16 @@ function showKanaQuestion() {
 
   area.appendChild(card);
 
+  // つぎへボタン（カードの外・area直下・最初は非表示）
+  const nextBtn = el('button', 'next-btn');
+  nextBtn.id = 'kana-next-btn';
+  nextBtn.style.display = 'none';
+  nextBtn.textContent = kanaIndex + 1 < kanaQueue.length ? 'つぎへ ▶' : 'かんりょう！🎉';
+  nextBtn.addEventListener('click', function() {
+    showKanaClear(char);
+  });
+  area.appendChild(nextBtn);
+
   // Canvas初期化
   kanaCtx = kanaCanvas.getContext('2d');
   drawKanaGuide(char);
@@ -849,7 +884,7 @@ function showKanaQuestion() {
 
 // なぞり判定用：累積ストローク距離
 let kanaStrokeLen = 0;
-const KANA_CLEAR_DIST = 180; // この距離なぞったらクリア（px）
+const KANA_CLEAR_DIST = 260; // 文字の一筆書き相当の距離（px）
 
 function drawKanaGuide(char) {
   const ctx = kanaCtx;
@@ -878,6 +913,29 @@ function drawKanaGuide(char) {
   ctx.fillStyle = 'rgba(150,200,240,0.45)';
   ctx.fillText(char, W/2, H/2 + 10);
 
+  // 書き順番号を描画
+  var orders = STROKE_ORDER[char];
+  if (orders) {
+    orders.forEach(function(pt, idx) {
+      var num = idx + 1;
+      var r = 16;
+      // 白い丸背景
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.fill();
+      ctx.strokeStyle = '#E3350D';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // 番号テキスト
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#E3350D';
+      ctx.fillText(String(num), pt.x, pt.y);
+    });
+  }
+
   // ストローク距離リセット
   kanaStrokeLen = 0;
   kanaFilledPixels = 0;
@@ -905,18 +963,15 @@ function setupKanaEvents(char) {
   }
 
   function startDraw(e) {
-    if (kanaCleared) return;
     e.preventDefault();
     kanaIsDrawing = true;
-    lastPos = null;
     const pos = getPos(e);
     kanaCtx.beginPath();
     kanaCtx.moveTo(pos.x, pos.y);
   }
 
-  let lastPos = null;
   function draw(e) {
-    if (!kanaIsDrawing || kanaCleared) return;
+    if (!kanaIsDrawing) return;
     e.preventDefault();
     const pos = getPos(e);
     kanaCtx.lineWidth = 30;
@@ -928,17 +983,9 @@ function setupKanaEvents(char) {
     kanaCtx.stroke();
     kanaCtx.beginPath();
     kanaCtx.moveTo(pos.x, pos.y);
-    // 距離を累積
-    if (lastPos) {
-      var dx = pos.x - lastPos.x;
-      var dy = pos.y - lastPos.y;
-      kanaStrokeLen += Math.sqrt(dx*dx + dy*dy);
-    }
-    lastPos = pos;
-    if (kanaStrokeLen >= KANA_CLEAR_DIST && !kanaCleared) {
-      kanaCleared = true;
-      showKanaClear(char);
-    }
+    // なぞったら「つぎへ」ボタンを表示
+    var nextBtn = document.getElementById('kana-next-btn');
+    if (nextBtn) nextBtn.style.display = 'block';
   }
 
   function stopDraw(e) {
@@ -961,7 +1008,7 @@ function checkKanaCoverage(char) { /* 距離判定に変更したため未使用
 function showKanaClear(char) {
   const area = document.getElementById('main-area');
 
-  // クリアバナー追加
+  // クリアバナー追加（カード内）
   const banner = el('div', 'kana-clear-banner');
   banner.innerHTML = '⭕ <span style="font-size:20px">「' + char + '」じょうず！</span>';
   const card = area.querySelector('.kana-card');
@@ -973,32 +1020,41 @@ function showKanaClear(char) {
   // ポケモン大量出現アニメ
   showKanaCelebration();
 
-  // 1.8秒後に次へ
+  // つぎへボタンを非表示にし、演出後に次の問題へ
   setTimeout(function() {
     kanaIndex++;
     showKanaQuestion();
-  }, 2200);
+  }, 2000);
+}
+
+function showCelebration(pokeIds, msg) {
+  var celebWrap = el('div', 'kana-celeb-wrap');
+  var count = 20;
+  for (var i = 0; i < count; i++) {
+    var img = document.createElement('img');
+    img.src = imgUrl(pokeIds[i % pokeIds.length]);
+    img.className = 'kana-celeb-poke';
+    var dur = (2.2 + Math.random() * 1.4).toFixed(2);
+    var delay = (Math.random() * 1.2).toFixed(2);
+    var left = Math.floor(Math.random() * 92);
+    img.style.animationDuration = dur + 's';
+    img.style.animationDelay = delay + 's';
+    img.style.left = left + '%';
+    img.style.top = '-80px';
+    celebWrap.appendChild(img);
+  }
+  var msgEl = el('div', 'kana-celeb-msg');
+  msgEl.textContent = msg || 'やったね！すごい！🎉';
+  msgEl.style.top = '38%';
+  msgEl.style.fontSize = '26px';
+  celebWrap.appendChild(msgEl);
+  document.body.appendChild(celebWrap);
+  setTimeout(function(){if(celebWrap.parentNode)celebWrap.parentNode.removeChild(celebWrap);}, 3500);
 }
 
 function showKanaCelebration() {
-  const celebWrap = el('div', 'kana-celeb-wrap');
-  const celebIds = shuffle(MATH_POKE.map(function(p) { return p.id; })).slice(0, 8);
-  celebIds.forEach(function(id, i) {
-    const img = document.createElement('img');
-    img.src = imgUrl(id);
-    img.className = 'kana-celeb-poke';
-    img.style.animationDelay = (i * 0.12) + 's';
-    img.style.left = (5 + i * 12) + '%';
-    img.style.top = '-80px';
-    celebWrap.appendChild(img);
-  });
-  const msg = el('div', 'kana-celeb-msg');
-  msg.textContent = 'やったね！すごい！🎉';
-  msg.style.top = '40%';
-  msg.style.fontSize = '24px';
-  celebWrap.appendChild(msg);
-  document.body.appendChild(celebWrap);
-  setTimeout(function(){if(celebWrap.parentNode)celebWrap.parentNode.removeChild(celebWrap);}, 2500);
+  var ids = shuffle(MATH_POKE.map(function(p){return p.id;}));
+  showCelebration(ids, 'やったね！すごい！🎉');
 }
 
 function showKanaComplete() {
@@ -1013,10 +1069,26 @@ function showKanaComplete() {
   const sm = el('div', 'score-msg'); sm.textContent = 'ぜんぶかけたよ！さいこう！'; sc.appendChild(sm);
 
   const btns = el('div', 'score-btns');
-  const rb = el('button', 'restart-btn'); rb.textContent = '🔄 もういちど';
-  rb.addEventListener('click', startKanaMode); btns.appendChild(rb);
-  const tb = el('button', 'top-btn'); tb.textContent = '🏠 もどる';
-  tb.addEventListener('click', showTop); btns.appendChild(tb);
+
+  // 次の段ボタン（ランダムモード以外）
+  if (kanaCurrentType === 'hiragana' || kanaCurrentType === 'katakana') {
+    const rowKeys = Object.keys(KANA_DATA[kanaCurrentType]);
+    const curIdx = rowKeys.indexOf(kanaCurrentRow);
+    const nextRow = rowKeys[curIdx + 1];
+    if (nextRow) {
+      const nb = el('button', 'restart-btn');
+      nb.textContent = 'つぎのだん：' + nextRow + ' ▶';
+      nb.addEventListener('click', function() { startKanaPlay(kanaCurrentType, nextRow); });
+      btns.appendChild(nb);
+    }
+  }
+
+  // 一覧に戻るボタン
+  const lb = el('button', 'top-btn');
+  lb.textContent = '← もじいちらんにもどる';
+  lb.addEventListener('click', startKanaMode);
+  btns.appendChild(lb);
+
   sc.appendChild(btns);
   area.appendChild(sc);
 }
@@ -1105,7 +1177,7 @@ function generateMaze(cols, rows, extraWalls) {
 
   // 難易度に応じてループを追加（分岐を増やす）
   // やさしい:4本、ふつう:8本、むずかしい:16本のループ追加
-  var loopCount = (mazeDifficulty==='easy')?4:(mazeDifficulty==='normal')?8:16;
+  var loopCount = (mazeDifficulty==='easy')?12:(mazeDifficulty==='normal')?20:32;
   var attempts = 0;
   var added = 0;
   while (added < loopCount && attempts < loopCount * 10) {
@@ -1219,7 +1291,7 @@ function renderMaze() {
   const silWrap = el('div', 'maze-sil-wrap');
   const silImg = document.createElement('img');
   silImg.src = imgUrl(mazePoke.id);
-  silImg.className = 'maze-sil-img';
+  silImg.className = 'maze-sil-img maze-sil-real';
   silWrap.appendChild(silImg);
   card.appendChild(silWrap);
 
@@ -1261,7 +1333,7 @@ function drawMazeGrid() {
   // 通過済みセルを塗る（鮮やかな青）
   mazePath.forEach(function(cell, idx) {
     const alpha = 0.25 + (idx / mazePath.length) * 0.35;
-    ctx.fillStyle = 'rgba(91,184,245,' + alpha + ')';
+    ctx.fillStyle = 'rgba(91,184,245,' + (alpha + 0.2) + ')';
     ctx.fillRect(cell.c*S+1, cell.r*S+1, S-2, S-2);
   });
 
@@ -1273,9 +1345,9 @@ function drawMazeGrid() {
   ctx.fillStyle = 'rgba(227,53,13,0.15)';
   ctx.fillRect(mazeStart.c*S+1, mazeStart.r*S+1, S-2, S-2);
 
-  // 壁を描画（濃いめ）
-  ctx.strokeStyle = '#1a4a7a';
-  ctx.lineWidth = 2.5;
+  // 壁を描画（太く濃く）
+  ctx.strokeStyle = '#0d3560';
+  ctx.lineWidth = Math.max(2, Math.ceil(S * 0.18));
   ctx.lineCap = 'square';
   for (let r = 0; r < mazeRows; r++) {
     for (let c = 0; c < mazeCols; c++) {
@@ -1409,7 +1481,8 @@ function setupMazeEvents() {
     var cellCenterY = row * S + S / 2;
     var distX = Math.abs(cx - cellCenterX) / S;
     var distY = Math.abs(cy - cellCenterY) / S;
-    if (distX > 0.45 || distY > 0.45) return null;
+    // 判定を緩く：セル全域を受け付ける（壁際でも反応する）
+    if (distX > 0.5 || distY > 0.5) return null;
     return {c: col, r: row};
   }
 
@@ -1459,11 +1532,8 @@ function setupMazeEvents() {
         mazeSolved = true;
         setTimeout(function() { showMazeClear(); }, 300);
       }
-    } else {
-      // 壁に当たった → 自動で直前の分岐点まで戻す（案C）
-      rollbackToBranch();
-      lastCell = null;
     }
+    // 壁に当たっても何もしない（指の動きをひたすら追従）
   }
 
   var mazePendingDraw = false;
@@ -1494,35 +1564,42 @@ function setupMazeEvents() {
 
 function showMazeClear() {
   launchConfetti();
-  const area = document.getElementById('main-area');
+  var pokeIds = [];
+  for (var ii = 0; ii < 20; ii++) pokeIds.push(mazePoke.id);
+  showCelebration(pokeIds, 'ゴール！すごい！🎉');
 
-  // クリアバナーをカードに追加
-  const card = area.querySelector('.maze-card');
+  var area = document.getElementById('main-area');
+  // バナー追加
+  var card = area.querySelector('.maze-card');
   if (card) {
-    const banner = el('div', 'kana-clear-banner');
+    var banner = el('div', 'kana-clear-banner');
     banner.innerHTML = '⭕ <span style="font-size:18px">ゴール！すごい！</span>';
     card.appendChild(banner);
-  }
 
-  // ポケモン大量表示
-  const celebWrap = el('div', 'kana-celeb-wrap');
-  for (let i = 0; i < 7; i++) {
-    const img = document.createElement('img');
-    img.src = imgUrl(mazePoke.id);
-    img.className = 'kana-celeb-poke';
-    img.style.animationDelay = (i * 0.07) + 's';
-    img.style.left = (4 + i * 13) + '%';
-    celebWrap.appendChild(img);
-  }
-  const msg = el('div', 'kana-celeb-msg');
-  msg.textContent = 'やったね！かんぺき！🎉';
-  celebWrap.appendChild(msg);
-  area.appendChild(celebWrap);
+    // 「つぎへ」「もういちど」ボタン
+    var btnWrap = el('div', 'maze-clear-btns');
 
-  // 1.8秒後に次の迷路へ（同じポケモン・同じ難易度）
-  setTimeout(function() {
-    startMaze(mazePoke);
-  }, 2200);
+    var nextBtn = el('button', 'restart-btn');
+    var nextIdx = MAZE_POKE.findIndex(function(p){ return p.id === mazePoke.id; });
+    var nextPoke = MAZE_POKE[(nextIdx + 1) % MAZE_POKE.length];
+    nextBtn.textContent = 'つぎへ：' + nextPoke.name + ' ▶';
+    nextBtn.addEventListener('click', function() { startMaze(nextPoke); });
+    btnWrap.appendChild(nextBtn);
+
+    var retryBtn2 = el('button', 'top-btn');
+    retryBtn2.textContent = '🔄 もういちど';
+    retryBtn2.style.marginTop = '8px';
+    retryBtn2.addEventListener('click', function() { startMaze(mazePoke); });
+    btnWrap.appendChild(retryBtn2);
+
+    var backBtn2 = el('button', 'top-btn');
+    backBtn2.textContent = '🏠 えらびなおす';
+    backBtn2.style.marginTop = '8px';
+    backBtn2.addEventListener('click', showMazeTop);
+    btnWrap.appendChild(backBtn2);
+
+    card.appendChild(btnWrap);
+  }
 }
 
 loadPokemon();
