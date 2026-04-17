@@ -276,7 +276,8 @@ function loadPokemon(){
   // 名前データは埋め込み済みなのでAPIリクエスト不要
   for(const [id, jpName] of Object.entries(POKE_NAMES)){
     const numId=parseInt(id);
-    if(numId<=1017) allPokemon.push({id:numId,jpName:jpName});
+    // jpNameが存在し空でないものだけ登録
+    if(numId<=1017 && jpName && jpName.trim()!=='') allPokemon.push({id:numId,jpName:jpName});
   }
   easyPokemon=allPokemon.filter(function(p){return EASY_IDS.has(p.id);});
   hardPokemon=allPokemon.filter(function(p){return !EASY_IDS.has(p.id);});
@@ -294,8 +295,11 @@ function imgUrl(id){return'https://raw.githubusercontent.com/PokeAPI/sprites/mas
 function makeQuizQuestions(){
   const eRatios={easy:25,normal:15,hard:5};
   const eCount=eRatios[difficulty];
-  const easy=shuffle(easyPokemon).slice(0,Math.min(eCount,easyPokemon.length));
-  const hard=shuffle(hardPokemon).slice(0,Math.min(30-eCount,hardPokemon.length));
+  // jpNameがあるポケモンのみ使用
+  const validEasy=easyPokemon.filter(function(p){return p.jpName&&p.jpName.trim()!=='';});
+  const validHard=hardPokemon.filter(function(p){return p.jpName&&p.jpName.trim()!=='';});
+  const easy=shuffle(validEasy).slice(0,Math.min(eCount,validEasy.length));
+  const hard=shuffle(validHard).slice(0,Math.min(30-eCount,validHard.length));
   return shuffle([...easy,...hard]).map(function(p){return Object.assign({type:'quiz'},p);});
 }
 function makeChoices(correct,count){
