@@ -256,6 +256,730 @@ function calcMedal(pct){return pct===100?'gold':pct>=80?'silver':'bronze';}
 
 
 
+
+// ===== ポケモンタイプデータ =====
+const POKE_TYPES={
+  1:['くさ','どく'],2:['くさ','どく'],3:['くさ','どく'],4:['ほのお'],5:['ほのお'],
+  6:['ほのお','ひこう'],7:['みず'],8:['みず'],9:['みず'],10:['むし'],12:['むし','ひこう'],
+  13:['むし','どく'],15:['むし','どく'],16:['ノーマル','ひこう'],18:['ノーマル','ひこう'],
+  19:['ノーマル'],20:['ノーマル'],21:['ノーマル','ひこう'],22:['ノーマル','ひこう'],
+  23:['どく'],24:['どく'],25:['でんき'],26:['でんき'],27:['じめん'],28:['じめん'],
+  29:['どく'],31:['どく','じめん'],32:['どく'],34:['どく','じめん'],35:['ノーマル'],
+  36:['ノーマル'],37:['ほのお'],38:['ほのお'],39:['ノーマル'],40:['ノーマル'],
+  41:['どく','ひこう'],42:['どく','ひこう'],43:['くさ','どく'],44:['くさ','どく'],
+  45:['くさ','どく'],46:['むし','くさ'],47:['むし','くさ'],48:['むし','どく'],49:['むし','どく'],
+  50:['じめん'],51:['じめん'],52:['ノーマル'],53:['ノーマル'],54:['みず'],55:['みず'],
+  56:['かくとう'],57:['かくとう'],58:['ほのお'],59:['ほのお'],60:['みず'],61:['みず'],
+  62:['みず','かくとう'],63:['エスパー'],64:['エスパー'],65:['エスパー'],
+  66:['かくとう'],67:['かくとう'],68:['かくとう'],69:['くさ','どく'],70:['くさ','どく'],
+  71:['くさ','どく'],72:['みず','どく'],73:['みず','どく'],74:['いわ','じめん'],
+  75:['いわ','じめん'],76:['いわ','じめん'],77:['ほのお'],78:['ほのお'],
+  79:['みず','エスパー'],80:['みず','エスパー'],81:['でんき','はがね'],82:['でんき','はがね'],
+  83:['ノーマル','ひこう'],84:['ノーマル','ひこう'],85:['ノーマル','ひこう'],
+  86:['みず'],87:['みず','こおり'],88:['どく'],89:['どく'],90:['みず'],91:['みず','こおり'],
+  92:['ゴースト','どく'],93:['ゴースト','どく'],94:['ゴースト','どく'],
+  95:['いわ','じめん'],96:['エスパー'],97:['エスパー'],98:['みず'],99:['みず'],
+  100:['でんき'],101:['でんき'],102:['くさ','エスパー'],103:['くさ','エスパー'],
+  104:['じめん'],105:['じめん'],106:['かくとう'],107:['かくとう'],108:['ノーマル'],
+  109:['どく'],110:['どく'],111:['じめん','いわ'],112:['じめん','いわ'],
+  113:['ノーマル'],114:['くさ'],115:['ノーマル'],116:['みず'],117:['みず'],
+  118:['みず'],119:['みず'],120:['みず'],121:['みず','エスパー'],122:['エスパー'],
+  123:['むし','ひこう'],124:['こおり','エスパー'],125:['でんき'],126:['ほのお'],
+  127:['むし'],128:['ノーマル'],129:['みず'],130:['みず','ひこう'],
+  131:['みず','こおり'],132:['ノーマル'],133:['ノーマル'],134:['みず'],
+  135:['でんき'],136:['ほのお'],137:['ノーマル'],138:['いわ','みず'],139:['いわ','みず'],
+  140:['いわ','みず'],141:['いわ','みず'],142:['いわ','ひこう'],143:['ノーマル'],
+  144:['こおり','ひこう'],145:['でんき','ひこう'],146:['ほのお','ひこう'],
+  147:['ドラゴン'],148:['ドラゴン'],149:['ドラゴン','ひこう'],150:['エスパー'],151:['エスパー'],
+  152:['くさ'],154:['くさ'],155:['ほのお'],157:['ほのお'],158:['みず'],160:['みず'],
+  163:['ノーマル','ひこう'],172:['でんき'],175:['ノーマル'],176:['ノーマル','ひこう'],
+  179:['でんき'],181:['でんき'],183:['みず'],184:['みず'],196:['エスパー'],197:['あく'],
+  242:['ノーマル'],243:['でんき'],244:['ほのお'],245:['みず'],248:['いわ','あく'],
+  249:['エスパー','ひこう'],250:['ほのお','ひこう'],251:['エスパー','くさ'],
+  252:['くさ'],254:['くさ'],255:['ほのお'],257:['ほのお','かくとう'],258:['みず'],260:['みず','じめん'],
+  280:['エスパー'],282:['エスパー'],309:['でんき'],318:['みず'],320:['みず'],330:['ドラゴン','じめん'],
+  350:['みず'],373:['ドラゴン','ひこう'],374:['はがね','エスパー'],376:['はがね','エスパー'],
+  377:['いわ'],378:['こおり'],379:['はがね'],380:['ドラゴン','エスパー'],381:['ドラゴン','エスパー'],
+  382:['みず'],383:['じめん'],384:['ドラゴン','ひこう'],385:['はがね','エスパー'],
+  387:['くさ'],389:['くさ'],390:['ほのお'],392:['ほのお','かくとう'],393:['みず'],395:['みず','はがね'],
+  399:['ノーマル'],401:['むし'],403:['でんき'],405:['でんき'],406:['くさ','どく'],407:['くさ','どく'],
+  415:['むし','ひこう'],416:['むし','ひこう'],417:['でんき'],418:['みず'],419:['みず'],
+  427:['ノーマル'],428:['ノーマル'],430:['あく','ひこう'],431:['ノーマル'],440:['ノーマル'],
+  443:['ドラゴン'],445:['ドラゴン','じめん'],447:['かくとう'],448:['かくとう','はがね'],
+  449:['じめん'],451:['どく','むし'],453:['どく','かくとう'],459:['くさ','こおり'],460:['くさ','こおり'],
+  466:['でんき'],467:['ほのお'],468:['ノーマル','ひこう'],470:['くさ'],471:['こおり'],
+  473:['こおり','じめん'],475:['エスパー','かくとう'],478:['こおり','ゴースト'],
+  479:['でんき','ゴースト'],483:['はがね','ドラゴン'],484:['みず','ドラゴン'],
+  485:['ほのお','はがね'],487:['ゴースト','ドラゴン'],488:['エスパー'],490:['みず'],
+  491:['あく'],492:['くさ'],493:['ノーマル'],
+  495:['くさ'],498:['ほのお'],501:['みず'],
+  503:['みず'],504:['ノーマル'],509:['あく'],510:['あく'],
+  519:['ノーマル','ひこう'],521:['ノーマル','ひこう'],
+  524:['いわ'],526:['いわ'],527:['エスパー'],528:['エスパー'],
+  529:['じめん'],530:['じめん','はがね'],531:['ノーマル'],
+  532:['かくとう'],534:['かくとう'],535:['みず'],537:['みず'],
+  538:['かくとう'],539:['かくとう'],540:['むし','くさ'],542:['むし','くさ'],
+  543:['むし','どく'],545:['むし','どく'],546:['くさ'],547:['くさ'],
+  548:['くさ'],549:['くさ'],551:['じめん','あく'],553:['じめん','あく'],
+  554:['ほのお'],555:['ほのお'],556:['くさ'],557:['いわ','みず'],558:['いわ','みず'],
+  559:['あく','かくとう'],560:['あく','かくとう'],
+  562:['ゴースト'],563:['ゴースト'],564:['みず','いわ'],565:['みず','いわ'],
+  566:['いわ','ひこう'],567:['いわ','ひこう'],
+  568:['どく'],569:['どく'],570:['あく'],571:['あく'],
+  574:['エスパー'],576:['エスパー'],577:['エスパー'],579:['エスパー'],
+  580:['みず','ひこう'],581:['みず','ひこう'],582:['こおり'],584:['こおり'],
+  585:['ノーマル','くさ'],586:['ノーマル','くさ'],587:['でんき','ひこう'],
+  590:['くさ','どく'],591:['くさ','どく'],592:['みず','ゴースト'],593:['みず','ゴースト'],
+  594:['みず'],595:['むし','でんき'],596:['むし','でんき'],597:['くさ','はがね'],598:['くさ','はがね'],
+  599:['はがね'],601:['はがね'],602:['でんき'],604:['でんき'],
+  605:['エスパー'],606:['エスパー'],607:['ほのお','ゴースト'],609:['ほのお','ゴースト'],
+  610:['ドラゴン'],612:['ドラゴン'],613:['こおり'],614:['こおり','みず'],
+  615:['こおり'],616:['むし'],617:['むし'],618:['みず','じめん'],
+  620:['かくとう'],621:['ドラゴン'],622:['じめん','ゴースト'],623:['じめん','ゴースト'],
+  624:['あく'],625:['あく','はがね'],626:['ノーマル'],627:['ノーマル','ひこう'],628:['ノーマル','ひこう'],
+  629:['あく','ひこう'],630:['あく','ひこう'],631:['ほのお','むし'],632:['むし','はがね'],
+  633:['あく','ドラゴン'],635:['あく','ドラゴン'],636:['ほのお','むし'],637:['ほのお','むし'],
+  638:['はがね','かくとう'],639:['いわ','かくとう'],640:['くさ','かくとう'],
+  641:['ひこう'],642:['でんき','ひこう'],643:['ほのお','ドラゴン'],644:['でんき','ドラゴン'],
+  645:['じめん','ひこう'],646:['ドラゴン'],647:['みず','かくとう'],648:['ノーマル','エスパー'],
+  649:['むし','はがね'],
+  650:['くさ'],652:['くさ'],653:['ほのお'],655:['ほのお','エスパー'],656:['みず'],658:['みず','あく'],
+  661:['ノーマル','ひこう'],663:['ほのお','ひこう'],664:['むし'],666:['むし','ひこう'],
+  667:['ほのお'],668:['ほのお','ノーマル'],669:['フェアリー'],671:['フェアリー'],
+  672:['くさ','ノーマル'],673:['くさ','ノーマル'],674:['かくとう','ノーマル'],675:['かくとう','あく'],
+  676:['ノーマル'],677:['エスパー'],678:['エスパー'],679:['はがね','ゴースト'],681:['はがね','ゴースト'],
+  682:['フェアリー'],683:['フェアリー'],684:['フェアリー'],685:['フェアリー'],
+  686:['あく','エスパー'],687:['あく','エスパー'],688:['みず','いわ'],689:['みず','いわ'],
+  690:['ドラゴン'],692:['ドラゴン'],693:['フェアリー'],694:['でんき'],695:['でんき','ノーマル'],
+  696:['いわ'],697:['いわ','ドラゴン'],698:['いわ','こおり'],699:['いわ','こおり'],
+  700:['フェアリー'],701:['かくとう','ひこう'],702:['でんき','フェアリー'],703:['いわ','フェアリー'],
+  704:['ドラゴン'],706:['ドラゴン'],707:['はがね','フェアリー'],708:['ゴースト','くさ'],
+  710:['ゴースト','くさ'],712:['こおり'],714:['ドラゴン','ひこう'],715:['ドラゴン','ひこう'],
+  716:['フェアリー'],717:['あく','ひこう'],718:['ドラゴン'],719:['いわ','フェアリー'],
+  720:['エスパー'],721:['ほのお','みず'],722:['くさ','ひこう'],724:['くさ','ゴースト'],
+  725:['ほのお'],727:['ほのお','あく'],728:['みず'],730:['みず','フェアリー'],
+  731:['ノーマル','ひこう'],733:['みず','ひこう'],734:['みず'],735:['ノーマル'],
+  736:['むし'],738:['むし','でんき'],739:['かくとう','みず'],741:['ノーマル','ひこう'],
+  742:['むし','フェアリー'],743:['むし','フェアリー'],744:['いわ'],745:['いわ'],
+  747:['どく'],748:['どく','みず'],749:['じめん'],750:['じめん'],
+  751:['みず','むし'],752:['みず','むし'],753:['くさ'],754:['くさ'],
+  755:['くさ','フェアリー'],756:['くさ','フェアリー'],757:['ほのお'],758:['ほのお'],
+  759:['ノーマル'],760:['ノーマル'],761:['くさ'],763:['くさ','ひこう'],
+  764:['ノーマル'],765:['ノーマル'],766:['かくとう'],767:['むし','みず'],
+  769:['じめん','ゴースト'],770:['じめん','ゴースト'],771:['ノーマル','みず'],
+  774:['いわ','エスパー'],777:['でんき','はがね'],778:['ゴースト','フェアリー'],
+  779:['みず','どく'],780:['ノーマル'],781:['エスパー'],782:['ドラゴン'],784:['ドラゴン'],
+  785:['でんき','フェアリー'],786:['エスパー','フェアリー'],787:['くさ','フェアリー'],788:['みず','フェアリー'],
+  789:['エスパー'],790:['エスパー'],791:['エスパー','はがね'],792:['エスパー','ゴースト'],
+  793:['どく'],794:['どく'],795:['でんき','くさ'],796:['はがね','ひこう'],
+  797:['くさ','はがね'],798:['あく','ドラゴン'],799:['エスパー'],
+  800:['はがね','フェアリー'],801:['ゴースト'],807:['でんき'],808:['はがね'],
+  810:['くさ'],812:['くさ'],813:['ほのお'],815:['ほのお'],816:['みず'],818:['みず'],
+  819:['ノーマル'],820:['ノーマル'],821:['ノーマル','ひこう'],823:['はがね','ひこう'],
+  825:['でんき'],826:['でんき','あく'],827:['でんき','はがね'],
+  828:['あく','ノーマル'],829:['ノーマル','くさ'],831:['ノーマル'],832:['ノーマル'],
+  833:['みず'],834:['みず'],835:['でんき'],836:['でんき','どく'],
+  837:['いわ'],839:['いわ','ほのお'],840:['くさ','ドラゴン'],841:['くさ','ドラゴン'],
+  843:['じめん','ドラゴン'],844:['じめん','ドラゴン'],845:['みず','いわ'],847:['でんき','ドラゴン'],
+  848:['どく'],849:['でんき','どく'],850:['ほのお','みず'],851:['ほのお','みず'],
+  852:['かくとう','みず'],853:['ゴースト','みず'],854:['ゴースト','みず'],
+  855:['こおり','ゴースト'],859:['ドラゴン','ゴースト'],861:['ドラゴン','ゴースト'],
+  865:['ゴースト'],867:['フェアリー'],872:['むし','こおり'],873:['むし','こおり'],
+  874:['こおり'],875:['こおり','あく'],876:['エスパー','ノーマル'],877:['でんき'],
+  878:['はがね'],879:['はがね'],880:['ドラゴン','でんき'],881:['でんき'],
+  882:['はがね','ドラゴン'],883:['ドラゴン'],888:['はがね','フェアリー'],889:['はがね','かくとう'],
+  890:['どく','ドラゴン'],891:['みず','かくとう'],898:['エスパー','くさ'],
+  906:['くさ'],908:['くさ','あく'],909:['ほのお'],911:['ほのお','ゴースト'],
+  912:['みず'],914:['みず','かくとう'],933:['どく','じめん'],934:['いわ','はがね'],
+};
+
+// タイプ → 代表ポケモンID（ランダム表示用）
+const TYPE_POKES={
+  'ノーマル':[143,39,113,132,234,241,83,128,163,399,400,427,428],
+  'ほのお':[6,58,136,146,244,157,37,38,126,77,78,136,155],
+  'みず':[9,131,134,245,54,382,7,60,86,87,116,129,130],
+  'でんき':[25,135,145,181,466,243,100,101,81,82,179,239,403],
+  'くさ':[3,103,470,154,407,45,1,43,69,102,187,191,252],
+  'こおり':[144,471,131,378,144,87,87,91,361,362,363,459,460],
+  'かくとう':[68,106,448,107,214,66,56,57,62,236,237,296,297],
+  'どく':[24,89,110,211,454,49,23,41,72,73,88,109,211],
+  'じめん':[76,111,383,28,450,31,27,50,74,95,104,231,232],
+  'ひこう':[18,249,22,334,169,85,16,21,83,84,85,142,163],
+  'エスパー':[65,196,150,280,488,63,64,79,80,96,97,121,122],
+  'むし':[12,127,214,212,213,415,10,13,46,47,48,123,127],
+  'いわ':[377,142,74,248,408,95,74,75,76,111,138,140,142],
+  'ゴースト':[94,354,477,92,487,607,92,93,200,353,354,355,356],
+  'ドラゴン':[149,373,384,443,230,147,147,148,230,329,330,371,372],
+  'あく':[197,229,248,491,359,198,197,198,228,229,261,262,359],
+  'はがね':[376,379,208,212,448,379,81,82,208,212,227,303,304],
+  'フェアリー':[39,35,700,468,282,183,35,36,39,40,175,176,183],
+};
+
+// タイプ相性テーブル (攻撃側→防御側: 2=ばつぐん, 0.5=いまひとつ, 0=むこう)
+const TYPE_CHART={
+  'ノーマル':{'いわ':0.5,'はがね':0.5,'ゴースト':0},
+  'ほのお':{'ほのお':0.5,'みず':0.5,'いわ':0.5,'ドラゴン':0.5,'くさ':2,'こおり':2,'むし':2,'はがね':2},
+  'みず':{'みず':0.5,'くさ':0.5,'ドラゴン':0.5,'ほのお':2,'じめん':2,'いわ':2},
+  'でんき':{'でんき':0.5,'くさ':0.5,'ドラゴン':0.5,'じめん':0,'みず':2,'ひこう':2},
+  'くさ':{'ほのお':0.5,'くさ':0.5,'どく':0.5,'ひこう':0.5,'むし':0.5,'ドラゴン':0.5,'はがね':0.5,'みず':2,'じめん':2,'いわ':2},
+  'こおり':{'みず':0.5,'こおり':0.5,'くさ':2,'じめん':2,'ひこう':2,'ドラゴン':2},
+  'かくとう':{'どく':0.5,'むし':0.5,'エスパー':0.5,'ひこう':0.5,'フェアリー':0.5,'ゴースト':0,'ノーマル':2,'こおり':2,'いわ':2,'あく':2,'はがね':2},
+  'どく':{'どく':0.5,'じめん':0.5,'いわ':0.5,'ゴースト':0.5,'はがね':0,'くさ':2,'フェアリー':2},
+  'じめん':{'くさ':0.5,'むし':0.5,'ひこう':0,'ほのお':2,'でんき':2,'どく':2,'いわ':2,'はがね':2},
+  'ひこう':{'でんき':0.5,'いわ':0.5,'はがね':0.5,'じめん':1,'くさ':2,'かくとう':2,'むし':2},
+  'エスパー':{'エスパー':0.5,'はがね':0.5,'あく':0,'かくとう':2,'どく':2},
+  'むし':{'ほのお':0.5,'かくとう':0.5,'ひこう':0.5,'どく':0.5,'ゴースト':0.5,'はがね':0.5,'フェアリー':0.5,'くさ':2,'エスパー':2,'あく':2},
+  'いわ':{'かくとう':0.5,'じめん':0.5,'はがね':0.5,'ほのお':2,'こおり':2,'ひこう':2,'むし':2},
+  'ゴースト':{'ノーマル':0,'あく':0.5,'エスパー':2,'ゴースト':2},
+  'ドラゴン':{'はがね':0.5,'フェアリー':0,'ドラゴン':2},
+  'あく':{'かくとう':0.5,'あく':0.5,'フェアリー':0.5,'エスパー':0,'ゴースト':2,'あく':2},
+  'はがね':{'ほのお':0.5,'みず':0.5,'でんき':0.5,'はがね':0.5,'どく':2,'こおり':2,'いわ':2,'フェアリー':2},
+  'フェアリー':{'ほのお':0.5,'どく':0.5,'はがね':0.5,'ドラゴン':0,'あく':2,'かくとう':2,'ドラゴン':2},
+};
+
+// タイプ表示色
+const TYPE_COLORS={
+  'ノーマル':'#A8A878','ほのお':'#F08030','みず':'#6890F0','でんき':'#F8D030',
+  'くさ':'#78C850','こおり':'#98D8D8','かくとう':'#C03028','どく':'#A040A0',
+  'じめん':'#E0C068','ひこう':'#A890F0','エスパー':'#F85888','むし':'#A8B820',
+  'いわ':'#B8A038','ゴースト':'#705898','ドラゴン':'#7038F8','あく':'#705848',
+  'はがね':'#B8B8D0','フェアリー':'#EE99AC',
+};
+const ALL_TYPES=Object.keys(TYPE_COLORS);
+
+// しんかデータ [進化前ID, 進化後ID(複数可)]
+const EVO_DATA=[
+  {from:1,to:[2]},{from:2,to:[3]},{from:4,to:[5]},{from:5,to:[6]},{from:7,to:[8]},{from:8,to:[9]},
+  {from:10,to:[11]},{from:11,to:[12]},{from:13,to:[14]},{from:14,to:[15]},
+  {from:16,to:[17]},{from:17,to:[18]},{from:19,to:[20]},{from:21,to:[22]},{from:23,to:[24]},
+  {from:25,to:[26]},{from:27,to:[28]},{from:29,to:[30]},{from:30,to:[31]},{from:32,to:[33]},{from:33,to:[34]},
+  {from:35,to:[36]},{from:37,to:[38]},{from:39,to:[40]},{from:41,to:[42]},{from:43,to:[44]},{from:44,to:[45]},
+  {from:46,to:[47]},{from:48,to:[49]},{from:50,to:[51]},{from:52,to:[53]},{from:54,to:[55]},{from:56,to:[57]},
+  {from:58,to:[59]},{from:60,to:[61]},{from:61,to:[62]},{from:63,to:[64]},{from:64,to:[65]},
+  {from:66,to:[67]},{from:67,to:[68]},{from:69,to:[70]},{from:70,to:[71]},{from:72,to:[73]},
+  {from:74,to:[75]},{from:75,to:[76]},{from:77,to:[78]},{from:79,to:[80]},{from:81,to:[82]},
+  {from:84,to:[85]},{from:86,to:[87]},{from:88,to:[89]},{from:90,to:[91]},{from:92,to:[93]},{from:93,to:[94]},
+  {from:96,to:[97]},{from:98,to:[99]},{from:100,to:[101]},{from:102,to:[103]},
+  {from:104,to:[105]},{from:109,to:[110]},{from:111,to:[112]},{from:114,to:[]},
+  {from:116,to:[117]},{from:117,to:[230]},{from:118,to:[119]},{from:120,to:[121]},
+  {from:123,to:[]},{from:129,to:[130]},{from:131,to:[]},
+  {from:133,to:[134,135,136,196,197,470,471]},
+  {from:137,to:[]},{from:138,to:[139]},{from:140,to:[141]},{from:143,to:[]},
+  {from:147,to:[148]},{from:148,to:[149]},{from:152,to:[153]},{from:153,to:[154]},
+  {from:155,to:[156]},{from:156,to:[157]},{from:158,to:[159]},{from:159,to:[160]},
+  {from:163,to:[164]},{from:172,to:[25]},{from:173,to:[35]},{from:174,to:[39]},
+  {from:175,to:[176]},{from:177,to:[178]},{from:179,to:[180]},{from:180,to:[181]},
+  {from:183,to:[184]},{from:187,to:[188]},{from:188,to:[189]},{from:190,to:[]},
+  {from:191,to:[192]},{from:194,to:[195]},{from:198,to:[]},
+  {from:200,to:[]},{from:204,to:[205]},{from:209,to:[210]},{from:213,to:[]},
+  {from:216,to:[217]},{from:218,to:[219]},{from:220,to:[221]},{from:222,to:[]},
+  {from:223,to:[224]},{from:228,to:[229]},{from:231,to:[232]},{from:234,to:[]},
+  {from:239,to:[125]},{from:240,to:[126]},{from:241,to:[]},{from:246,to:[247]},{from:247,to:[248]},
+  {from:252,to:[253]},{from:253,to:[254]},{from:255,to:[256]},{from:256,to:[257]},
+  {from:258,to:[259]},{from:259,to:[260]},{from:261,to:[262]},{from:263,to:[264]},
+  {from:270,to:[271]},{from:271,to:[272]},{from:273,to:[274]},{from:274,to:[275]},
+  {from:276,to:[277]},{from:278,to:[279]},{from:279,to:[280]},
+  {from:285,to:[286]},{from:287,to:[288]},{from:289,to:[]},{from:292,to:[]},
+  {from:293,to:[294]},{from:294,to:[295]},{from:296,to:[297]},
+  {from:300,to:[301]},{from:302,to:[]},{from:303,to:[]},{from:307,to:[308]},
+  {from:309,to:[310]},{from:311,to:[]},{from:312,to:[]},{from:318,to:[130]},
+  {from:320,to:[321]},{from:322,to:[323]},{from:325,to:[326]},{from:333,to:[334]},
+  {from:337,to:[]},{from:338,to:[]},{from:341,to:[342]},{from:345,to:[346]},
+  {from:347,to:[348]},{from:349,to:[350]},{from:353,to:[354]},{from:355,to:[356]},
+  {from:359,to:[]},{from:361,to:[362]},{from:363,to:[364]},{from:364,to:[365]},
+  {from:369,to:[]},{from:371,to:[372]},{from:372,to:[373]},
+  {from:374,to:[375]},{from:375,to:[376]},{from:377,to:[]},{from:378,to:[]},{from:379,to:[]},
+  {from:380,to:[]},{from:381,to:[]},{from:385,to:[]},
+  {from:387,to:[388]},{from:388,to:[389]},{from:390,to:[391]},{from:391,to:[392]},
+  {from:393,to:[394]},{from:394,to:[395]},{from:396,to:[397]},{from:397,to:[398]},
+  {from:399,to:[400]},{from:401,to:[402]},{from:403,to:[404]},{from:404,to:[405]},
+  {from:406,to:[407]},{from:408,to:[409]},{from:410,to:[411]},{from:412,to:[413]},
+  {from:415,to:[416]},{from:418,to:[419]},{from:420,to:[421]},{from:422,to:[423]},
+  {from:424,to:[]},{from:425,to:[426]},{from:427,to:[428]},{from:431,to:[432]},
+  {from:433,to:[]},{from:434,to:[435]},{from:436,to:[437]},{from:439,to:[122]},
+  {from:440,to:[]},{from:441,to:[]},{from:443,to:[444]},{from:444,to:[445]},
+  {from:447,to:[448]},{from:449,to:[450]},{from:451,to:[452]},{from:453,to:[454]},
+  {from:455,to:[]},{from:459,to:[460]},{from:461,to:[]},{from:462,to:[]},
+  {from:463,to:[]},{from:464,to:[]},{from:465,to:[]},{from:466,to:[]},{from:467,to:[]},
+  {from:468,to:[]},{from:469,to:[]},{from:470,to:[]},{from:471,to:[]},
+  {from:472,to:[]},{from:473,to:[]},{from:475,to:[]},{from:476,to:[]},
+  {from:477,to:[]},{from:478,to:[]},{from:479,to:[]},
+  {from:495,to:[496]},{from:496,to:[497]},{from:498,to:[499]},{from:499,to:[500]},
+  {from:501,to:[502]},{from:502,to:[503]},{from:504,to:[505]},{from:509,to:[510]},
+  {from:519,to:[520]},{from:520,to:[521]},{from:524,to:[525]},{from:525,to:[526]},
+  {from:527,to:[528]},{from:529,to:[530]},{from:531,to:[]},{from:532,to:[533]},{from:533,to:[534]},
+  {from:535,to:[536]},{from:536,to:[537]},{from:538,to:[]},{from:539,to:[]},
+  {from:540,to:[541]},{from:541,to:[542]},{from:543,to:[544]},{from:544,to:[545]},
+  {from:546,to:[547]},{from:548,to:[549]},{from:551,to:[552]},{from:552,to:[553]},
+  {from:554,to:[555]},{from:557,to:[558]},{from:559,to:[560]},{from:562,to:[563]},
+  {from:564,to:[565]},{from:566,to:[567]},{from:568,to:[569]},{from:570,to:[571]},
+  {from:574,to:[575]},{from:575,to:[576]},{from:577,to:[578]},{from:578,to:[579]},
+  {from:580,to:[581]},{from:582,to:[583]},{from:583,to:[584]},{from:585,to:[586]},
+  {from:590,to:[591]},{from:592,to:[593]},{from:595,to:[596]},{from:597,to:[598]},
+  {from:599,to:[600]},{from:600,to:[601]},{from:602,to:[603]},{from:603,to:[604]},
+  {from:605,to:[606]},{from:607,to:[608]},{from:608,to:[609]},
+  {from:610,to:[611]},{from:611,to:[612]},{from:613,to:[614]},
+  {from:616,to:[617]},{from:619,to:[620]},{from:622,to:[623]},
+  {from:624,to:[625]},{from:627,to:[628]},{from:629,to:[630]},{from:631,to:[]},{from:632,to:[]},
+  {from:633,to:[634]},{from:634,to:[635]},{from:636,to:[637]},
+  {from:650,to:[651]},{from:651,to:[652]},{from:653,to:[654]},{from:654,to:[655]},
+  {from:656,to:[657]},{from:657,to:[658]},{from:661,to:[662]},{from:662,to:[663]},
+  {from:664,to:[665]},{from:669,to:[670]},{from:672,to:[673]},{from:674,to:[675]},
+  {from:677,to:[678]},{from:679,to:[680]},{from:680,to:[681]},{from:682,to:[683]},
+  {from:684,to:[685]},{from:686,to:[687]},{from:688,to:[689]},
+  {from:690,to:[691]},{from:691,to:[692]},{from:694,to:[695]},
+  {from:696,to:[697]},{from:698,to:[699]},{from:700,to:[]},{from:701,to:[]},
+  {from:702,to:[]},{from:703,to:[]},{from:704,to:[705]},{from:705,to:[706]},
+  {from:707,to:[]},{from:708,to:[709]},{from:710,to:[711]},{from:712,to:[713]},
+  {from:714,to:[715]},{from:716,to:[]},{from:717,to:[]},{from:718,to:[]},
+  {from:722,to:[723]},{from:723,to:[724]},{from:725,to:[726]},{from:726,to:[727]},
+  {from:728,to:[729]},{from:729,to:[730]},{from:731,to:[732]},{from:732,to:[733]},
+  {from:736,to:[737]},{from:737,to:[738]},{from:739,to:[740]},
+  {from:742,to:[743]},{from:744,to:[745]},{from:747,to:[748]},{from:749,to:[750]},
+  {from:751,to:[752]},{from:753,to:[754]},{from:755,to:[756]},{from:757,to:[758]},
+  {from:759,to:[760]},{from:761,to:[762]},{from:762,to:[763]},{from:766,to:[]},
+  {from:769,to:[770]},{from:772,to:[773]},{from:777,to:[]},{from:778,to:[]},
+  {from:780,to:[]},{from:782,to:[783]},{from:783,to:[784]},
+  {from:810,to:[811]},{from:811,to:[812]},{from:813,to:[814]},{from:814,to:[815]},
+  {from:816,to:[817]},{from:817,to:[818]},{from:819,to:[820]},{from:821,to:[822]},
+  {from:822,to:[823]},{from:825,to:[826]},{from:827,to:[]},{from:828,to:[]},
+  {from:829,to:[830]},{from:831,to:[832]},{from:833,to:[834]},{from:835,to:[]},
+  {from:836,to:[]},{from:837,to:[838]},{from:838,to:[839]},{from:840,to:[841]},
+  {from:843,to:[844]},{from:845,to:[]},{from:846,to:[847]},{from:848,to:[849]},
+  {from:850,to:[851]},{from:852,to:[]},{from:853,to:[854]},{from:855,to:[]},
+  {from:859,to:[860]},{from:860,to:[861]},{from:872,to:[873]},{from:874,to:[]},
+  {from:875,to:[]},{from:876,to:[]},{from:878,to:[879]},{from:880,to:[]},
+  {from:881,to:[]},{from:882,to:[]},{from:883,to:[]},{from:888,to:[]},{from:889,to:[]},
+  {from:906,to:[907]},{from:907,to:[908]},{from:909,to:[910]},{from:910,to:[911]},
+  {from:912,to:[913]},{from:913,to:[914]},
+];
+
+// しんかクイズ用: 進化する+画像があるペアを抽出
+function buildEvoQuestions(){
+  const valid=EVO_DATA.filter(function(e){
+    return e.to.length>=1 && e.to.length<=4 &&
+      POKE_NAMES[e.from] && e.to.every(function(id){return POKE_NAMES[id];});
+  });
+  return valid;
+}
+
+let typeDifficulty='easy'; // easy|normal|hard|vhard
+let typeCompDiff='easy';
+let currentTypeQuestions=[];
+let currentEvoQuestions=[];
+let tcAnswered=false;
+let tcCurrent=0;
+let tcScore=0;
+let evoCurrent=0;
+let evoScore=0;
+let evoAnswered=false;
+
+// ===== タイプクイズ =====
+function makeTypeQuestions(){
+  // difficultyに応じてEASY_IDS重み調整（つうじょうクイズと同様）
+  const pokesWithType=Object.keys(POKE_TYPES).map(Number).filter(function(id){
+    return POKE_NAMES[id] && id<=1017;
+  });
+  const easyPool=pokesWithType.filter(function(id){return EASY_IDS.has(id);});
+  const hardPool=pokesWithType.filter(function(id){return !EASY_IDS.has(id);});
+  const eRatios={easy:25,normal:15,hard:5};
+  const eCount=eRatios[difficulty]||15;
+  const easy=shuffle(easyPool).slice(0,Math.min(eCount,easyPool.length));
+  const hard=shuffle(hardPool).slice(0,Math.min(30-eCount,hardPool.length));
+  const pool=shuffle([...easy,...hard]).slice(0,10);
+  return pool.map(function(id){
+    const correct=POKE_TYPES[id];
+    // 不正解選択肢: タイプの組み合わせをランダム生成
+    const wrongChoices=[];
+    const usedTypes=new Set([correct.join('・')]);
+    let attempts=0;
+    while(wrongChoices.length<3 && attempts<50){
+      attempts++;
+      if(correct.length===1){
+        // 単タイプの正解 → 不正解も単タイプ or 複合
+        const t1=ALL_TYPES[Math.floor(Math.random()*ALL_TYPES.length)];
+        const combo=Math.random()<0.4?t1:[t1,ALL_TYPES[Math.floor(Math.random()*ALL_TYPES.length)]].filter(function(x,i,a){return a.indexOf(x)===i;});
+        const key=Array.isArray(combo)?combo.join('・'):combo;
+        if(!usedTypes.has(key)){usedTypes.add(key);wrongChoices.push(Array.isArray(combo)?combo:[combo]);}
+      } else {
+        // 複合タイプの正解 → 不正解も複合
+        const t1=ALL_TYPES[Math.floor(Math.random()*ALL_TYPES.length)];
+        const t2=ALL_TYPES[Math.floor(Math.random()*ALL_TYPES.length)];
+        if(t1===t2)continue;
+        const key=t1+'・'+t2;
+        const key2=t2+'・'+t1;
+        if(!usedTypes.has(key)&&!usedTypes.has(key2)){usedTypes.add(key);wrongChoices.push([t1,t2]);}
+      }
+    }
+    return {id:id,name:POKE_NAMES[id],types:correct,wrong:wrongChoices,type:'typequiz'};
+  });
+}
+
+function startTypeQuiz(){
+  currentMode='typequiz';
+  currentTypeQuestions=makeTypeQuestions();
+  tcCurrent=0;tcScore=0;tcAnswered=false;
+  renderTypeQuestion();
+}
+
+function renderTypeQuestion(){
+  if(tcCurrent>=currentTypeQuestions.length){showTypeScore();return;}
+  const q=currentTypeQuestions[tcCurrent];
+  const area=document.getElementById('main-area');area.innerHTML='';
+
+  // ステータスバー
+  const sb=el('div','status-bar');
+  const qb=el('span','q-badge');qb.textContent='もんだい '+(tcCurrent+1)+'/'+currentTypeQuestions.length;sb.appendChild(qb);
+  const mb=el('span','mode-badge type');mb.textContent='🎨 タイプクイズ';mb.style.color='#c07000';mb.style.background='rgba(255,255,255,0.85)';mb.style.border='1px solid rgba(192,112,0,0.25)';sb.appendChild(mb);
+  const pw=el('div','progress-wrap');const pb=el('div','progress-bar');const pf=el('div','progress-fill');
+  pf.style.width=(tcCurrent/currentTypeQuestions.length*100)+'%';pb.appendChild(pf);pw.appendChild(pb);sb.appendChild(pw);
+  const sc=el('span','score-badge');sc.textContent='⭐ '+tcScore+'せいかい';sb.appendChild(sc);
+  area.appendChild(sb);
+
+  // ポケモン画像カード
+  const ic=el('div','img-card');
+  const img=el('img','poke-img');img.src=imgUrl(q.id);img.alt=q.name;ic.appendChild(img);
+  // タイプタグ（未回答時は隠す）
+  const tagWrap=el('div');tagWrap.style.cssText='display:flex;justify-content:center;gap:6px;margin-top:4px;min-height:24px;';tagWrap.id='type-tags';ic.appendChild(tagWrap);
+  const qt=el('div','hint-text');qt.style.marginTop='0.4rem';qt.textContent='このポケモンのタイプは どれ？';ic.appendChild(qt);
+  area.appendChild(ic);
+
+  // 選択肢（正解+不正解をシャッフル）
+  const allChoices=shuffle([q.types,...q.wrong]);
+  const choiceDiv=el('div','choices');
+  choiceDiv.className='choices col2';
+  allChoices.forEach(function(types){
+    const btn=el('button','choice-btn');
+    const label=types.join('・');
+    // タイプドット
+    types.forEach(function(t,i){
+      const dot=document.createElement('span');
+      dot.style.cssText='width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:3px;flex-shrink:0;background:'+(TYPE_COLORS[t]||'#aaa');
+      btn.appendChild(dot);
+    });
+    btn.appendChild(document.createTextNode(label));
+    btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';
+    btn.addEventListener('click',function(){pickTypeAnswer(btn,types,q);});
+    choiceDiv.appendChild(btn);
+  });
+  area.appendChild(choiceDiv);
+
+  const rb=el('div','result-banner');rb.id='rb';area.appendChild(rb);
+  const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
+  nb.addEventListener('click',function(){tcCurrent++;tcAnswered=false;renderTypeQuestion();});
+  area.appendChild(nb);
+}
+
+function pickTypeAnswer(btn,chosen,q){
+  if(tcAnswered)return;tcAnswered=true;
+  document.querySelectorAll('.choice-btn').forEach(function(b){b.style.pointerEvents='none';});
+  const correct=q.types;
+  const isCorrect=chosen.join('・')===correct.join('・');
+  // タイプタグを表示
+  const tagWrap=document.getElementById('type-tags');
+  correct.forEach(function(t){
+    const tag=document.createElement('span');
+    tag.textContent=t;
+    tag.style.cssText='font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:'+(TYPE_COLORS[t]||'#aaa')+';color:#fff;';
+    tagWrap.appendChild(tag);
+  });
+  const rb=document.getElementById('rb');
+  if(isCorrect){
+    btn.classList.add('correct');tcScore++;
+    showCorrectBanner(rb,q.id,'せいかい！すごい！');
+    const img=document.querySelector('.poke-img');if(img){img.style.animation='none';void img.offsetWidth;img.style.animation='bouncePoke 0.5s ease forwards';}
+    showCelebration([q.id],'せいかい！🎉');
+  } else {
+    btn.classList.add('wrong');
+    rb.className='result-banner wrong';
+    const mk=document.createElement('span');mk.className='mark';mk.textContent='❌';
+    const tx=document.createElement('span');tx.textContent='ざんねん… こたえは「'+correct.join('・')+'」だよ！';
+    rb.appendChild(mk);rb.appendChild(tx);
+    const img=document.querySelector('.poke-img');if(img){img.style.animation='none';void img.offsetWidth;img.style.animation='shakePoke 0.4s ease forwards';}
+    // 正解ボタンをハイライト
+    document.querySelectorAll('.choice-btn').forEach(function(b){
+      if(b.textContent.replace(/./gu,'').trim()===correct.join('・')||
+         [...b.childNodes].filter(function(n){return n.nodeType===3;}).map(function(n){return n.textContent.trim();}).join('')===correct.join('・'))
+        b.classList.add('correct');
+    });
+  }
+  document.getElementById('nb').style.display='block';
+}
+
+function showTypeScore(){
+  const pct=Math.round((tcScore/currentTypeQuestions.length)*100);
+  const medal=calcMedal(pct);
+  saveTrophy('typequiz',difficulty,medal);
+  if(pct>0)launchConfetti();
+  const area=document.getElementById('main-area');area.innerHTML='';
+  const sc=el('div','score-screen');
+  let stars='⭐',msg='またチャレンジしてみよう！💪';
+  if(pct===100){stars='🏆🌟🏆';msg='かんぺき！ポケモンマスター！';}
+  else if(pct>=80){stars='🎉🎊🎉';msg='すごい！よくできたね！';}
+  else if(pct>=50){stars='👏😊👏';msg='がんばったね！もう一かいどうぞ！';}
+  const ss=el('div','score-stars');ss.textContent=stars;sc.appendChild(ss);
+  const sbig=el('div','score-big');sbig.textContent=tcScore;
+  const sd=el('span','score-denom');sd.textContent='/'+currentTypeQuestions.length;sbig.appendChild(sd);sc.appendChild(sbig);
+  const sp=el('div','score-pct');sp.textContent=pct+'%せいかい';sc.appendChild(sp);
+  const te=el('div','score-trophy-earned');te.textContent=trophyIcon(medal)+'  ゲット！';sc.appendChild(te);
+  const sm=el('div','score-msg');sm.textContent=msg;sc.appendChild(sm);
+  const btns=el('div','score-btns');
+  const rb=el('button','restart-btn');rb.textContent='🔄 もういちどあそぶ';rb.addEventListener('click',startTypeQuiz);btns.appendChild(rb);
+  const tb=el('button','top-btn');tb.textContent='🏠 モードをえらびなおす';tb.addEventListener('click',showTop);btns.appendChild(tb);
+  sc.appendChild(btns);area.appendChild(sc);
+}
+
+// ===== タイプ相性クイズ =====
+function makeTypeCompQuestions(diff){
+  const qs=[];
+  const allT=Object.keys(TYPE_CHART);
+  const shuffledT=shuffle(allT);
+  // effKinds: easy=ばつぐんのみ, normal=ばつぐん+むこう+いまひとつ, hard/vhard=全種
+  const effKinds=diff==='easy'?[2]:diff==='normal'?[2,0,0.5]:[2,0.5,0];
+  for(let i=0;i<Math.min(10,shuffledT.length);i++){
+    const atk=shuffledT[i];
+    const chart=TYPE_CHART[atk]||{};
+    const kind=effKinds[Math.floor(Math.random()*effKinds.length)];
+    let correctTypes=Object.keys(chart).filter(function(t){return chart[t]===kind;});
+    if(correctTypes.length===0)continue;
+    const correctType=correctTypes[Math.floor(Math.random()*correctTypes.length)];
+    // 不正解3択: 同じeffでない(=このkindでない)タイプ
+    const wrongPool=ALL_TYPES.filter(function(t){return t!==correctType&&(chart[t]||1)!==kind;});
+    const wrong=shuffle(wrongPool).slice(0,3);
+    if(wrong.length<3)continue;
+    // 表示ポケモン: 攻撃タイプのポケモンをランダム3体
+    const pokePool=TYPE_POKES[atk]||[];
+    const displayPokes=shuffle(pokePool).slice(0,3);
+    qs.push({atk:atk,correct:correctType,wrong:wrong,kind:kind,pokes:displayPokes,type:'typecomp'});
+  }
+  return qs.slice(0,10);
+}
+
+function startTypeComp(){
+  currentMode='typecomp';
+  currentTypeQuestions=makeTypeCompQuestions(typeCompDiff);
+  tcCurrent=0;tcScore=0;tcAnswered=false;
+  renderTypeCompQuestion();
+}
+
+function showTypeCompTop(){
+  const area=document.getElementById('main-area');area.innerHTML='';
+  const wrap=el('div','top-screen');
+  const title=el('div','kana-select-title');title.textContent='⚡ タイプ相性クイズ';wrap.appendChild(title);
+  const sub=el('div','top-sub');sub.textContent='むずかしさをえらんでね';wrap.appendChild(sub);
+  const diffs=[
+    {id:'easy',icon:'😊',name:'やさしい',desc:'こうかばつぐんのみ・4たくから1つえらぶ'},
+    {id:'normal',icon:'😐',name:'ふつう',desc:'いまひとつ・むこうも出るよ'},
+    {id:'hard',icon:'😤',name:'むずかしい',desc:'ばつぐんを全てえらぶ（複数選択）'},
+    {id:'vhard',icon:'🔥',name:'ちょうむずかしい',desc:'ばつぐん・いまひとつ・むこう全種をランダム出題'},
+  ];
+  diffs.forEach(function(d){
+    const card=el('div','kana-rand-card');
+    card.addEventListener('click',function(){typeCompDiff=d.id;startTypeComp();});
+    const icon=el('div','mode-icon');icon.textContent=d.icon;card.appendChild(icon);
+    const info=el('div');
+    const name=el('div','mode-name');name.textContent=d.name;
+    const desc=el('div','mode-desc');desc.textContent=d.desc;
+    info.appendChild(name);info.appendChild(desc);card.appendChild(info);
+    wrap.appendChild(card);
+  });
+  const tb=el('button','top-btn');tb.textContent='← もどる';tb.style.marginTop='0.5rem';tb.addEventListener('click',showTop);wrap.appendChild(tb);
+  area.appendChild(wrap);
+}
+
+function renderTypeCompQuestion(){
+  if(tcCurrent>=currentTypeQuestions.length){showTypeScore();return;}
+  const q=currentTypeQuestions[tcCurrent];
+  const area=document.getElementById('main-area');area.innerHTML='';
+
+  const sb=el('div','status-bar');
+  const qb=el('span','q-badge');qb.textContent='もんだい '+(tcCurrent+1)+'/'+currentTypeQuestions.length;sb.appendChild(qb);
+  const diffNames={easy:'やさしい',normal:'ふつう',hard:'むずかしい',vhard:'ちょうむずかしい'};
+  const mb=el('span','mode-badge');mb.textContent='⚡ タイプ相性';mb.style.color='#6B21C8';mb.style.background='rgba(255,255,255,0.85)';mb.style.border='1px solid rgba(107,33,200,0.25)';sb.appendChild(mb);
+  const pw=el('div','progress-wrap');const pb=el('div','progress-bar');const pf=el('div','progress-fill');
+  pf.style.width=(tcCurrent/currentTypeQuestions.length*100)+'%';pb.appendChild(pf);pw.appendChild(pb);sb.appendChild(pw);
+  const sc=el('span','score-badge');sc.textContent='⭐ '+tcScore+'せいかい';sb.appendChild(sc);
+  area.appendChild(sb);
+
+  // ポケモン表示カード
+  const ic=el('div','img-card');
+  const pokeRow=el('div');pokeRow.style.cssText='display:flex;justify-content:center;gap:8px;margin-bottom:8px;';
+  (q.pokes.length?q.pokes:[25]).forEach(function(pid){
+    const pw2=el('div');pw2.style.textAlign='center';
+    const pimg=el('img','');pimg.src=imgUrl(pid);pimg.style.cssText='width:72px;height:72px;object-fit:contain;';pimg.alt=POKE_NAMES[pid]||'';
+    const pname=el('div','');pname.textContent=POKE_NAMES[pid]||'';pname.style.fontSize='10px';pname.style.color='#555';
+    pw2.appendChild(pimg);pw2.appendChild(pname);pokeRow.appendChild(pw2);
+  });
+  ic.appendChild(pokeRow);
+  // タイプ大表示
+  const bigTag=el('div');
+  bigTag.style.cssText='display:inline-block;font-size:20px;font-weight:900;padding:7px 22px;border-radius:24px;background:'+(TYPE_COLORS[q.atk]||'#aaa')+';color:#fff;margin-bottom:8px;';
+  bigTag.textContent=q.atk;ic.appendChild(bigTag);
+  const qtext=el('div','hint-text');
+  const kindLabel=q.kind===2?'こうかばつぐん（×2）':q.kind===0?'ぜんぜんきかない（×0）':'いまひとつ（×0.5）';
+  qtext.textContent='「'+q.atk+'」が '+kindLabel+' になるタイプは どれ？';
+ic.appendChild(qtext);
+  area.appendChild(ic);
+
+  const allChoices=shuffle([q.correct,...q.wrong]);
+  const choiceDiv=el('div','choices');choiceDiv.className='choices col2';
+  allChoices.forEach(function(t){
+    const btn=el('button','choice-btn');
+    const dot=document.createElement('span');
+    dot.style.cssText='width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px;background:'+(TYPE_COLORS[t]||'#aaa');
+    btn.appendChild(dot);btn.appendChild(document.createTextNode(t));
+    btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';
+    btn.addEventListener('click',function(){pickTypeCompAnswer(btn,t,q);});
+    choiceDiv.appendChild(btn);
+  });
+  area.appendChild(choiceDiv);
+
+  const rb=el('div','result-banner');rb.id='rb';area.appendChild(rb);
+  const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
+  nb.addEventListener('click',function(){tcCurrent++;tcAnswered=false;renderTypeCompQuestion();});
+  area.appendChild(nb);
+}
+
+function pickTypeCompAnswer(btn,chosen,q){
+  if(tcAnswered)return;tcAnswered=true;
+  document.querySelectorAll('.choice-btn').forEach(function(b){b.style.pointerEvents='none';});
+  const rb=document.getElementById('rb');
+  if(chosen===q.correct){
+    btn.classList.add('correct');tcScore++;
+    showCorrectBanner(rb,q.pokes[0]||25,'せいかい！すごい！');
+    showCelebration(q.pokes.length?q.pokes:[25],'せいかい！🎉');
+  } else {
+    btn.classList.add('wrong');
+    rb.className='result-banner wrong';
+    const mk=document.createElement('span');mk.className='mark';mk.textContent='❌';
+    const tx=document.createElement('span');tx.textContent='ざんねん… こたえは「'+q.correct+'」だよ！';
+    rb.appendChild(mk);rb.appendChild(tx);
+    document.querySelectorAll('.choice-btn').forEach(function(b){
+      if([...b.childNodes].filter(function(n){return n.nodeType===3;}).map(function(n){return n.textContent.trim();}).join('')===q.correct)
+        b.classList.add('correct');
+    });
+  }
+  document.getElementById('nb').style.display='block';
+}
+
+// ===== しんかクイズ =====
+function makeEvoQuestions(){
+  const pool=buildEvoQuestions().filter(function(e){
+    return e.to.length>=1;
+  });
+  const easyPool=pool.filter(function(e){return EASY_IDS.has(e.from);});
+  const hardPool=pool.filter(function(e){return !EASY_IDS.has(e.from);});
+  const eRatios={easy:8,normal:5,hard:2};
+  const eCount=eRatios[difficulty]||5;
+  const easy=shuffle(easyPool).slice(0,Math.min(eCount,easyPool.length));
+  const hard=shuffle(hardPool).slice(0,Math.min(10-eCount,hardPool.length));
+  return shuffle([...easy,...hard]).slice(0,10).map(function(e){
+    // 不正解: 正解と同じ進化後の個数になるよう、別のポケモンIDを混ぜる
+    const correctIds=e.to;
+    const wrongPool=Object.keys(POKE_NAMES).map(Number).filter(function(id){
+      return !correctIds.includes(id) && id!==e.from && POKE_NAMES[id] && id<=500;
+    });
+    // 4択: 正解1体(複合の場合はまとめて1択)+ wrong 3
+    const wrong=shuffle(wrongPool).slice(0,3);
+    return {from:e.from,to:correctIds,wrong:wrong,type:'evoquiz'};
+  });
+}
+
+function startEvoQuiz(){
+  currentMode='evoquiz';
+  currentEvoQuestions=makeEvoQuestions();
+  evoCurrent=0;evoScore=0;evoAnswered=false;
+  renderEvoQuestion();
+}
+
+function renderEvoQuestion(){
+  if(evoCurrent>=currentEvoQuestions.length){showEvoScore();return;}
+  const q=currentEvoQuestions[evoCurrent];
+  const area=document.getElementById('main-area');area.innerHTML='';
+
+  const sb=el('div','status-bar');
+  const qb=el('span','q-badge');qb.textContent='もんだい '+(evoCurrent+1)+'/'+currentEvoQuestions.length;sb.appendChild(qb);
+  const mb=el('span','mode-badge');mb.textContent='✨ しんかクイズ';mb.style.color='#185FA5';mb.style.background='rgba(255,255,255,0.85)';mb.style.border='1px solid rgba(24,95,165,0.25)';sb.appendChild(mb);
+  const pw=el('div','progress-wrap');const pb=el('div','progress-bar');const pf=el('div','progress-fill');
+  pf.style.width=(evoCurrent/currentEvoQuestions.length*100)+'%';pb.appendChild(pf);pw.appendChild(pb);sb.appendChild(pw);
+  const sc=el('span','score-badge');sc.textContent='⭐ '+evoScore+'せいかい';sb.appendChild(sc);
+  area.appendChild(sb);
+
+  const ic=el('div','img-card');
+  const img=el('img','poke-img');img.src=imgUrl(q.from);img.alt=POKE_NAMES[q.from]||'';ic.appendChild(img);
+  const qt=el('div','hint-text');qt.style.marginTop='0.4rem';qt.textContent='このポケモンは どれに しんかする？';ic.appendChild(qt);
+  area.appendChild(ic);
+
+  // 4択: 正解(q.to[0])、不正解3体
+  const correctId=q.to[0];
+  const choiceIds=shuffle([correctId,...q.wrong]);
+  const choiceDiv=el('div','choices');choiceDiv.className='choices col2';
+  choiceIds.forEach(function(id){
+    const btn=el('button','choice-btn');
+    btn.style.cssText='flex-direction:column;gap:4px;padding:0.6rem;display:flex;align-items:center;justify-content:center;';
+    const cimg=el('img','');cimg.src=imgUrl(id);cimg.style.cssText='width:60px;height:60px;object-fit:contain;';
+    const cname=el('span','');cname.textContent=POKE_NAMES[id]||'';cname.style.fontSize='13px';cname.style.fontWeight='700';
+    btn.appendChild(cimg);btn.appendChild(cname);
+    btn.addEventListener('click',function(){pickEvoAnswer(btn,id,q);});
+    choiceDiv.appendChild(btn);
+  });
+  area.appendChild(choiceDiv);
+
+  const rb=el('div','result-banner');rb.id='rb';area.appendChild(rb);
+  const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
+  nb.addEventListener('click',function(){evoCurrent++;evoAnswered=false;renderEvoQuestion();});
+  area.appendChild(nb);
+}
+
+function pickEvoAnswer(btn,chosen,q){
+  if(evoAnswered)return;evoAnswered=true;
+  document.querySelectorAll('.choice-btn').forEach(function(b){b.style.pointerEvents='none';});
+  const rb=document.getElementById('rb');
+  const isCorrect=q.to.includes(chosen);
+  if(isCorrect){
+    btn.classList.add('correct');evoScore++;
+    showCorrectBanner(rb,chosen,'せいかい！すごい！');
+    const img=document.querySelector('.poke-img');if(img){img.style.animation='none';void img.offsetWidth;img.style.animation='bouncePoke 0.5s ease forwards';}
+    showCelebration([chosen,q.from],'せいかい！🎉');
+  } else {
+    btn.classList.add('wrong');
+    rb.className='result-banner wrong';
+    const mk=document.createElement('span');mk.className='mark';mk.textContent='❌';
+    const correctName=POKE_NAMES[q.to[0]]||'';
+    const tx=document.createElement('span');tx.textContent='ざんねん… こたえは「'+correctName+'」だよ！';
+    rb.appendChild(mk);rb.appendChild(tx);
+    document.querySelectorAll('.choice-btn').forEach(function(b){
+      const nameEl=b.querySelector('span');
+      if(nameEl&&q.to.some(function(id){return POKE_NAMES[id]===nameEl.textContent;}))
+        b.classList.add('correct');
+    });
+  }
+  document.getElementById('nb').style.display='block';
+}
+
+function showEvoScore(){
+  const pct=Math.round((evoScore/currentEvoQuestions.length)*100);
+  const medal=calcMedal(pct);
+  saveTrophy('evoquiz',difficulty,medal);
+  if(pct>0)launchConfetti();
+  const area=document.getElementById('main-area');area.innerHTML='';
+  const sc=el('div','score-screen');
+  let stars='⭐',msg='またチャレンジしてみよう！💪';
+  if(pct===100){stars='🏆🌟🏆';msg='かんぺき！ポケモンマスター！';}
+  else if(pct>=80){stars='🎉🎊🎉';msg='すごい！よくできたね！';}
+  else if(pct>=50){stars='👏😊👏';msg='がんばったね！もう一かいどうぞ！';}
+  const ss=el('div','score-stars');ss.textContent=stars;sc.appendChild(ss);
+  const sbig=el('div','score-big');sbig.textContent=evoScore;
+  const sd=el('span','score-denom');sd.textContent='/'+currentEvoQuestions.length;sbig.appendChild(sd);sc.appendChild(sbig);
+  const sp=el('div','score-pct');sp.textContent=pct+'%せいかい';sc.appendChild(sp);
+  const te=el('div','score-trophy-earned');te.textContent=trophyIcon(medal)+'  ゲット！';sc.appendChild(te);
+  const sm=el('div','score-msg');sm.textContent=msg;sc.appendChild(sm);
+  const btns=el('div','score-btns');
+  const rb=el('button','restart-btn');rb.textContent='🔄 もういちどあそぶ';rb.addEventListener('click',startEvoQuiz);btns.appendChild(rb);
+  const tb=el('button','top-btn');tb.textContent='🏠 モードをえらびなおす';tb.addEventListener('click',showTop);btns.appendChild(tb);
+  sc.appendChild(btns);area.appendChild(sc);
+}
+
 // ===== ローディング =====
 function loadPokemon(){
   // 名前データは埋め込み済みなのでAPIリクエスト不要
@@ -329,8 +1053,11 @@ function showTop(){
   const modes=[
     {id:'normal',icon:'🎮',name:'つうじょうクイズ',desc:'ポケモンのすがたをみて なまえをこたえよう！ 4つからえらんでね'},
     {id:'silhouette',icon:'🌑',name:'シルエットクイズ',desc:'かげをみて なんのポケモンかあてよう！ 3つからえらんでね'},
-    {id:'math',icon:'➕',name:'さんすうクイズ',desc:'ポケモンをつかった たしざん・ひきざん！ 10もんチャレンジ'},
+    {id:'typequiz',icon:'🎨',name:'タイプクイズ',desc:'ポケモンのタイプを4つからあてよう！'},
+    {id:'typecomp',icon:'⚡',name:'タイプ相性クイズ',desc:'こうかばつぐん・いまひとつ・むこうをおぼえよう！'},
+    {id:'evoquiz',icon:'✨',name:'しんかクイズ',desc:'このポケモンはなんにしんかする？4つからえらんでね'},
     {id:'kana',icon:'✏️',name:'もじかきれんしゅう',desc:'ひらがな・カタカナをゆびでなぞって かいてみよう！'},
+    {id:'math',icon:'➕',name:'さんすうクイズ',desc:'ポケモンをつかった たしざん・ひきざん！ 10もんチャレンジ'},
     {id:'maze',icon:'🗺️',name:'めいろ',desc:'ゆびでなぞってゴールをめざせ！ポケモンといっしょにすすもう！'},
   ];
   modes.forEach(function(m){
@@ -354,7 +1081,7 @@ function showTop(){
     const ts=el('div','trophy-section');
     const tTitle=el('div','trophy-section-title');tTitle.textContent='🏆 これまでのトロフィー';ts.appendChild(tTitle);
     const tg=el('div','trophy-grid');
-    const mL={normal:'つうじょう',silhouette:'シルエット',math:'さんすう'};
+    const mL={normal:'つうじょう',silhouette:'シルエット',math:'さんすう',typequiz:'タイプ',typecomp:'タイプ相性',evoquiz:'しんか'};
     const dL={easy:'かんたん',normal:'ふつう',hard:'むずかしい',all:'ぜんぶ'};
     Object.keys(trophies).forEach(function(key){
       const idx=key.lastIndexOf('_');
@@ -376,6 +1103,9 @@ function startMode(mode){
   isRetryMode=false;
   if(mode==='kana'){startKanaMode();return;}
   if(mode==='maze'){showMazeTop();return;}
+  if(mode==='typequiz'){startTypeQuiz();return;}
+  if(mode==='typecomp'){showTypeCompTop();return;}
+  if(mode==='evoquiz'){startEvoQuiz();return;}
   if(mode==='math'){questions=Array.from({length:10},makeMathQ);}
   else{questions=makeQuizQuestions();}
   current=0;score=0;renderQuestion();
@@ -394,7 +1124,7 @@ function renderQuestion(){
   const sb=el('div','status-bar');
   const qb=el('span','q-badge');qb.textContent='もんだい '+(current+1)+'/'+questions.length;sb.appendChild(qb);
   let badgeCls='mode-badge ',badgeTxt='';
-  else if(q.type==='math'){badgeCls+='math';badgeTxt='➕ さんすう';}
+  if(q.type==='math'){badgeCls+='math';badgeTxt='➕ さんすう';}
   else if(currentMode==='silhouette'){badgeCls+='silhouette';badgeTxt='🌑 シルエット';}
   else{badgeCls+='normal';badgeTxt='🎮 つうじょう';}
   const mb=el('span',badgeCls);mb.textContent=badgeTxt;sb.appendChild(mb);
