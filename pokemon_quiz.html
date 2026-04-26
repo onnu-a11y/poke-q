@@ -91,6 +91,10 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 .hint-box{background:rgba(255,255,255,0.78);border:1.5px solid rgba(26,82,118,0.18);border-radius:12px;padding:0.6rem 1rem;margin-bottom:0.85rem;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);}
 .hint-label{font-size:10px;color:#1a5276;font-weight:700;letter-spacing:1.5px;margin-bottom:2px;}
 .hint-text{font-size:14px;color:#222;line-height:1.6;}
+.cry-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:0.5rem auto 0;padding:0.5rem 1.2rem;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;background:rgba(255,255,255,0.88);border:2px solid rgba(255,255,255,0.95);border-radius:20px;cursor:pointer;touch-action:manipulation;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.15s;}
+.cry-btn:active{transform:scale(0.95);}
+.cry-btn.playing{background:#FFCB05;border-color:#FFCB05;}
+.poke-name-label{font-size:15px;font-weight:700;color:#333;margin-top:4px;}
 .hint-text ruby{ruby-position:over;}
 .hint-text rt{font-size:9px;color:#888;}
 
@@ -1001,7 +1005,8 @@ function renderEvoQuestion(){
 
   const ic=el('div','img-card');
   const img=el('img','poke-img');img.src=imgUrl(q.from);img.alt=POKE_NAMES[q.from]||'';ic.appendChild(img);
-  const qt=el('div','hint-text');qt.style.marginTop='0.4rem';qt.textContent='このポケモンは どれに しんかする？';ic.appendChild(qt);
+  var nameLabel=el('div','poke-name-label');nameLabel.textContent=POKE_NAMES[q.from]||'';ic.appendChild(nameLabel);
+  const qt=el('div','hint-text');qt.style.marginTop='0.2rem';qt.textContent='このポケモンは どれに しんかする？';ic.appendChild(qt);
   area.appendChild(ic);
 
   // 4択: 正解(q.to[0])、不正解3体
@@ -1074,6 +1079,22 @@ function showEvoScore(){
   const rb=el('button','restart-btn');rb.textContent='🔄 もういちどあそぶ';rb.addEventListener('click',startEvoQuiz);btns.appendChild(rb);
   const tb=el('button','top-btn');tb.textContent='🏠 モードをえらびなおす';tb.addEventListener('click',showTop);btns.appendChild(tb);
   sc.appendChild(btns);area.appendChild(sc);
+}
+
+// ===== 鳴き声 =====
+function cryUrl(id){return 'https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/'+id+'.ogg';}
+function playCry(id,btn){
+  if(btn){btn.classList.add('playing');}
+  const audio=new Audio(cryUrl(id));
+  audio.play().catch(function(){});
+  audio.onended=function(){if(btn){btn.classList.remove('playing');}};
+  audio.onerror=function(){if(btn){btn.classList.remove('playing');}};
+}
+function addCryBtn(parent,id){
+  var btn=el('button','cry-btn');
+  btn.innerHTML='🔊 なきごえをきく';
+  btn.addEventListener('click',function(){playCry(id,btn);});
+  parent.appendChild(btn);
 }
 
 // ===== ローディング =====
@@ -1244,10 +1265,7 @@ function renderQuizQuestion(area,q){
   img.className='poke-img'+(isSilhouette?' silhouette':'');
   imgCard.appendChild(img);area.appendChild(imgCard);
 
-  const hintBox=el('div','hint-box');
-  const hintLabel=el('div','hint-label');hintLabel.textContent='ヒント';hintBox.appendChild(hintLabel);
-  const hintText=el('div','hint-text');hintText.innerHTML=getHint(q.id);hintBox.appendChild(hintText);
-  area.appendChild(hintBox);
+  addCryBtn(imgCard,q.id);
 
   const choiceCount=isSilhouette?3:4;
   const choices=makeChoices(q,choiceCount);
