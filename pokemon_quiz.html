@@ -97,6 +97,7 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 .choices{display:grid;gap:10px;margin-bottom:0.85rem;}
 .choices.col2{grid-template-columns:1fr 1fr;}
 .choices.col3{grid-template-columns:1fr 1fr 1fr;}
+.choice-btn.selected{border-color:#185FA5;background:rgba(24,95,165,0.1);color:#185FA5;}
 .choice-btn{background:rgba(255,255,255,0.88);border:2px solid rgba(255,255,255,0.95);border-radius:12px;padding:0.9rem 0.5rem;font-size:16px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;cursor:pointer;transition:all 0.15s;color:#222;touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-height:62px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;box-shadow:0 3px 8px rgba(0,0,0,0.1);}
 .choices.col3 .choice-btn{font-size:15px;padding:0.75rem 0.25rem;min-height:56px;}
 .choice-btn:hover:not(:disabled){border-color:#E3350D;color:#E3350D;transform:translateY(-2px);box-shadow:0 5px 14px rgba(227,53,13,0.18);}
@@ -586,7 +587,7 @@ function makeTypeQuestions(){
   const eCount=eRatios[difficulty]||15;
   const easy=shuffle(easyPool).slice(0,Math.min(eCount,easyPool.length));
   const hard=shuffle(hardPool).slice(0,Math.min(30-eCount,hardPool.length));
-  const pool=shuffle([...easy,...hard]).slice(0,10);
+  const pool=shuffle([...easy,...hard]);
   return pool.map(function(id){
     const correct=POKE_TYPES[id];
     // 不正解選択肢: タイプの組み合わせをランダム生成
@@ -668,6 +669,8 @@ function renderTypeQuestion(){
   const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
   nb.addEventListener('click',function(){tcCurrent++;tcAnswered=false;renderTypeQuestion();});
   area.appendChild(nb);
+  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='4px';bk.style.width='100%';
+  bk.addEventListener('click',showTop);area.appendChild(bk);
 }
 
 function pickTypeAnswer(btn,chosen,q){
@@ -734,27 +737,59 @@ function makeTypeCompQuestions(diff){
   const qs=[];
   const allT=Object.keys(TYPE_CHART);
   const shuffledT=shuffle(allT);
-  // effKinds: easy=ばつぐんのみ, normal=ばつぐん+むこう+いまひとつ, hard/vhard=全種
-  const effKinds=diff==='easy'?[2]:diff==='normal'?[2,0,0.5]:[2,0.5,0];
-  for(let i=0;i<Math.min(10,shuffledT.length);i++){
+  for(let i=0;i<shuffledT.length&&qs.length<30;i++){
     const atk=shuffledT[i];
     const chart=TYPE_CHART[atk]||{};
-    const kind=effKinds[Math.floor(Math.random()*effKinds.length)];
-    let correctTypes=Object.keys(chart).filter(function(t){return chart[t]===kind;});
-    if(correctTypes.length===0)continue;
-    const correctType=correctTypes[Math.floor(Math.random()*correctTypes.length)];
-    // 不正解3択: 同じeffでない(=このkindでない)タイプ
-    const wrongPool=ALL_TYPES.filter(function(t){return t!==correctType&&(chart[t]||1)!==kind;});
-    const wrong=shuffle(wrongPool).slice(0,3);
-    if(wrong.length<3)continue;
-    // 表示ポケモン: 攻撃タイプのポケモンをランダム3体
     const pokePool=TYPE_POKES[atk]||[];
     const displayPokes=shuffle(pokePool).slice(0,3);
-    qs.push({atk:atk,correct:correctType,wrong:wrong,kind:kind,pokes:displayPokes,type:'typecomp'});
+    if(diff==='easy'){
+      // こうかばつぐんのみ・1択
+      const corrects=Object.keys(chart).filter(function(t){return chart[t]===2;});
+      if(corrects.length===0)continue;
+      const correct=corrects[Math.floor(Math.random()*corrects.length)];
+      const wrongPool=ALL_TYPES.filter(function(t){return t!==correct&&(chart[t]||1)!==2;});
+      const wrong=shuffle(wrongPool).slice(0,3);
+      if(wrong.length<3)continue;
+      qs.push({atk:atk,correct:[correct],wrong:wrong,kind:2,multi:false,pokes:displayPokes,type:'typecomp'});
+    } else if(diff==='normal'){
+      // ばつぐん/いまひとつ/むこうをランダムで1択
+      const kindPool=[2,0,0.5].filter(function(k){
+        return Object.keys(chart).some(function(t){return chart[t]===k;});
+      });
+      if(kindPool.length===0)continue;
+      const kind=kindPool[Math.floor(Math.random()*kindPool.length)];
+      const corrects=Object.keys(chart).filter(function(t){return chart[t]===kind;});
+      const correct=corrects[Math.floor(Math.random()*corrects.length)];
+      const wrongPool=ALL_TYPES.filter(function(t){return t!==correct&&(chart[t]||1)!==kind;});
+      const wrong=shuffle(wrongPool).slice(0,3);
+      if(wrong.length<3)continue;
+      qs.push({atk:atk,correct:[correct],wrong:wrong,kind:kind,multi:false,pokes:displayPokes,type:'typecomp'});
+    } else if(diff==='hard'){
+      // こうかばつぐんを全て選ぶ（複数選択）
+      const corrects=Object.keys(chart).filter(function(t){return chart[t]===2;});
+      if(corrects.length===0)continue;
+      // 不正解選択肢（ばつぐんでないタイプ）
+      const wrongPool=shuffle(ALL_TYPES.filter(function(t){return (chart[t]||1)!==2;}));
+      // 全タイプから6〜8択を表示（正解全部+不正解数個）
+      const wrongCount=Math.min(6,wrongPool.length);
+      const shown=shuffle([...corrects,...wrongPool.slice(0,wrongCount)]);
+      qs.push({atk:atk,correct:corrects,shown:shown,kind:2,multi:true,pokes:displayPokes,type:'typecomp'});
+    } else {
+      // ちょうむずかしい: ばつぐん/いまひとつ/むこうをランダムで全て選ぶ
+      const kindPool=[2,0,0.5].filter(function(k){
+        return Object.keys(chart).some(function(t){return chart[t]===k;});
+      });
+      if(kindPool.length===0)continue;
+      const kind=kindPool[Math.floor(Math.random()*kindPool.length)];
+      const corrects=Object.keys(chart).filter(function(t){return chart[t]===kind;});
+      const wrongPool=shuffle(ALL_TYPES.filter(function(t){return (chart[t]||1)!==kind;}));
+      const wrongCount=Math.min(6,wrongPool.length);
+      const shown=shuffle([...corrects,...wrongPool.slice(0,wrongCount)]);
+      qs.push({atk:atk,correct:corrects,shown:shown,kind:kind,multi:true,pokes:displayPokes,type:'typecomp'});
+    }
   }
-  return qs.slice(0,10);
+  return qs;
 }
-
 function startTypeComp(){
   currentMode='typecomp';
   currentTypeQuestions=makeTypeCompQuestions(typeCompDiff);
@@ -794,10 +829,9 @@ function renderTypeCompQuestion(){
 
   const sb=el('div','status-bar');
   const qb=el('span','q-badge');qb.textContent='もんだい '+(tcCurrent+1)+'/'+currentTypeQuestions.length;sb.appendChild(qb);
-  const diffNames={easy:'やさしい',normal:'ふつう',hard:'むずかしい',vhard:'ちょうむずかしい'};
   const mb=el('span','mode-badge');mb.textContent='⚡ タイプ相性';mb.style.color='#6B21C8';mb.style.background='rgba(255,255,255,0.85)';mb.style.border='1px solid rgba(107,33,200,0.25)';sb.appendChild(mb);
-  const pw=el('div','progress-wrap');const pb=el('div','progress-bar');const pf=el('div','progress-fill');
-  pf.style.width=(tcCurrent/currentTypeQuestions.length*100)+'%';pb.appendChild(pf);pw.appendChild(pb);sb.appendChild(pw);
+  const pw=el('div','progress-wrap');const pb2=el('div','progress-bar');const pf=el('div','progress-fill');
+  pf.style.width=(tcCurrent/currentTypeQuestions.length*100)+'%';pb2.appendChild(pf);pw.appendChild(pb2);sb.appendChild(pw);
   const sc=el('span','score-badge');sc.textContent='⭐ '+tcScore+'せいかい';sb.appendChild(sc);
   area.appendChild(sb);
 
@@ -806,38 +840,98 @@ function renderTypeCompQuestion(){
   const pokeRow=el('div');pokeRow.style.cssText='display:flex;justify-content:center;gap:8px;margin-bottom:8px;';
   (q.pokes.length?q.pokes:[25]).forEach(function(pid){
     const pw2=el('div');pw2.style.textAlign='center';
-    const pimg=el('img','');pimg.src=imgUrl(pid);pimg.style.cssText='width:72px;height:72px;object-fit:contain;';pimg.alt=POKE_NAMES[pid]||'';
+    const pimg=el('img','');pimg.src=imgUrl(pid);pimg.style.cssText='width:72px;height:72px;object-fit:contain;';
     const pname=el('div','');pname.textContent=POKE_NAMES[pid]||'';pname.style.fontSize='10px';pname.style.color='#555';
     pw2.appendChild(pimg);pw2.appendChild(pname);pokeRow.appendChild(pw2);
   });
   ic.appendChild(pokeRow);
-  // タイプ大表示
   const bigTag=el('div');
   bigTag.style.cssText='display:inline-block;font-size:20px;font-weight:900;padding:7px 22px;border-radius:24px;background:'+(TYPE_COLORS[q.atk]||'#aaa')+';color:#fff;margin-bottom:8px;';
   bigTag.textContent=q.atk;ic.appendChild(bigTag);
   const qtext=el('div','hint-text');
   const kindLabel=q.kind===2?'こうかばつぐん（×2）':q.kind===0?'ぜんぜんきかない（×0）':'いまひとつ（×0.5）';
-  qtext.textContent='「'+q.atk+'」が '+kindLabel+' になるタイプは どれ？';
-ic.appendChild(qtext);
+  if(q.multi){
+    qtext.textContent='「'+q.atk+'」が '+kindLabel+' になるタイプを ぜんぶ えらんでね！';
+  } else {
+    qtext.textContent='「'+q.atk+'」が '+kindLabel+' になるタイプは どれ？';
+  }
+  ic.appendChild(qtext);
   area.appendChild(ic);
 
-  const allChoices=shuffle([q.correct,...q.wrong]);
-  const choiceDiv=el('div','choices');choiceDiv.className='choices col2';
-  allChoices.forEach(function(t){
-    const btn=el('button','choice-btn');
-    const dot=document.createElement('span');
-    dot.style.cssText='width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px;background:'+(TYPE_COLORS[t]||'#aaa');
-    btn.appendChild(dot);btn.appendChild(document.createTextNode(t));
-    btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';
-    btn.addEventListener('click',function(){pickTypeCompAnswer(btn,t,q);});
-    choiceDiv.appendChild(btn);
-  });
-  area.appendChild(choiceDiv);
+  if(q.multi){
+    // 複数選択モード
+    const selected=new Set();
+    const choiceDiv=el('div','choices');
+    const cols=q.shown.length<=6?'col2':'col3';
+    choiceDiv.className='choices '+cols;
+    q.shown.forEach(function(t){
+      const btn=el('button','choice-btn');
+      const dot=document.createElement('span');
+      dot.style.cssText='width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px;background:'+(TYPE_COLORS[t]||'#aaa');
+      btn.appendChild(dot);btn.appendChild(document.createTextNode(t));
+      btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';
+      btn.dataset.type=t;
+      btn.addEventListener('click',function(){
+        if(tcAnswered)return;
+        if(selected.has(t)){selected.delete(t);btn.classList.remove('selected');}
+        else{selected.add(t);btn.classList.add('selected');}
+      });
+      choiceDiv.appendChild(btn);
+    });
+    area.appendChild(choiceDiv);
+    const confirmBtn=el('button','restart-btn');
+    confirmBtn.textContent='けってい！';confirmBtn.style.marginBottom='0.5rem';
+    confirmBtn.addEventListener('click',function(){pickTypeCompMulti(selected,q,confirmBtn);});
+    area.appendChild(confirmBtn);
+  } else {
+    // 1択モード
+    const allChoices=shuffle([...q.correct,...q.wrong]);
+    const choiceDiv=el('div','choices');choiceDiv.className='choices col2';
+    allChoices.forEach(function(t){
+      const btn=el('button','choice-btn');
+      const dot=document.createElement('span');
+      dot.style.cssText='width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px;background:'+(TYPE_COLORS[t]||'#aaa');
+      btn.appendChild(dot);btn.appendChild(document.createTextNode(t));
+      btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';
+      btn.addEventListener('click',function(){pickTypeCompAnswer(btn,t,q);});
+      choiceDiv.appendChild(btn);
+    });
+    area.appendChild(choiceDiv);
+  }
 
   const rb=el('div','result-banner');rb.id='rb';area.appendChild(rb);
   const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
   nb.addEventListener('click',function(){tcCurrent++;tcAnswered=false;renderTypeCompQuestion();});
   area.appendChild(nb);
+  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='4px';bk.style.width='100%';
+  bk.addEventListener('click',showTypeCompTop);area.appendChild(bk);
+}
+function pickTypeCompMulti(selected,q,confirmBtn){
+  if(tcAnswered)return;tcAnswered=true;
+  confirmBtn.disabled=true;
+  const correct=new Set(q.correct);
+  // 正解判定: selected と correct が完全一致
+  const isCorrect=selected.size===correct.size&&[...selected].every(function(t){return correct.has(t);});
+  // ボタンを色分け
+  document.querySelectorAll('.choice-btn').forEach(function(b){
+    b.style.pointerEvents='none';
+    const t=b.dataset.type;
+    if(correct.has(t)){b.classList.remove('selected');b.classList.add('correct');}
+    else if(selected.has(t)){b.classList.remove('selected');b.classList.add('wrong');}
+  });
+  const rb=document.getElementById('rb');
+  if(isCorrect){
+    tcScore++;
+    showCorrectBanner(rb,q.pokes[0]||25,'せいかい！すごい！');
+    showCelebration(q.pokes.length?q.pokes:[25],'せいかい！🎉');
+  } else {
+    rb.className='result-banner wrong';
+    const mk=document.createElement('span');mk.className='mark';mk.textContent='❌';
+    const ans=q.correct.join('・');
+    const tx=document.createElement('span');tx.textContent='ざんねん… こたえは「'+ans+'」だよ！';
+    rb.appendChild(mk);rb.appendChild(tx);
+  }
+  document.getElementById('nb').style.display='block';
 }
 
 function pickTypeCompAnswer(btn,chosen,q){
@@ -869,11 +963,11 @@ function makeEvoQuestions(){
   });
   const easyPool=pool.filter(function(e){return EASY_IDS.has(e.from);});
   const hardPool=pool.filter(function(e){return !EASY_IDS.has(e.from);});
-  const eRatios={easy:8,normal:5,hard:2};
+  const eRatios={easy:25,normal:15,hard:5};
   const eCount=eRatios[difficulty]||5;
   const easy=shuffle(easyPool).slice(0,Math.min(eCount,easyPool.length));
-  const hard=shuffle(hardPool).slice(0,Math.min(10-eCount,hardPool.length));
-  return shuffle([...easy,...hard]).slice(0,10).map(function(e){
+  const hard=shuffle(hardPool).slice(0,Math.min(30-eCount,hardPool.length));
+  return shuffle([...easy,...hard]).map(function(e){
     // 不正解: 正解と同じ進化後の個数になるよう、別のポケモンIDを混ぜる
     const correctIds=e.to;
     const wrongPool=Object.keys(POKE_NAMES).map(Number).filter(function(id){
@@ -929,6 +1023,8 @@ function renderEvoQuestion(){
   const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
   nb.addEventListener('click',function(){evoCurrent++;evoAnswered=false;renderEvoQuestion();});
   area.appendChild(nb);
+  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='4px';bk.style.width='100%';
+  bk.addEventListener('click',showTop);area.appendChild(bk);
 }
 
 function pickEvoAnswer(btn,chosen,q){
@@ -1318,7 +1414,7 @@ function openSettings(){
   const handle=el('div','settings-handle');panel.appendChild(handle);
   const title=el('div','settings-title');title.textContent='⚙️ せってい';panel.appendChild(title);
   const row=el('div','settings-row');
-  const label=el('div','settings-label');label.textContent='むずかしさ（クイズ・シルエット）';row.appendChild(label);
+  const label=el('div','settings-label');label.textContent='むずかしさ（クイズ・シルエット・タイプ・しんか）';row.appendChild(label);
   const diffBtns=el('div','diff-btns');
   [['easy','かんたん'],['normal','ふつう'],['hard','むずかしい']].forEach(function(d){
     const btn=el('button','diff-btn'+(difficulty===d[0]?' active':''));btn.textContent=d[1];
