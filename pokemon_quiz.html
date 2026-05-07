@@ -298,15 +298,15 @@ const TYPE_CHART={
   'かくとう':{'どく':0.5,'むし':0.5,'エスパー':0.5,'ひこう':0.5,'フェアリー':0.5,'ゴースト':0,'ノーマル':2,'こおり':2,'いわ':2,'あく':2,'はがね':2},
   'どく':{'どく':0.5,'じめん':0.5,'いわ':0.5,'ゴースト':0.5,'はがね':0,'くさ':2,'フェアリー':2},
   'じめん':{'くさ':0.5,'むし':0.5,'ひこう':0,'ほのお':2,'でんき':2,'どく':2,'いわ':2,'はがね':2},
-  'ひこう':{'でんき':0.5,'いわ':0.5,'はがね':0.5,'じめん':1,'くさ':2,'かくとう':2,'むし':2},
+  'ひこう':{'でんき':0.5,'いわ':0.5,'はがね':0.5,'くさ':2,'かくとう':2,'むし':2},
   'エスパー':{'エスパー':0.5,'はがね':0.5,'あく':0,'かくとう':2,'どく':2},
   'むし':{'ほのお':0.5,'かくとう':0.5,'ひこう':0.5,'どく':0.5,'ゴースト':0.5,'はがね':0.5,'フェアリー':0.5,'くさ':2,'エスパー':2,'あく':2},
   'いわ':{'かくとう':0.5,'じめん':0.5,'はがね':0.5,'ほのお':2,'こおり':2,'ひこう':2,'むし':2},
   'ゴースト':{'ノーマル':0,'あく':0.5,'エスパー':2,'ゴースト':2},
   'ドラゴン':{'はがね':0.5,'フェアリー':0,'ドラゴン':2},
-  'あく':{'かくとう':0.5,'あく':0.5,'フェアリー':0.5,'エスパー':0,'ゴースト':2,'あく':2},
+  'あく':{'かくとう':0.5,'あく':0.5,'フェアリー':0.5,'エスパー':0,'ゴースト':2},
   'はがね':{'ほのお':0.5,'みず':0.5,'でんき':0.5,'はがね':0.5,'どく':2,'こおり':2,'いわ':2,'フェアリー':2},
-  'フェアリー':{'ほのお':0.5,'どく':0.5,'はがね':0.5,'ドラゴン':0,'あく':2,'かくとう':2,'ドラゴン':2},
+  'フェアリー':{'ほのお':0.5,'どく':0.5,'はがね':0.5,'ドラゴン':0,'あく':2,'かくとう':2},
 };
 
 // タイプ表示色
@@ -768,10 +768,10 @@ function renderTypeQuestion(){
   area.appendChild(choiceDiv);
 
   const rb=el('div','result-banner');rb.id='rb';area.appendChild(rb);
-  const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
+  const nb=el('button','next-btn');nb.id='nb';nb.textContent='つぎへ ▶';nb.style.display='none';
   nb.addEventListener('click',function(){tcCurrent++;tcAnswered=false;renderTypeQuestion();});
   area.appendChild(nb);
-  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='4px';bk.style.width='100%';
+  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='8px';bk.style.width='100%';
   bk.addEventListener('click',showTop);area.appendChild(bk);
 }
 
@@ -1002,10 +1002,10 @@ function renderTypeCompQuestion(){
   }
 
   const rb=el('div','result-banner');rb.id='rb';area.appendChild(rb);
-  const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
+  const nb=el('button','next-btn');nb.id='nb';nb.textContent='つぎへ ▶';nb.style.display='none';
   nb.addEventListener('click',function(){tcCurrent++;tcAnswered=false;renderTypeCompQuestion();});
   area.appendChild(nb);
-  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='4px';bk.style.width='100%';
+  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='8px';bk.style.width='100%';
   bk.addEventListener('click',showTypeCompTop);area.appendChild(bk);
 }
 function pickTypeCompMulti(selected,q,confirmBtn){
@@ -1123,10 +1123,10 @@ function renderEvoQuestion(){
   area.appendChild(choiceDiv);
 
   const rb=el('div','result-banner');rb.id='rb';area.appendChild(rb);
-  const nb=el('button','top-btn');nb.id='nb';nb.textContent='つぎへ →';nb.style.display='none';nb.style.width='100%';
+  const nb=el('button','next-btn');nb.id='nb';nb.textContent='つぎへ ▶';nb.style.display='none';
   nb.addEventListener('click',function(){evoCurrent++;evoAnswered=false;renderEvoQuestion();});
   area.appendChild(nb);
-  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='4px';bk.style.width='100%';
+  const bk=el('button','top-btn');bk.textContent='← やめる';bk.style.marginTop='8px';bk.style.width='100%';
   bk.addEventListener('click',showTop);area.appendChild(bk);
 }
 
