@@ -1040,7 +1040,8 @@ function pickTypeCompAnswer(btn,chosen,q){
   if(tcAnswered)return;tcAnswered=true;
   document.querySelectorAll('.choice-btn').forEach(function(b){b.style.pointerEvents='none';});
   const rb=document.getElementById('rb');
-  if(chosen===q.correct){
+  const correctAns=q.correct[0]; // q.correctは配列なので[0]で取り出す
+  if(chosen===correctAns){
     btn.classList.add('correct');tcScore++;
     showCorrectBanner(rb,q.pokes[0]||25,'せいかい！すごい！');
     showCelebration(q.pokes.length?q.pokes:[25],'せいかい！🎉');
@@ -1048,11 +1049,11 @@ function pickTypeCompAnswer(btn,chosen,q){
     btn.classList.add('wrong');
     rb.className='result-banner wrong';
     const mk=document.createElement('span');mk.className='mark';mk.textContent='❌';
-    const tx=document.createElement('span');tx.textContent='ざんねん… こたえは「'+q.correct+'」だよ！';
+    const tx=document.createElement('span');tx.textContent='ざんねん… こたえは「'+correctAns+'」だよ！';
     rb.appendChild(mk);rb.appendChild(tx);
     document.querySelectorAll('.choice-btn').forEach(function(b){
-      if([...b.childNodes].filter(function(n){return n.nodeType===3;}).map(function(n){return n.textContent.trim();}).join('')===q.correct)
-        b.classList.add('correct');
+      const t=[...b.childNodes].filter(function(n){return n.nodeType===3;}).map(function(n){return n.textContent.trim();}).join('');
+      if(t===correctAns) b.classList.add('correct');
     });
   }
   document.getElementById('nb').style.display='block';
