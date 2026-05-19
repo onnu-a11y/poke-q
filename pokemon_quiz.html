@@ -200,6 +200,31 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 
 .maze-clear-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
 .maze-retry-btn{margin-left:auto;background:rgba(255,255,255,0.88);border:1.5px solid #ccc;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;color:#555;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+
+/* ===== バトルナビ アニメーション ===== */
+@keyframes btl-enter-my    { from{transform:translateY(60px) scale(0.7);opacity:0;} to{transform:translateY(0) scale(1);opacity:1;} }
+@keyframes btl-enter-enemy { from{transform:translateY(-60px) scale(0.7);opacity:0;} to{transform:translateY(0) scale(1);opacity:1;} }
+@keyframes btl-attack-my   { 0%{transform:translateX(0);} 40%{transform:translateX(28px) scale(1.1);} 100%{transform:translateX(0) scale(1);} }
+@keyframes btl-attack-en   { 0%{transform:scaleX(-1) translateX(0);} 40%{transform:scaleX(-1) translateX(28px) scale(1.1);} 100%{transform:scaleX(-1) translateX(0) scale(1);} }
+@keyframes btl-hit         { 0%{filter:brightness(1);} 20%{filter:brightness(3) saturate(0);} 40%{filter:brightness(1);} 60%{filter:brightness(3) saturate(0);} 80%{filter:brightness(1);} 100%{filter:brightness(1);} }
+@keyframes btl-hit-super   { 0%{filter:sepia(1) saturate(5) hue-rotate(300deg);transform:translate(0,0);} 15%{transform:translate(-6px,3px);} 30%{transform:translate(6px,-3px);filter:sepia(1) saturate(8) hue-rotate(300deg);} 50%{transform:translate(-4px,4px);} 70%{transform:translate(4px,-2px);} 100%{transform:translate(0,0);filter:none;} }
+@keyframes btl-hit-weak    { 0%{filter:brightness(1);} 30%{filter:brightness(0.5) saturate(0.2);} 100%{filter:brightness(1);} }
+@keyframes btl-faint       { 0%{opacity:1;transform:translateY(0) rotate(0deg);filter:none;} 40%{transform:translateY(8px) rotate(-15deg);filter:grayscale(0.5);} 100%{opacity:0;transform:translateY(40px) rotate(-30deg);filter:grayscale(1);} }
+@keyframes btl-swap-out    { from{opacity:1;transform:translateX(0);} to{opacity:0;transform:translateX(-60px);} }
+@keyframes btl-swap-in     { from{opacity:0;transform:translateX(-60px);} to{opacity:1;transform:translateX(0);} }
+@keyframes btl-swap-out-en { from{opacity:1;transform:scaleX(-1) translateX(0);} to{opacity:0;transform:scaleX(-1) translateX(-60px);} }
+@keyframes btl-swap-in-en  { from{opacity:0;transform:scaleX(-1) translateX(-60px);} to{opacity:1;transform:scaleX(-1) translateX(0);} }
+
+/* タイプ別エフェクト */
+@keyframes fx-fire   { 0%{transform:scale(0.3) translateY(20px);opacity:0;} 40%{opacity:1;transform:scale(1.2) translateY(-5px);} 100%{transform:scale(1.8) translateY(-20px);opacity:0;} }
+@keyframes fx-water  { 0%{transform:scale(0.2);opacity:0;border-radius:50%;} 50%{opacity:0.9;transform:scale(1.3);} 100%{transform:scale(2.2);opacity:0;} }
+@keyframes fx-elec   { 0%{opacity:0;transform:scale(0.5) skew(-10deg);} 20%{opacity:1;transform:scale(1.1) skew(-10deg);} 40%{opacity:0.3;transform:scale(0.9) skew(5deg);} 60%{opacity:1;transform:scale(1.2) skew(-5deg);} 100%{opacity:0;transform:scale(1.5);} }
+@keyframes fx-ice    { 0%{transform:scale(0.4) rotate(0deg);opacity:0;} 50%{opacity:1;transform:scale(1.1) rotate(180deg);} 100%{transform:scale(1.6) rotate(360deg);opacity:0;} }
+@keyframes fx-ghost  { 0%{opacity:0;transform:scale(0.8);filter:blur(0px);} 30%{opacity:0.8;transform:scale(1.1);filter:blur(1px);} 70%{opacity:0.5;transform:scale(1.3);filter:blur(3px);} 100%{opacity:0;transform:scale(1.8);filter:blur(6px);} }
+@keyframes fx-dragon { 0%{opacity:0;transform:scale(0.3) rotate(0deg);} 50%{opacity:1;transform:scale(1.2) rotate(540deg);} 100%{opacity:0;transform:scale(2) rotate(1080deg);} }
+@keyframes fx-normal { 0%{opacity:0;transform:scale(0.5);} 40%{opacity:1;transform:scale(1.15);} 70%{opacity:1;transform:scale(1);} 100%{opacity:0;transform:scale(0.9);} }
+@keyframes btl-compat-pop { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.3);} 30%{opacity:1;transform:translate(-50%,-50%) scale(1.3);} 70%{opacity:1;transform:translate(-50%,-50%) scale(1);} 100%{opacity:0;transform:translate(-50%,-50%) scale(0.8);} }
+@keyframes btl-confetti { 0%{transform:translateY(0) rotate(0);opacity:1;} 100%{transform:translateY(100vh) rotate(720deg);opacity:0;} }
 </style>
 </head>
 <body>
@@ -288,25 +313,25 @@ const TYPE_POKES={
 };
 
 // タイプ相性テーブル (攻撃側→防御側: 2=ばつぐん, 0.5=いまひとつ, 0=むこう)
-const TYPE_CHART={
-  'ノーマル':{'いわ':0.5,'はがね':0.5,'ゴースト':0},
-  'ほのお':{'ほのお':0.5,'みず':0.5,'いわ':0.5,'ドラゴン':0.5,'くさ':2,'こおり':2,'むし':2,'はがね':2},
-  'みず':{'みず':0.5,'くさ':0.5,'ドラゴン':0.5,'ほのお':2,'じめん':2,'いわ':2},
-  'でんき':{'でんき':0.5,'くさ':0.5,'ドラゴン':0.5,'じめん':0,'みず':2,'ひこう':2},
-  'くさ':{'ほのお':0.5,'くさ':0.5,'どく':0.5,'ひこう':0.5,'むし':0.5,'ドラゴン':0.5,'はがね':0.5,'みず':2,'じめん':2,'いわ':2},
-  'こおり':{'みず':0.5,'こおり':0.5,'くさ':2,'じめん':2,'ひこう':2,'ドラゴン':2},
-  'かくとう':{'どく':0.5,'むし':0.5,'エスパー':0.5,'ひこう':0.5,'フェアリー':0.5,'ゴースト':0,'ノーマル':2,'こおり':2,'いわ':2,'あく':2,'はがね':2},
-  'どく':{'どく':0.5,'じめん':0.5,'いわ':0.5,'ゴースト':0.5,'はがね':0,'くさ':2,'フェアリー':2},
-  'じめん':{'くさ':0.5,'むし':0.5,'ひこう':0,'ほのお':2,'でんき':2,'どく':2,'いわ':2,'はがね':2},
-  'ひこう':{'でんき':0.5,'いわ':0.5,'はがね':0.5,'くさ':2,'かくとう':2,'むし':2},
-  'エスパー':{'エスパー':0.5,'はがね':0.5,'あく':0,'かくとう':2,'どく':2},
-  'むし':{'ほのお':0.5,'かくとう':0.5,'ひこう':0.5,'どく':0.5,'ゴースト':0.5,'はがね':0.5,'フェアリー':0.5,'くさ':2,'エスパー':2,'あく':2},
-  'いわ':{'かくとう':0.5,'じめん':0.5,'はがね':0.5,'ほのお':2,'こおり':2,'ひこう':2,'むし':2},
-  'ゴースト':{'ノーマル':0,'あく':0.5,'エスパー':2,'ゴースト':2},
-  'ドラゴン':{'はがね':0.5,'フェアリー':0,'ドラゴン':2},
-  'あく':{'かくとう':0.5,'あく':0.5,'フェアリー':0.5,'エスパー':0,'ゴースト':2},
-  'はがね':{'ほのお':0.5,'みず':0.5,'でんき':0.5,'はがね':0.5,'どく':2,'こおり':2,'いわ':2,'フェアリー':2},
-  'フェアリー':{'ほのお':0.5,'どく':0.5,'はがね':0.5,'ドラゴン':0,'あく':2,'かくとう':2},
+const TYPE_CHART = {
+  'ノーマル': {'いわ':0.5,'ゴースト':0,'はがね':0.5},
+  'ほのお':   {'くさ':2,'こおり':2,'むし':2,'はがね':2,'ほのお':0.5,'みず':0.5,'いわ':0.5,'ドラゴン':0.5},
+  'みず':     {'ほのお':2,'じめん':2,'いわ':2,'みず':0.5,'くさ':0.5,'ドラゴン':0.5},
+  'でんき':   {'みず':2,'ひこう':2,'でんき':0.5,'くさ':0.5,'ドラゴン':0.5,'じめん':0},
+  'くさ':     {'みず':2,'じめん':2,'いわ':2,'ほのお':0.5,'くさ':0.5,'どく':0.5,'ひこう':0.5,'むし':0.5,'はがね':0.5,'ドラゴン':0.5},
+  'こおり':   {'くさ':2,'じめん':2,'ひこう':2,'ドラゴン':2,'こおり':0.5,'みず':0.5,'はがね':0.5,'ほのお':0.5},
+  'かくとう': {'ノーマル':2,'こおり':2,'いわ':2,'あく':2,'はがね':2,'どく':0.5,'ひこう':0.5,'エスパー':0.5,'むし':0.5,'フェアリー':0.5,'ゴースト':0},
+  'どく':     {'くさ':2,'フェアリー':2,'どく':0.5,'じめん':0.5,'いわ':0.5,'ゴースト':0.5,'はがね':0},
+  'じめん':   {'ほのお':2,'でんき':2,'どく':2,'いわ':2,'はがね':2,'くさ':0.5,'むし':0.5,'ひこう':0},
+  'ひこう':   {'くさ':2,'かくとう':2,'むし':2,'でんき':0.5,'いわ':0.5,'はがね':0.5},
+  'エスパー': {'かくとう':2,'どく':2,'エスパー':0.5,'はがね':0.5,'あく':0},
+  'むし':     {'くさ':2,'エスパー':2,'あく':2,'ほのお':0.5,'かくとう':0.5,'ひこう':0.5,'ゴースト':0.5,'はがね':0.5,'フェアリー':0.5},
+  'いわ':     {'ほのお':2,'こおり':2,'ひこう':2,'むし':2,'かくとう':0.5,'じめん':0.5,'はがね':0.5},
+  'ゴースト': {'ゴースト':2,'エスパー':2,'ノーマル':0,'あく':0.5},
+  'ドラゴン': {'ドラゴン':2,'はがね':0.5,'フェアリー':0},
+  'あく':     {'ゴースト':2,'エスパー':2,'かくとう':0.5,'あく':0.5,'フェアリー':0.5},
+  'はがね':   {'こおり':2,'いわ':2,'フェアリー':2,'ほのお':0.5,'みず':0.5,'でんき':0.5,'はがね':0.5},
+  'フェアリー':{'かくとう':2,'ドラゴン':2,'あく':2,'ほのお':0.5,'どく':0.5,'はがね':0.5},
 };
 
 // タイプ表示色
@@ -1275,6 +1300,7 @@ function showTop(){
     {id:'kana',icon:'✏️',name:'もじかきれんしゅう',desc:'ひらがな・カタカナをゆびでなぞって かいてみよう！'},
     {id:'math',icon:'➕',name:'さんすうクイズ',desc:'ポケモンをつかった たしざん・ひきざん！ 10もんチャレンジ'},
     {id:'maze',icon:'🗺️',name:'めいろ',desc:'ゆびでなぞってゴールをめざせ！ポケモンといっしょにすすもう！'},
+    {id:'battle',icon:'⚔️',name:'バトルナビ',desc:'モンコレでバトル！わざとタイプ相性をかくにんしよう！'},
   ];
   modes.forEach(function(m){
     const card=el('div','mode-card');
@@ -1317,6 +1343,7 @@ function showTop(){
 function startMode(mode){
   currentMode=mode;answered=false;
   isRetryMode=false;
+  if(mode==='battle'){startBattleNavi();return;}
   if(mode==='kana'){startKanaMode();return;}
   if(mode==='maze'){showMazeTop();return;}
   if(mode==='typequiz'){startTypeQuiz();return;}
@@ -2599,6 +2626,678 @@ function showMazeClear() {
     card.appendChild(btnWrap);
   }
 }
+
+
+// ===== バトルナビ =====
+
+// タイプ相性テーブル（攻撃タイプ → 防御タイプ → 倍率）
+const TYPE_CHART = {
+  'ノーマル':{'いわ':0.5,'ゴースト':0,'はがね':0.5},
+  'ほのお':{'くさ':2,'こおり':2,'むし':2,'はがね':2,'ほのお':0.5,'みず':0.5,'いわ':0.5,'ドラゴン':0.5},
+  'みず':{'ほのお':2,'じめん':2,'いわ':2,'みず':0.5,'くさ':0.5,'ドラゴン':0.5},
+  'でんき':{'みず':2,'ひこう':2,'でんき':0.5,'くさ':0.5,'ドラゴン':0.5,'じめん':0},
+  'くさ':{'みず':2,'じめん':2,'いわ':2,'ほのお':0.5,'くさ':0.5,'どく':0.5,'ひこう':0.5,'むし':0.5,'はがね':0.5,'ドラゴン':0.5},
+  'こおり':{'くさ':2,'じめん':2,'ひこう':2,'ドラゴン':2,'こおり':0.5,'みず':0.5,'はがね':0.5,'ほのお':0.5},
+  'かくとう':{'ノーマル':2,'こおり':2,'いわ':2,'あく':2,'はがね':2,'どく':0.5,'ひこう':0.5,'エスパー':0.5,'むし':0.5,'フェアリー':0.5,'ゴースト':0},
+  'どく':{'くさ':2,'フェアリー':2,'どく':0.5,'じめん':0.5,'いわ':0.5,'ゴースト':0.5,'はがね':0},
+  'じめん':{'ほのお':2,'でんき':2,'どく':2,'いわ':2,'はがね':2,'くさ':0.5,'むし':0.5,'ひこう':0},
+  'ひこう':{'くさ':2,'かくとう':2,'むし':2,'でんき':0.5,'いわ':0.5,'はがね':0.5},
+  'エスパー':{'かくとう':2,'どく':2,'エスパー':0.5,'はがね':0.5,'あく':0},
+  'むし':{'くさ':2,'エスパー':2,'あく':2,'ほのお':0.5,'かくとう':0.5,'ひこう':0.5,'ゴースト':0.5,'はがね':0.5,'フェアリー':0.5},
+  'いわ':{'ほのお':2,'こおり':2,'ひこう':2,'むし':2,'かくとう':0.5,'じめん':0.5,'はがね':0.5},
+  'ゴースト':{'ゴースト':2,'エスパー':2,'ノーマル':0,'あく':0},
+  'ドラゴン':{'ドラゴン':2,'はがね':0.5,'フェアリー':0},
+  'あく':{'ゴースト':2,'エスパー':2,'かくとう':0.5,'あく':0.5,'フェアリー':0.5},
+  'はがね':{'こおり':2,'いわ':2,'フェアリー':2,'ほのお':0.5,'みず':0.5,'でんき':0.5,'はがね':0.5,'ほのお':0.5},
+  'フェアリー':{'かくとう':2,'ドラゴン':2,'あく':2,'ほのお':0.5,'どく':0.5,'はがね':0.5},
+};
+
+// ●24体の技データ
+const MONKORE_LIST = [
+  {name:'ホゲータ',id:909, moves:[{name:'ひのこ',type:'ほのお'},{name:'かえんほうしゃ',type:'ほのお'},{name:'じだんだ',type:'じめん'},{name:'チャームボイス',type:'フェアリー'}]},
+  {name:'メタグロス',id:376, moves:[{name:'コメットパンチ',type:'はがね'},{name:'じしん',type:'じめん'},{name:'しねんのずつき',type:'エスパー'},{name:'バレットパンチ',type:'はがね'}]},
+  {name:'ゲッコウガ',id:658, moves:[{name:'みずしゅりけん',type:'みず'},{name:'みずのはどう',type:'みず'},{name:'シャドーボール',type:'ゴースト'},{name:'かげぶんしん',type:'ノーマル'}]},
+  {name:'フシギバナ',id:3, moves:[{name:'はっぱカッター',type:'くさ'},{name:'ソーラービーム',type:'くさ'},{name:'やどりぎのたね',type:'くさ'},{name:'つるのむち',type:'くさ'}]},
+  {name:'ガブリアス',id:445, moves:[{name:'じしん',type:'じめん'},{name:'げきりん',type:'ドラゴン'},{name:'ストーンエッジ',type:'いわ'},{name:'かみくだく',type:'あく'}]},
+  {name:'カイリュー',id:149, moves:[{name:'ドラゴンクロー',type:'ドラゴン'},{name:'りゅうせいぐん',type:'ドラゴン'},{name:'ぼうふう',type:'ひこう'},{name:'ダブルウイング',type:'ひこう'}]},
+  {name:'ゲンガー',id:94, moves:[{name:'シャドーボール',type:'ゴースト'},{name:'さいみんじゅつ',type:'エスパー'},{name:'ヘドロばくだん',type:'どく'},{name:'ゆめくい',type:'エスパー'}]},
+  {name:'エースバーン',id:815, moves:[{name:'かえんボール',type:'ほのお'},{name:'ブレイズキック',type:'ほのお'},{name:'でんこうせっか',type:'ノーマル'},{name:'きあいだま',type:'かくとう'}]},
+  {name:'パオジアン',id:1002, moves:[{name:'つららおとし',type:'こおり'},{name:'ふいうち',type:'あく'},{name:'せいなるつるぎ',type:'かくとう'},{name:'かみくだく',type:'あく'}]},
+  {name:'ボーマンダ',id:373, moves:[{name:'りゅうのいぶき',type:'ドラゴン'},{name:'かえんほうしゃ',type:'ほのお'},{name:'そらをとぶ',type:'ひこう'},{name:'りゅうせいぐん',type:'ドラゴン'}]},
+  {name:'レックウザ',id:384, moves:[{name:'ガリョウテンセイ',type:'ひこう'},{name:'りゅうせいぐん',type:'ドラゴン'},{name:'だいもんじ',type:'ほのお'},{name:'ふぶき',type:'こおり'}]},
+  {name:'ゼクロム',id:644, moves:[{name:'クロスサンダー',type:'でんき'},{name:'らいげき',type:'でんき'},{name:'りゅうのいぶき',type:'ドラゴン'},{name:'げきりん',type:'ドラゴン'}]},
+  {name:'イベルタル',id:717, moves:[{name:'デスウイング',type:'あく'},{name:'イカサマ',type:'あく'},{name:'そらをとぶ',type:'ひこう'},{name:'ぼうふう',type:'ひこう'}]},
+  {name:'ネクロズマ(たそがれ)',id:800, types:['エスパー','はがね'], moves:[{name:'フォトンゲイザー',type:'エスパー'},{name:'メテオドライブ',type:'はがね'},{name:'シャドーボール',type:'ゴースト'},{name:'サイコファング',type:'エスパー'}]},
+  {name:'ザシアン',id:888, moves:[{name:'きょじゅうざん',type:'フェアリー'},{name:'アイアンヘッド',type:'はがね'},{name:'でんこうせっか',type:'ノーマル'},{name:'じゃれつく',type:'フェアリー'}]},
+  {name:'ザマゼンタ',id:889, moves:[{name:'きょじゅうだん',type:'はがね'},{name:'アイアンヘッド',type:'はがね'},{name:'でんこうせっか',type:'ノーマル'},{name:'きあいだま',type:'かくとう'}]},
+  {name:'ミュウツー',id:150, moves:[{name:'サイコキネシス',type:'エスパー'},{name:'シャドーボール',type:'ゴースト'},{name:'れいとうビーム',type:'こおり'},{name:'かみなり',type:'でんき'}]},
+  {name:'ムゲンダイナ',id:890, moves:[{name:'ダイマックスほう',type:'どく'},{name:'りゅうのいぶき',type:'ドラゴン'},{name:'かえんほうしゃ',type:'ほのお'},{name:'ヘドロばくだん',type:'どく'}]},
+  {name:'レックウザ(黒)',id:384, moves:[{name:'ガリョウテンセイ',type:'ひこう'},{name:'りゅうせいぐん',type:'ドラゴン'},{name:'だいもんじ',type:'ほのお'},{name:'ふぶき',type:'こおり'}]},
+  {name:'リザードン(キョダイ)',id:6, types:['ほのお','ひこう'], moves:[{name:'キョダイゴクエン',type:'ほのお'},{name:'かえんほうしゃ',type:'ほのお'},{name:'そらをとぶ',type:'ひこう'},{name:'りゅうのいぶき',type:'ドラゴン'}]},
+  {name:'メガリザードンX',id:6, types:['ドラゴン','ほのお'], moves:[{name:'かえんほうしゃ',type:'ほのお'},{name:'りゅうのいぶき',type:'ドラゴン'},{name:'フレアドライブ',type:'ほのお'},{name:'そらをとぶ',type:'ひこう'}]},
+  {name:'メガバンギラス',id:248, types:['いわ','あく'], moves:[{name:'いわなだれ',type:'いわ'},{name:'かみくだく',type:'あく'},{name:'ストーンエッジ',type:'いわ'},{name:'じしん',type:'じめん'}]},
+  {name:'メガミュウツーY',id:150, types:['エスパー'], moves:[{name:'サイコキネシス',type:'エスパー'},{name:'シャドーボール',type:'ゴースト'},{name:'れいとうビーム',type:'こおり'},{name:'かみなり',type:'でんき'}]},
+  {name:'メガアブソル',id:359, types:['あく'], moves:[{name:'きりさく',type:'ノーマル'},{name:'ふいうち',type:'あく'},{name:'かみくだく',type:'あく'},{name:'シャドークロー',type:'ゴースト'}]}
+];
+
+// PokeAPI 鳴き声URL
+
+// タイプ相性計算（攻撃タイプ vs 防御タイプリスト）
+function calcCompatibility(atkType, defTypes){
+  let mult = 1;
+  for(const dt of defTypes){
+    const row = TYPE_CHART[atkType];
+    if(row && row[dt] !== undefined) mult *= row[dt];
+  }
+  if(mult >= 2) return {badge:'🔴', label:'ばつぐん', cls:'super'};
+  if(mult <= 0) return {badge:'❌', label:'きかない', cls:'zero'};
+  if(mult < 1)  return {badge:'🔵', label:'いまひとつ', cls:'weak'};
+  return {badge:'⚪', label:'ふつう', cls:'normal'};
+}
+
+// バトル状態
+let btl = {
+  myTeam:[], enemyTeam:[],
+  myIdx:0, enemyIdx:0,
+  selecting: false,
+  selectPhase: 'my',
+  selectBuf: [],
+  wins:0, losses:0,
+  fainted: {my:[], enemy:[]},
+};
+
+function battleImgUrl(p){
+  // 特殊フォルム対応
+  const id = p.id;
+  return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/'+id+'.png';
+}
+
+// タイプ色
+const TYPE_COLORS_BTL = {
+  'ノーマル':'#A8A878','ほのお':'#F08030','みず':'#6890F0','でんき':'#F8D030',
+  'くさ':'#78C850','こおり':'#98D8D8','かくとう':'#C03028','どく':'#A040A0',
+  'じめん':'#E0C068','ひこう':'#A890F0','エスパー':'#F85888','むし':'#A8B820',
+  'いわ':'#B8A038','ゴースト':'#705898','ドラゴン':'#7038F8','あく':'#705848',
+  'はがね':'#B8B8D0','フェアリー':'#EE99AC',
+};
+const TYPE_TEXT_WHITE = new Set(['ほのお','みず','くさ','かくとう','どく','じめん','ゴースト','ドラゴン','あく','むし','エスパー','いわ','ひこう','フェアリー','でんき','こおり','はがね']);
+
+function startBattleNavi(){
+  btl.wins=0; btl.losses=0;
+  btl.fainted={my:[], enemy:[]};
+  btl.myIdx=0; btl.enemyIdx=0;
+  btl.myTeam=[]; btl.enemyTeam=[];
+  showBattleSelect('my');
+}
+
+function showBattleSelect(phase){
+  btl.selectPhase = phase;
+  btl.selectBuf = [];
+  const area = document.getElementById('main-area');
+  area.innerHTML = '';
+  area.style.padding = '0';
+
+  const wrap = el('div','');
+  wrap.style.cssText = 'max-width:480px;margin:0 auto;padding:12px;';
+
+  const backBtn = el('button','back-btn');
+  backBtn.textContent = '← もどる';
+  backBtn.addEventListener('click', showTop);
+  wrap.appendChild(backBtn);
+
+  const title = el('div','');
+  title.style.cssText = 'font-size:17px;font-weight:700;text-align:center;margin:10px 0 6px;color:#1a1a2e;';
+  title.textContent = phase==='my' ? '⚔️ じぶんのポケモンを3ひきえらぼう' : '🛡️ あいてのポケモンを3ひきえらぼう';
+  wrap.appendChild(title);
+
+  const counter = el('div','');
+  counter.id = 'btl-select-count';
+  counter.style.cssText = 'text-align:center;font-size:14px;color:#555;margin-bottom:10px;';
+  counter.textContent = '0 / 3 えらんだ';
+  wrap.appendChild(counter);
+
+  const grid = el('div','');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;';
+
+  MONKORE_LIST.forEach(function(p, idx){
+    const card = el('div','');
+    card.style.cssText = 'background:white;border:2px solid #ddd;border-radius:12px;padding:6px;text-align:center;cursor:pointer;transition:all 0.15s;';
+    const img = el('img','');
+    img.src = battleImgUrl(p);
+    img.style.cssText = 'width:60px;height:60px;object-fit:contain;';
+    const nm = el('div','');
+    nm.style.cssText = 'font-size:9px;font-weight:700;margin-top:2px;color:#1a1a2e;line-height:1.2;';
+    nm.textContent = p.name;
+    card.appendChild(img);
+    card.appendChild(nm);
+    card.dataset.idx = idx;
+    card.dataset.selected = '0';
+    card.addEventListener('click', function(){
+      const already = btl.selectBuf.indexOf(idx);
+      if(already >= 0){
+        btl.selectBuf.splice(already,1);
+        card.style.borderColor='#ddd';
+        card.style.background='white';
+        card.style.transform='';
+      } else {
+        if(btl.selectBuf.length>=3) return;
+        btl.selectBuf.push(idx);
+        card.style.borderColor = phase==='my'?'#e74c3c':'#2980b9';
+        card.style.background = phase==='my'?'#ffeaea':'#eaf4ff';
+        card.style.transform='scale(0.96)';
+      }
+      document.getElementById('btl-select-count').textContent = btl.selectBuf.length + ' / 3 えらんだ';
+      const okB = document.getElementById('btl-select-ok');
+      okB.disabled = btl.selectBuf.length < 3;
+      okB.style.opacity = btl.selectBuf.length >= 3 ? '1' : '0.5';
+    });
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
+
+  const okBtn = el('button','top-btn');
+  okBtn.id = 'btl-select-ok';
+  okBtn.textContent = 'これでバトル！';
+  okBtn.disabled = true;
+  okBtn.style.cssText = 'display:block;width:100%;margin-top:14px;padding:14px;font-size:16px;font-weight:700;border-radius:12px;background:#e74c3c;color:white;border:none;cursor:pointer;';
+  okBtn.style.opacity = '0.5';
+  okBtn.addEventListener('click', function(){
+    if(btl.selectBuf.length < 3) return;
+    if(phase==='my'){
+      btl.myTeam = btl.selectBuf.map(function(i){return MONKORE_LIST[i];});
+      btl.myIdx = 0;
+      showBattleSelect('enemy');
+    } else {
+      btl.enemyTeam = btl.selectBuf.map(function(i){return MONKORE_LIST[i];});
+      btl.enemyIdx = 0;
+      showBattleMain();
+    }
+  });
+
+
+  wrap.appendChild(okBtn);
+  area.appendChild(wrap);
+}
+
+
+// ===== タイプ別エフェクト設定 =====
+const TYPE_FX = {
+  'ほのお':  {anim:'fx-fire',  emoji:'🔥', bg:'rgba(240,80,30,0.85)',  dur:700},
+  'みず':    {anim:'fx-water', emoji:'💧', bg:'rgba(40,100,220,0.75)', dur:700},
+  'でんき':  {anim:'fx-elec',  emoji:'⚡', bg:'rgba(250,210,20,0.85)', dur:600},
+  'こおり':  {anim:'fx-ice',   emoji:'❄️', bg:'rgba(100,210,220,0.8)', dur:750},
+  'ゴースト':{anim:'fx-ghost', emoji:'👻', bg:'rgba(80,50,130,0.8)',   dur:900},
+  'ドラゴン':{anim:'fx-dragon',emoji:'🐲', bg:'rgba(80,30,240,0.8)',   dur:800},
+  'くさ':    {anim:'fx-fire',  emoji:'🌿', bg:'rgba(80,180,60,0.8)',   dur:650},
+  'どく':    {anim:'fx-ghost', emoji:'☠️', bg:'rgba(150,40,160,0.8)',  dur:700},
+  'かくとう':{anim:'fx-normal',emoji:'👊', bg:'rgba(180,30,30,0.85)',  dur:500},
+  'じめん':  {anim:'fx-normal',emoji:'💥', bg:'rgba(200,160,60,0.8)',  dur:600},
+  'ひこう':  {anim:'fx-water', emoji:'🌀', bg:'rgba(140,130,230,0.8)', dur:650},
+  'エスパー':{anim:'fx-ghost', emoji:'🔮', bg:'rgba(240,60,130,0.8)',  dur:750},
+  'むし':    {anim:'fx-normal',emoji:'🐛', bg:'rgba(150,170,20,0.8)',  dur:550},
+  'いわ':    {anim:'fx-normal',emoji:'🪨', bg:'rgba(170,150,40,0.85)', dur:550},
+  'あく':    {anim:'fx-ghost', emoji:'🌑', bg:'rgba(80,60,50,0.85)',   dur:700},
+  'はがね':  {anim:'fx-elec',  emoji:'⚙️', bg:'rgba(170,170,190,0.85)',dur:600},
+  'フェアリー':{anim:'fx-water',emoji:'✨',bg:'rgba(230,140,160,0.8)', dur:700},
+  'ノーマル':{anim:'fx-normal',emoji:'💢', bg:'rgba(160,160,110,0.8)', dur:500},
+};
+
+function getFx(type){ return TYPE_FX[type] || TYPE_FX['ノーマル']; }
+
+// ===== バトル状態 (上書き) =====
+
+function showBattleMain(enterAnim){
+  const area = document.getElementById('main-area');
+  area.innerHTML = '';
+  area.style.padding = '0';
+
+  const root = el('div','');
+  root.id = 'btl-root';
+  root.style.cssText = 'display:flex;flex-direction:column;height:100dvh;max-height:100dvh;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);color:white;font-family:sans-serif;user-select:none;';
+
+  // ヘッダー
+  const header = el('div','');
+  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:rgba(0,0,0,0.4);flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.1);';
+  const backB = el('button','');
+  backB.textContent='← もどる';
+  backB.style.cssText='background:rgba(255,255,255,0.12);border:none;color:white;padding:4px 10px;border-radius:8px;font-size:12px;cursor:pointer;';
+  backB.addEventListener('click', showTop);
+  const titleH = el('div','');
+  titleH.style.cssText='font-size:13px;font-weight:900;letter-spacing:1px;';
+  titleH.textContent='⚔️ バトルナビ';
+  const scoreD = el('div','');
+  scoreD.id='btl-score';
+  scoreD.style.cssText='font-size:12px;font-weight:700;';
+  scoreD.textContent='🏆 '+btl.wins+' 勝 / 💀 '+btl.losses+' 敗';
+  header.appendChild(backB);header.appendChild(titleH);header.appendChild(scoreD);
+  root.appendChild(header);
+
+  // ボールインジケーター
+  const ballRow = el('div','');
+  ballRow.style.cssText='display:flex;justify-content:space-between;padding:4px 12px;background:rgba(0,0,0,0.25);flex-shrink:0;';
+  ['enemy','my'].forEach(function(side){
+    const team = side==='my'?btl.myTeam:btl.enemyTeam;
+    const fainted = side==='my'?btl.fainted.my:btl.fainted.enemy;
+    const curIdx = side==='my'?btl.myIdx:btl.enemyIdx;
+    const row = el('div','');
+    row.style.cssText='display:flex;gap:5px;align-items:center;';
+    if(side==='enemy'){
+      const lbl=el('span','');lbl.style.cssText='font-size:9px;opacity:0.6;margin-right:3px;';lbl.textContent='あいて';row.appendChild(lbl);
+    }
+    team.forEach(function(_,i){
+      const ball=el('span','');
+      const isFainted = fainted.includes(i);
+      const isCurrent = i===curIdx;
+      ball.style.cssText='font-size:'+(isCurrent?'16':'12')+'px;opacity:'+(isFainted?'0.25':'1')+';transition:all 0.3s;filter:'+(isFainted?'grayscale(1)':'none')+';';
+      ball.textContent = isFainted?'⚫':isCurrent?'🔴':'⚪';
+      row.appendChild(ball);
+    });
+    if(side==='my'){
+      const lbl=el('span','');lbl.style.cssText='font-size:9px;opacity:0.6;margin-left:3px;';lbl.textContent='じぶん';row.appendChild(lbl);
+    }
+    ballRow.appendChild(row);
+  });
+  root.appendChild(ballRow);
+
+  // バトルフィールド（ポケモン画像エリア）
+  const field = el('div','');
+  field.id='btl-field';
+  field.style.cssText='position:relative;display:flex;justify-content:space-between;align-items:center;padding:8px 16px;flex-shrink:0;min-height:110px;background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,50,0.3) 100%);';
+
+  // 影
+  const shadowL = el('div','');
+  shadowL.style.cssText='position:absolute;bottom:8px;left:20%;width:60px;height:10px;background:rgba(0,0,0,0.3);border-radius:50%;filter:blur(4px);';
+  const shadowR = el('div','');
+  shadowR.style.cssText='position:absolute;bottom:8px;right:20%;width:60px;height:10px;background:rgba(0,0,0,0.3);border-radius:50%;filter:blur(4px);';
+  field.appendChild(shadowL);field.appendChild(shadowR);
+
+  // 相手ポケモン
+  const enemyPoke = btl.enemyTeam[btl.enemyIdx];
+  const enemyImgWrap = el('div','');
+  enemyImgWrap.id='btl-img-enemy';
+  enemyImgWrap.style.cssText='display:flex;flex-direction:column;align-items:center;';
+  const eImg = el('img','');
+  eImg.src=battleImgUrl(enemyPoke);
+  eImg.style.cssText='width:80px;height:80px;object-fit:contain;transform:scaleX(-1);cursor:pointer;';
+  if(enterAnim!==false){
+    eImg.style.animation='btl-enter-enemy 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
+  }
+  eImg.addEventListener('click',function(){ try{new Audio(cryUrl(enemyPoke.id)).play();}catch(e){} });
+  const eNm=el('div','');eNm.style.cssText='font-size:10px;font-weight:700;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,0.8);';eNm.textContent=enemyPoke.name;
+  enemyImgWrap.appendChild(eImg);enemyImgWrap.appendChild(eNm);
+  field.appendChild(enemyImgWrap);
+
+  // VS
+  const vs=el('div','');vs.style.cssText='font-size:18px;font-weight:900;opacity:0.5;';vs.textContent='VS';
+  field.appendChild(vs);
+
+  // 自分ポケモン
+  const myPoke = btl.myTeam[btl.myIdx];
+  const myImgWrap = el('div','');
+  myImgWrap.id='btl-img-my';
+  myImgWrap.style.cssText='display:flex;flex-direction:column;align-items:center;';
+  const mImg = el('img','');
+  mImg.src=battleImgUrl(myPoke);
+  mImg.style.cssText='width:80px;height:80px;object-fit:contain;cursor:pointer;';
+  if(enterAnim!==false){
+    mImg.style.animation='btl-enter-my 0.5s 0.1s cubic-bezier(0.34,1.56,0.64,1) both';
+  }
+  mImg.addEventListener('click',function(){ try{new Audio(cryUrl(myPoke.id)).play();}catch(e){} });
+  const mNm=el('div','');mNm.style.cssText='font-size:10px;font-weight:700;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,0.8);';mNm.textContent=myPoke.name;
+  myImgWrap.appendChild(mImg);myImgWrap.appendChild(mNm);
+  field.appendChild(myImgWrap);
+
+  root.appendChild(field);
+
+  // 技エリア（2分割）
+  const moveArea = el('div','');
+  moveArea.style.cssText='display:flex;flex:1;overflow:hidden;gap:1px;background:rgba(255,255,255,0.08);';
+
+  // 相手技パネル
+  moveArea.appendChild(buildMovePanel('enemy', btl.enemyTeam, btl.enemyIdx));
+  // 自分技パネル
+  moveArea.appendChild(buildMovePanel('my', btl.myTeam, btl.myIdx));
+
+  root.appendChild(moveArea);
+
+  // フッター（勝敗 + 交代）
+  const footer = el('div','');
+  footer.style.cssText='display:flex;gap:6px;padding:6px 8px;background:rgba(0,0,0,0.4);flex-shrink:0;border-top:1px solid rgba(255,255,255,0.1);';
+
+  // 自分の交代ボタン
+  const myChangeable = btl.myTeam.filter(function(_,i){ return i!==btl.myIdx && !btl.fainted.my.includes(i); });
+  const changeMyBtn = el('button','');
+  changeMyBtn.textContent='🔄 こうたい';
+  changeMyBtn.disabled = myChangeable.length===0;
+  changeMyBtn.style.cssText='padding:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;flex:1;opacity:'+(myChangeable.length>0?'1':'0.3')+';';
+  changeMyBtn.addEventListener('click', function(){ showChangeSelect('my'); });
+
+  const winBtn = el('button','');
+  winBtn.textContent='🏆 かった！';
+  winBtn.style.cssText='flex:1.5;padding:8px;background:linear-gradient(135deg,#27ae60,#2ecc71);border:none;color:white;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 3px 10px rgba(39,174,96,0.4);';
+  winBtn.addEventListener('click', function(){ btl.wins++; updateScore(); showWinLose('かった！','#27ae60'); });
+
+  const loseBtn = el('button','');
+  loseBtn.textContent='💀 まけた';
+  loseBtn.style.cssText='flex:1.5;padding:8px;background:linear-gradient(135deg,#c0392b,#e74c3c);border:none;color:white;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 3px 10px rgba(192,57,43,0.4);';
+  loseBtn.addEventListener('click', function(){ btl.losses++; updateScore(); showWinLose('まけた…','#c0392b'); });
+
+  footer.appendChild(changeMyBtn);
+  footer.appendChild(winBtn);
+  footer.appendChild(loseBtn);
+  root.appendChild(footer);
+  area.appendChild(root);
+}
+
+function buildMovePanel(side, team, idx){
+  const poke = team[idx];
+  const defTypes = poke.types || POKE_TYPES[poke.id] || ['ノーマル'];
+  const oppoTeam = side==='my' ? btl.enemyTeam : btl.myTeam;
+  const oppoIdx  = side==='my' ? btl.enemyIdx  : btl.myIdx;
+  const oppoPoke = oppoTeam[oppoIdx];
+  const oppoDefTypes = oppoPoke.types || POKE_TYPES[oppoPoke.id] || ['ノーマル'];
+
+  const panel = el('div','');
+  panel.style.cssText='flex:1;display:flex;flex-direction:column;padding:6px;overflow-y:auto;background:'+(side==='enemy'?'rgba(30,40,80,0.6)':'rgba(50,20,20,0.6)')+';';
+
+  // ラベル＋タイプ
+  const topRow=el('div','');topRow.style.cssText='margin-bottom:4px;';
+  const lbl=el('div','');lbl.style.cssText='font-size:9px;font-weight:700;opacity:0.6;';lbl.textContent=side==='enemy'?'あいて のわざ':'じぶん のわざ';
+  const typesDiv=el('div','');typesDiv.style.cssText='display:flex;gap:2px;flex-wrap:wrap;margin-top:2px;';
+  defTypes.forEach(function(t){
+    const tb=el('span','');
+    tb.style.cssText='font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;background:'+(TYPE_COLORS_BTL[t]||'#999')+';color:'+(TYPE_TEXT_WHITE.has(t)?'white':'#333')+';';
+    tb.textContent=t;typesDiv.appendChild(tb);
+  });
+  topRow.appendChild(lbl);topRow.appendChild(typesDiv);
+  panel.appendChild(topRow);
+
+  // 技ボタン
+  poke.moves.forEach(function(mv){
+    const compat = calcCompatibility(mv.type, oppoDefTypes);
+    const typeColor = TYPE_COLORS_BTL[mv.type]||'#999';
+    const isLight = !TYPE_TEXT_WHITE.has(mv.type);
+
+    const btn = el('button','');
+    btn.style.cssText=[
+      'width:100%','margin-bottom:5px','padding:7px 6px',
+      'border:none','border-radius:9px','cursor:pointer',
+      'text-align:left','position:relative',
+      'background:'+typeColor,
+      'color:'+(isLight?'#1a1a1a':'white'),
+      'box-shadow:0 2px 6px rgba(0,0,0,0.3)',
+      'transition:transform 0.1s',
+    ].join(';');
+
+    const mName=el('div','');mName.style.cssText='font-size:11px;font-weight:700;line-height:1.2;';mName.textContent=mv.name;
+    const mType=el('div','');mType.style.cssText='font-size:8px;opacity:0.8;margin-top:1px;';mType.textContent=mv.type;
+    const badge=el('div','');
+    badge.style.cssText='position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:13px;line-height:1;';
+    const compatLabels={'super':'🔴','normal':'⚪','weak':'🔵','zero':'❌'};
+    badge.textContent=compatLabels[compat.cls];
+
+    btn.appendChild(mName);btn.appendChild(mType);btn.appendChild(badge);
+
+    btn.addEventListener('click', function(){
+      btn.style.transform='scale(0.94)';
+      setTimeout(function(){btn.style.transform='';},100);
+      // 攻撃モーション → エフェクト → ダメージモーション
+      playAttackSequence(side, mv, compat);
+    });
+    panel.appendChild(btn);
+  });
+
+  return panel;
+}
+
+function playAttackSequence(attackerSide, mv, compat){
+  const defenderSide = attackerSide==='my'?'enemy':'my';
+  const attackerImgWrap = document.getElementById('btl-img-'+attackerSide);
+  const defenderImgWrap = document.getElementById('btl-img-'+defenderSide);
+  if(!attackerImgWrap || !defenderImgWrap) return;
+
+  const attackerImg = attackerImgWrap.querySelector('img');
+  const defenderImg = defenderImgWrap.querySelector('img');
+  const fx = getFx(mv.type);
+
+  // 1) 攻撃モーション
+  attackerImg.style.animation='none';
+  void attackerImg.offsetWidth;
+  const atkAnim = attackerSide==='my'?'btl-attack-my':'btl-attack-en';
+  attackerImg.style.animation=atkAnim+' 0.35s ease forwards';
+
+  // 2) 技エフェクト（中央）
+  setTimeout(function(){
+    showTypeEffect(mv, compat, fx);
+    // 鳴き声
+    const poke = attackerSide==='my'?btl.myTeam[btl.myIdx]:btl.enemyTeam[btl.enemyIdx];
+    try{new Audio(cryUrl(poke.id)).play();}catch(e){}
+  }, 200);
+
+  // 3) ダメージモーション
+  setTimeout(function(){
+    defenderImg.style.animation='none';
+    void defenderImg.offsetWidth;
+    let dmgAnim = 'btl-hit 0.5s ease';
+    if(compat.cls==='super') dmgAnim='btl-hit-super 0.6s ease';
+    if(compat.cls==='weak')  dmgAnim='btl-hit-weak 0.4s ease';
+    if(compat.cls==='zero'){
+      // はじくエフェクトのみ
+      showZeroEffect(defenderSide);
+    } else {
+      defenderImg.style.animation=dmgAnim;
+    }
+
+    // 相性テキスト
+    showCompatText(compat, defenderSide);
+
+  }, 350);
+
+  // 4) アニメリセット
+  setTimeout(function(){
+    if(attackerImg) attackerImg.style.animation='';
+    if(defenderImg) defenderImg.style.animation='';
+  }, 900);
+}
+
+function showTypeEffect(mv, compat, fx){
+  const field = document.getElementById('btl-field');
+  if(!field) return;
+  const overlay = el('div','');
+  const size = compat.cls==='super'?100:compat.cls==='weak'?60:80;
+  overlay.style.cssText=[
+    'position:absolute','top:50%','left:50%',
+    'transform:translate(-50%,-50%)',
+    'width:'+size+'px','height:'+size+'px',
+    'border-radius:50%',
+    'background:'+fx.bg,
+    'display:flex','align-items:center','justify-content:center',
+    'font-size:'+(size*0.4)+'px',
+    'pointer-events:none','z-index:50',
+    'animation:'+fx.anim+' '+fx.dur+'ms ease forwards',
+  ].join(';');
+  overlay.textContent=fx.emoji;
+  field.appendChild(overlay);
+  setTimeout(function(){overlay.remove();}, fx.dur);
+}
+
+function showCompatText(compat, defenderSide){
+  const field = document.getElementById('btl-field');
+  if(!field) return;
+  const texts = {
+    super:  {t:'ばつぐん！',   c:'#ff4444', s:'28px'},
+    normal: {t:'',             c:'white',   s:'0px'},
+    weak:   {t:'いまひとつ…', c:'#88aaff', s:'18px'},
+    zero:   {t:'きかない！',   c:'#aaa',    s:'20px'},
+  };
+  const cfg = texts[compat.cls];
+  if(!cfg.t) return;
+
+  const txt = el('div','');
+  const isLeft = defenderSide==='enemy';
+  txt.style.cssText=[
+    'position:absolute',
+    isLeft?'left:8%':'right:8%',
+    'top:10%',
+    'font-size:'+cfg.s,
+    'font-weight:900',
+    'color:'+cfg.c,
+    'text-shadow:0 2px 8px rgba(0,0,0,0.8)',
+    'pointer-events:none','z-index:51',
+    'animation:btl-compat-pop 0.9s ease forwards',
+    'white-space:nowrap',
+  ].join(';');
+  txt.textContent=cfg.t;
+  field.appendChild(txt);
+  setTimeout(function(){txt.remove();}, 900);
+}
+
+function showZeroEffect(side){
+  const imgWrap = document.getElementById('btl-img-'+side);
+  if(!imgWrap) return;
+  const img = imgWrap.querySelector('img');
+  // はじく：横に小さく揺れるだけ
+  img.style.animation='none';
+  void img.offsetWidth;
+  img.style.animation='btl-hit-weak 0.3s ease';
+  setTimeout(function(){img.style.animation='';},300);
+}
+
+function playFaintAnim(side, callback){
+  const imgWrap = document.getElementById('btl-img-'+side);
+  if(!imgWrap){ if(callback)callback(); return; }
+  const img = imgWrap.querySelector('img');
+  img.style.animation='btl-faint 0.7s ease forwards';
+  setTimeout(function(){
+    img.style.opacity='0';
+    img.style.animation='';
+    if(callback) callback();
+  }, 700);
+}
+
+function playSwapAnim(side, newPoke, callback){
+  const imgWrap = document.getElementById('btl-img-'+side);
+  if(!imgWrap){ if(callback)callback(); return; }
+  const img = imgWrap.querySelector('img');
+  const nm  = imgWrap.querySelector('div');
+  const outAnim = side==='my'?'btl-swap-out':'btl-swap-out-en';
+  const inAnim  = side==='my'?'btl-swap-in' :'btl-swap-in-en';
+
+  img.style.animation=outAnim+' 0.3s ease forwards';
+  setTimeout(function(){
+    img.src = battleImgUrl(newPoke);
+    img.style.opacity='0';
+    img.style.animation='none';
+    if(nm) nm.textContent=newPoke.name;
+    void img.offsetWidth;
+    img.style.opacity='1';
+    img.style.animation=inAnim+' 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards';
+    if(callback) callback();
+  }, 300);
+}
+
+function updateScore(){
+  const s = document.getElementById('btl-score');
+  if(s) s.textContent='🏆 '+btl.wins+' 勝 / 💀 '+btl.losses+' 敗';
+}
+
+function showWinLose(text, color){
+  // 紙吹雪
+  if(text.includes('かった')){
+    for(let i=0;i<30;i++){
+      const c=el('div','');
+      const colors=['#f1c40f','#e74c3c','#2ecc71','#3498db','#9b59b6','#e67e22'];
+      c.style.cssText=[
+        'position:fixed','pointer-events:none','z-index:1001',
+        'left:'+Math.random()*100+'vw','top:-20px',
+        'width:'+(8+Math.random()*8)+'px','height:'+(8+Math.random()*8)+'px',
+        'background:'+colors[Math.floor(Math.random()*colors.length)],
+        'border-radius:'+(Math.random()>0.5?'50%':'2px'),
+        'animation:btl-confetti '+(1.5+Math.random()*2)+'s '+(Math.random()*0.5)+'s linear forwards',
+      ].join(';');
+      document.body.appendChild(c);
+      setTimeout(function(){c.remove();},3500);
+    }
+  }
+  const overlay=el('div','');
+  overlay.style.cssText='position:fixed;inset:0;background:'+color+'cc;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;';
+  const msg=el('div','');
+  msg.style.cssText='font-size:52px;font-weight:900;color:white;text-shadow:0 4px 16px rgba(0,0,0,0.6);animation:btl-enter-my 0.4s ease forwards;';
+  msg.textContent=text;
+  const sub=el('div','');sub.style.cssText='font-size:14px;color:white;opacity:0.8;margin-top:8px;';sub.textContent='タップでとじる';
+  overlay.appendChild(msg);overlay.appendChild(sub);
+  overlay.addEventListener('click',function(){overlay.remove();});
+  document.body.appendChild(overlay);
+  setTimeout(function(){overlay.remove();},2500);
+}
+
+function showChangeSelect(side){
+  const team = side==='my'?btl.myTeam:btl.enemyTeam;
+  const curIdx = side==='my'?btl.myIdx:btl.enemyIdx;
+  const fainted = side==='my'?btl.fainted.my:btl.fainted.enemy;
+
+  const area=document.getElementById('main-area');
+  area.innerHTML='';area.style.padding='0';
+  const wrap=el('div','');
+  wrap.style.cssText='max-width:480px;margin:0 auto;padding:14px;background:linear-gradient(135deg,#1a1a2e,#16213e);min-height:100dvh;color:white;';
+
+  const title=el('div','');title.style.cssText='font-size:16px;font-weight:700;text-align:center;margin-bottom:14px;';
+  title.textContent='🔄 どのポケモンとこうたいする？';wrap.appendChild(title);
+
+  team.forEach(function(p,i){
+    if(i===curIdx) return;
+    const isFainted = fainted.includes(i);
+    const btn=el('button','');
+    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;margin-bottom:8px;padding:10px;background:'+(isFainted?'rgba(80,80,80,0.4)':'rgba(255,255,255,0.1)')+';border:2px solid '+(isFainted?'rgba(100,100,100,0.3)':'rgba(255,255,255,0.25)')+';border-radius:12px;cursor:'+(isFainted?'default':'pointer')+';color:white;';
+    const img=el('img','');img.src=battleImgUrl(p);img.style.cssText='width:52px;height:52px;object-fit:contain;opacity:'+(isFainted?'0.3':'1')+';filter:'+(isFainted?'grayscale(1)':'none')+';';
+    const info=el('div','');
+    const nm=el('div','');nm.style.cssText='font-size:14px;font-weight:700;opacity:'+(isFainted?'0.4':'1')+';';nm.textContent=p.name;
+    const st=el('div','');st.style.cssText='font-size:10px;opacity:0.5;margin-top:2px;';st.textContent=isFainted?'たおれた…':'こうたいできる';
+    info.appendChild(nm);info.appendChild(st);btn.appendChild(img);btn.appendChild(info);
+
+    if(!isFainted){
+      btn.addEventListener('click',function(){
+        // 退場アニメ → 新ポケ登場アニメ → 画面再描画
+        const prevIdx = side==='my'?btl.myIdx:btl.enemyIdx;
+        if(side==='my') btl.myIdx=i; else btl.enemyIdx=i;
+        // まず交代先を描画してからアニメ
+        showBattleMain(false);
+        setTimeout(function(){
+          playSwapAnim(side, p, function(){});
+        }, 50);
+      });
+    }
+    wrap.appendChild(btn);
+  });
+
+  // 「たおれた」ボタン（今出てるポケモンを倒れ扱いにする）
+  const faintBtn=el('button','');
+  faintBtn.textContent='💀 いまのポケモンがたおれた';
+  faintBtn.style.cssText='width:100%;margin-top:4px;margin-bottom:8px;padding:10px;background:rgba(192,57,43,0.5);border:1px solid rgba(220,80,60,0.5);color:white;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;';
+  faintBtn.addEventListener('click',function(){
+    // 倒れアニメ後に記録
+    showBattleMain(false);
+    setTimeout(function(){
+      playFaintAnim(side, function(){
+        if(side==='my'){ if(!btl.fainted.my.includes(curIdx)) btl.fainted.my.push(curIdx); }
+        else { if(!btl.fainted.enemy.includes(curIdx)) btl.fainted.enemy.push(curIdx); }
+        // 交代可能なポケモンが残っていれば交代画面へ
+        const remaining = team.filter(function(_,i){ return i!==curIdx && !(side==='my'?btl.fainted.my:btl.fainted.enemy).includes(i); });
+        if(remaining.length>0) showChangeSelect(side);
+        else showBattleMain(false);
+      });
+    },50);
+  });
+  wrap.appendChild(faintBtn);
+
+  const cancelBtn=el('button','');
+  cancelBtn.textContent='← キャンセル';
+  cancelBtn.style.cssText='display:block;width:100%;margin-top:0;padding:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:10px;font-size:13px;cursor:pointer;';
+  cancelBtn.addEventListener('click',function(){ showBattleMain(false); });
+  wrap.appendChild(cancelBtn);
+  area.appendChild(wrap);
+}
+
 
 loadPokemon();
 </script>
