@@ -1223,17 +1223,20 @@ function addCryBtn(parent,id){
 
 // ===== ローディング =====
 function loadPokemon(){
-  // 名前データは埋め込み済みなのでAPIリクエスト不要
-  for(const [id, jpName] of Object.entries(POKE_NAMES)){
-    const numId=parseInt(id);
-    // jpNameが存在し空でないものだけ登録
-    if(numId<=1017 && jpName && jpName.trim()!=='') allPokemon.push({id:numId,jpName:jpName});
+  try{
+    for(const [id, jpName] of Object.entries(POKE_NAMES)){
+      const numId=parseInt(id);
+      if(numId<=1017 && jpName && jpName.trim()!=='') allPokemon.push({id:numId,jpName:jpName});
+    }
+    easyPokemon=allPokemon.filter(function(p){return EASY_IDS.has(p.id);});
+    hardPokemon=allPokemon.filter(function(p){return !EASY_IDS.has(p.id);});
+  }catch(e){
+    console.error('loadPokemon error:', e);
+  }finally{
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('main-area').style.display='block';
+    showTop();
   }
-  easyPokemon=allPokemon.filter(function(p){return EASY_IDS.has(p.id);});
-  hardPokemon=allPokemon.filter(function(p){return !EASY_IDS.has(p.id);});
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('main-area').style.display='block';
-  showTop();
 }
 
 // ===== ユーティリティ =====
@@ -2918,6 +2921,7 @@ function showBattleMain(enterAnim){
   enemyImgWrap.style.cssText='display:flex;flex-direction:column;align-items:center;';
   const eImg = el('img','');
   eImg.src=battleImgUrl(enemyPoke);
+  eImg.onerror=function(){this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+enemyPoke.id+'.png';};
   eImg.style.cssText='width:80px;height:80px;object-fit:contain;transform:scaleX(-1);cursor:pointer;';
   if(enterAnim!==false){
     eImg.style.animation='btl-enter-enemy 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
@@ -2938,6 +2942,7 @@ function showBattleMain(enterAnim){
   myImgWrap.style.cssText='display:flex;flex-direction:column;align-items:center;';
   const mImg = el('img','');
   mImg.src=battleImgUrl(myPoke);
+  mImg.onerror=function(){this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+myPoke.id+'.png';};
   mImg.style.cssText='width:80px;height:80px;object-fit:contain;cursor:pointer;';
   if(enterAnim!==false){
     mImg.style.animation='btl-enter-my 0.5s 0.1s cubic-bezier(0.34,1.56,0.64,1) both';
