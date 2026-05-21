@@ -240,6 +240,7 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 @keyframes btl-dematerialize{ 0%{filter:none;transform:scale(1);opacity:1;} 60%{filter:brightness(3) saturate(0);transform:scale(1.05);opacity:1;} 100%{filter:brightness(10) saturate(0);transform:scale(0.4);opacity:0;} }
 @keyframes btl-select-slot { 0%{transform:rotateY(90deg) scale(0.8);opacity:0;} 100%{transform:rotateY(0deg) scale(1);opacity:1;} }
 /* landscape */
+#btl-root { flex-direction: column; flex-wrap: nowrap; }
 @media (orientation: landscape) {
   #btl-root { flex-direction: row !important; flex-wrap: wrap; }
   #btl-turn-bar { width:100%; flex-shrink:0; order:-2; font-size:11px; padding:3px 8px; }
@@ -2857,7 +2858,23 @@ function drawPokeballCanvas(canvas,progress,opening){
 }
 
 // ===== ボール:戻る演出 =====
+
+// ===== 演出中ロック =====
+function lockAllPanels(){
+  ['my','enemy'].forEach(function(side){
+    var panel=document.getElementById('btl-panel-'+side);
+    if(panel){
+      panel.style.pointerEvents='none';
+      panel.querySelectorAll('button').forEach(function(btn){btn.style.pointerEvents='none';});
+    }
+  });
+}
+function unlockAllPanels(){
+  // updateTurnDisplayに委譲（ターン状態に基づいて正しく設定）
+  updateTurnDisplay();
+}
 function playBallThrowOut(side,callback){
+  lockAllPanels();
   var wrap=document.getElementById('btl-img-'+side);if(!wrap){if(callback)callback();return;}
   var img=wrap.querySelector('img');if(!img){if(callback)callback();return;}
   img.style.animation='none';void img.offsetWidth;
@@ -2897,7 +2914,7 @@ function playBallThrowIn(side,newPoke,callback){
         img.style.animation='btl-materialize 0.5s ease forwards';
         var nm=wrap.querySelector('div');if(nm)nm.textContent=newPoke.name;
         playSE('enter');
-        setTimeout(function(){img.style.animation='';applyAura(side,newPoke);if(callback)callback();},550);
+        setTimeout(function(){img.style.animation='';applyAura(side,newPoke);if(callback)callback();unlockAllPanels();},550);
         return;
       }
       drawPokeballCanvas(ball,fr/tot,true);
@@ -3330,7 +3347,7 @@ function showBattleMain(enterAnim){
   area.style.cssText='display:block;padding:0;';
 
   const root=el('div','');root.id='btl-root';
-  root.style.cssText='display:flex;flex-direction:column;width:100vw;height:100dvh;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);color:white;font-family:sans-serif;user-select:none;position:fixed;top:0;left:0;z-index:100;';
+  root.style.cssText='display:flex;width:100vw;height:100dvh;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);color:white;font-family:sans-serif;user-select:none;position:fixed;top:0;left:0;z-index:100;';
 
   // ヘッダー
   const hdr=el('div','');
@@ -3568,6 +3585,11 @@ function updateTurnDisplay(){
     if(panel){
       panel.style.filter=active?'':'brightness(0.45)';
       panel.style.pointerEvents=active?'auto':'none';
+      // 技ボタン個別のpointer-eventsもリセット
+      panel.querySelectorAll('button').forEach(function(btn){
+        btn.style.pointerEvents=active?'auto':'none';
+        btn.style.cursor=active?'pointer':'default';
+      });
     }
     if(lbl){
       lbl.style.background=active?(isMyPanel?'rgba(220,50,50,0.5)':'rgba(40,100,200,0.5)'):'rgba(255,255,255,0.04)';
@@ -3663,6 +3685,7 @@ function showChangeSelect(side){
         if(side==='my')btl.myIdx=i;else btl.enemyIdx=i;
         overlay.remove();
         showBattleMain(false);
+        lockAllPanels();
         playSE('enter');
         // ⑬ 入場テキスト
         var teamLabel=side==='my'?'チームレッド':'チームブルー';
@@ -3679,6 +3702,7 @@ function showChangeSelect(side){
     overlay.remove();
     const root=document.getElementById('btl-root');if(root)root.remove();
     showBattleMain(false);
+    lockAllPanels();
     setTimeout(function(){
       playFaintAnim(side,function(){
         if(side==='my'){if(!btl.fainted.my.includes(curIdx))btl.fainted.my.push(curIdx);}
