@@ -1308,6 +1308,7 @@ function makeMathQ(){
 
 // ===== トップ画面 =====
 function showTop(){
+  cleanupBtlRotate(); // バトル画面からの遷移フェイルセーフ
   currentMode='top';isRetryMode=false;
   const area=document.getElementById('main-area');area.innerHTML='';
   const wrap=el('div','top-screen');
@@ -2923,7 +2924,14 @@ function startBattleNavi(){
   showBattleSelect('my');
 }
 
+// rotateWrapを安全に削除するユーティリティ（どこから呼んでも安全）
+function cleanupBtlRotate(){
+  const w=document.getElementById('btl-rotate-wrap');if(w)w.remove();
+  stopBattleBgm();
+}
+
 function showBattleSelect(phase){
+  cleanupBtlRotate(); // 前のバトル画面の残留を必ず消す
   btl.selectPhase=phase; btl.selectBuf=[];
   const area=document.getElementById('main-area');
   area.innerHTML=''; area.style.cssText='display:block;padding:0;';
@@ -2937,7 +2945,7 @@ function showBattleSelect(phase){
   const backBtn=el('button','');
   backBtn.textContent='← もどる';
   backBtn.style.cssText='background:rgba(255,255,255,0.12);border:none;color:white;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;';
-  backBtn.addEventListener('click',showTop);
+  backBtn.addEventListener('click',function(){ cleanupBtlRotate(); showTop(); });
   const titleDiv=el('div','');
   titleDiv.style.cssText='font-size:14px;font-weight:900;line-height:1.4;';
   titleDiv.innerHTML=isRed
@@ -3037,6 +3045,7 @@ function updateSelectSlots(phase){
 }
 
 function showTeamConfirm(){
+  cleanupBtlRotate(); // rotateWrapの残留を消す
   const area=document.getElementById('main-area');
   area.innerHTML=''; area.style.cssText='display:block;padding:0;';
   const wrap=el('div','');
@@ -3154,14 +3163,14 @@ function showBattleMain(enterAnim){
   document.body.appendChild(rotateWrap);
 
   const root=el('div','');root.id='btl-root';
-  root.style.cssText='display:flex;flex-direction:row;width:100%;height:100%;overflow:hidden;';
+  root.style.cssText='display:flex;flex-direction:column;width:100%;height:100%;overflow:hidden;';
 
   // ヘッダー
   const hdr=el('div','');
   hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:4px 10px;background:rgba(0,0,0,0.5);flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.08);';
   const backB=el('button','');backB.textContent='← もどる';
   backB.style.cssText='background:rgba(255,255,255,0.1);border:none;color:white;padding:3px 8px;border-radius:6px;font-size:11px;cursor:pointer;';
-  backB.addEventListener('click',function(){rotateWrap.remove();showTop();});
+  backB.addEventListener('click',function(){ cleanupBtlRotate(); showTop(); });
   const scoreD=el('div','');scoreD.id='btl-score';
   scoreD.style.cssText='font-size:11px;font-weight:700;';
   scoreD.textContent='🏆 '+btl.wins+' 勝 / 💀 '+btl.losses+' 敗';
@@ -3260,8 +3269,6 @@ function showBattleMain(enterAnim){
 
   // BGM開始
   startBattleBgm();
-  // もどるボタンにBGM停止を追加
-  backB.addEventListener('click',function(){ stopBattleBgm(); rotateWrap.remove(); showTop(); },true);
 
   // resize時に回転補正を再適用
   const _resizeHandler=function(){ applyBtlRotate(rotateWrap); };
@@ -3287,7 +3294,6 @@ function showBattleMain(enterAnim){
   // D: ボール登場演出（初回のみ）
   if(enterAnim!==false){
     const eImg=enemyWrap.querySelector('img'), mImg=myWrap.querySelector('img');
-    const br=field.getBoundingClientRect();
     setTimeout(function(){
       playBallEntrance(eImg,'enemy',btl.enemyTeam[btl.enemyIdx].shinyImg,function(){});
     },100);
@@ -3552,11 +3558,10 @@ function showShinyFlash(wrap, field, br){
 }
 
 // ===== I: BGM (Web Audio API 8bit生成) =====
-let _bgmNodes=[], _bgmRunning=false;
+let _bgmNodes=[], _bgmRunning=false, _bgmTimerId=null;
 function startBattleBgm(){
   if(!_cryAudioCtx||_bgmRunning) return;
   _bgmRunning=true;
-  // ポケモンバトル風の簡易ループ（Cメジャースケールのモチーフ）
   const notes=[523,587,659,698,784,880,988,1047,988,880,784,698,659,587,523,523];
   const dur=0.12, ctx=_cryAudioCtx;
   let t=ctx.currentTime+0.1;
@@ -3574,13 +3579,13 @@ function startBattleBgm(){
       _bgmNodes.push(osc);
     });
     t+=notes.length*dur;
-    // ループ継続
-    setTimeout(scheduleLoop,(notes.length*dur-0.3)*1000);
+    _bgmTimerId=setTimeout(scheduleLoop,(notes.length*dur-0.3)*1000);
   }
   scheduleLoop();
 }
 function stopBattleBgm(){
   _bgmRunning=false;
+  if(_bgmTimerId){clearTimeout(_bgmTimerId);_bgmTimerId=null;}
   _bgmNodes.forEach(function(n){try{n.stop();}catch(e){}});
   _bgmNodes=[];
 }
@@ -3609,31 +3614,35 @@ function updateScore(){
 function showWinLose(text,color){
   stopBattleBgm(); // I: バトル終了時BGM停止
   addBattleLog(text.includes('かった')?'🏆 かった！':'💀 まけた…');
+  // overlayはrotateWrap内に追加（横向き座標系に合わせる）
+  const _rw=document.getElementById('btl-rotate-wrap')||document.body;
   if(text.includes('かった')){
     for(let i=0;i<30;i++){
       const c=el('div','');
       const cols=['#f1c40f','#e74c3c','#2ecc71','#3498db','#9b59b6','#e67e22'];
-      c.style.cssText='position:fixed;pointer-events:none;z-index:2001;left:'+Math.random()*100+'vw;top:-20px;width:'+(8+Math.random()*8)+'px;height:'+(8+Math.random()*8)+'px;background:'+cols[Math.floor(Math.random()*cols.length)]+';border-radius:'+(Math.random()>0.5?'50%':'2px')+';animation:btl-confetti '+(1.5+Math.random()*2)+'s '+(Math.random()*0.5)+'s linear forwards;';
-      document.body.appendChild(c);setTimeout(function(){c.remove();},3500);
+      c.style.cssText='position:absolute;pointer-events:none;z-index:2001;left:'+Math.random()*100+'%;top:-20px;width:'+(8+Math.random()*8)+'px;height:'+(8+Math.random()*8)+'px;background:'+cols[Math.floor(Math.random()*cols.length)]+';border-radius:'+(Math.random()>0.5?'50%':'2px')+';animation:btl-confetti '+(1.5+Math.random()*2)+'s '+(Math.random()*0.5)+'s linear forwards;';
+      _rw.appendChild(c);setTimeout(function(){c.remove();},3500);
     }
   }
   const overlay=el('div','');
-  overlay.style.cssText='position:fixed;inset:0;background:'+color+'cc;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;';
+  overlay.style.cssText='position:absolute;inset:0;background:'+color+'cc;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;';
   const msg=el('div','');msg.style.cssText='font-size:52px;font-weight:900;color:white;text-shadow:0 4px 16px rgba(0,0,0,0.6);animation:btl-enter-my 0.4s ease forwards;';msg.textContent=text;
   const sub=el('div','');sub.style.cssText='font-size:14px;color:white;opacity:0.8;margin-top:8px;';sub.textContent='タップでとじる';
   overlay.appendChild(msg);overlay.appendChild(sub);
   overlay.addEventListener('click',function(){overlay.remove();});
-  document.body.appendChild(overlay);setTimeout(function(){overlay.remove();},2500);
+  _rw.appendChild(overlay);setTimeout(function(){overlay.remove();},2500);
 }
 
 function showChangeSelect(side){
   const team=side==='my'?btl.myTeam:btl.enemyTeam;
   const curIdx=side==='my'?btl.myIdx:btl.enemyIdx;
   const fainted=side==='my'?btl.fainted.my:btl.fainted.enemy;
+  // rotateWrap内に追加して横向き座標系に合わせる
+  const _rw=document.getElementById('btl-rotate-wrap')||document.body;
   const overlay=el('div','');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,0.88);z-index:1000;display:flex;align-items:flex-end;justify-content:center;';
   const panel=el('div','');
-  panel.style.cssText='width:100%;max-width:480px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:20px 20px 0 0;padding:16px;color:white;';
+  panel.style.cssText='width:100%;max-width:600px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:20px 20px 0 0;padding:16px;color:white;';
   const title=el('div','');title.style.cssText='font-size:15px;font-weight:700;text-align:center;margin-bottom:14px;';title.textContent='🔄 どのポケモンとこうたいする？';panel.appendChild(title);
 
   team.forEach(function(p,i){
@@ -3661,16 +3670,19 @@ function showChangeSelect(side){
   faintBtn.style.cssText='width:100%;margin:4px 0 8px;padding:10px;background:rgba(192,57,43,0.5);border:1px solid rgba(220,80,60,0.4);color:white;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;';
   faintBtn.addEventListener('click',function(){
     overlay.remove();
-    const root=document.getElementById('btl-root');if(root)root.remove();
-    showBattleMain(false);
-    setTimeout(function(){
-      playFaintAnim(side,function(){
-        if(side==='my'){if(!btl.fainted.my.includes(curIdx))btl.fainted.my.push(curIdx);}
-        else{if(!btl.fainted.enemy.includes(curIdx))btl.fainted.enemy.push(curIdx);}
-        const remaining=team.filter(function(_,i){return i!==curIdx&&!(side==='my'?btl.fainted.my:btl.fainted.enemy).includes(i);});
-        if(remaining.length>0)showChangeSelect(side);else showBattleMain(false);
-      });
-    },50);
+    // fainted登録 → showBattleMain再構築（btl-rootはshowBattleMain冒頭で削除済み）
+    if(side==='my'){if(!btl.fainted.my.includes(curIdx))btl.fainted.my.push(curIdx);}
+    else{if(!btl.fainted.enemy.includes(curIdx))btl.fainted.enemy.push(curIdx);}
+    const remaining=team.filter(function(_,i){return i!==curIdx&&!(side==='my'?btl.fainted.my:btl.fainted.enemy).includes(i);});
+    if(remaining.length>0){
+      // まだ控えがいる → 気絶アニメ後に次のポケモンを選ばせる
+      showBattleMain(false);
+      setTimeout(function(){
+        playFaintAnim(side,function(){showChangeSelect(side);});
+      },50);
+    } else {
+      showBattleMain(false);
+    }
   });
   panel.appendChild(faintBtn);
 
@@ -3678,7 +3690,7 @@ function showChangeSelect(side){
   cancelBtn.style.cssText='display:block;width:100%;padding:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;border-radius:10px;font-size:13px;cursor:pointer;';
   cancelBtn.addEventListener('click',function(){overlay.remove();});
   panel.appendChild(cancelBtn);
-  overlay.appendChild(panel);document.body.appendChild(overlay);
+  overlay.appendChild(panel);_rw.appendChild(overlay);
 }
 
 
