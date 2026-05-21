@@ -224,17 +224,25 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 @keyframes fx-dragon { 0%{opacity:0;transform:scale(0.3) rotate(0deg);} 50%{opacity:1;transform:scale(1.2) rotate(540deg);} 100%{opacity:0;transform:scale(2) rotate(1080deg);} }
 @keyframes fx-normal { 0%{opacity:0;transform:scale(0.5);} 40%{opacity:1;transform:scale(1.15);} 70%{opacity:1;transform:scale(1);} 100%{opacity:0;transform:scale(0.9);} }
 @keyframes btl-compat-pop { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.3);} 30%{opacity:1;transform:translate(-50%,-50%) scale(1.3);} 70%{opacity:1;transform:translate(-50%,-50%) scale(1);} 100%{opacity:0;transform:translate(-50%,-50%) scale(0.8);} }
+@keyframes btl-compat-pop2 { 0%{opacity:0;transform:scale(0.3);} 30%{opacity:1;transform:scale(1.25);} 70%{opacity:1;transform:scale(1);} 100%{opacity:0;transform:scale(0.8);} }
+@keyframes btl-hint-pop { 0%{opacity:0;} 15%{opacity:1;} 80%{opacity:1;} 100%{opacity:0;} }
+@keyframes btl-ball-drop { 0%{transform:translateY(-80px) scale(0.6);opacity:0;} 40%{transform:translateY(0) scale(1.1);opacity:1;} 55%{transform:translateY(-12px) scale(0.95);} 70%{transform:translateY(0) scale(1.05);} 85%{transform:translateY(-5px) scale(0.98);} 100%{transform:translateY(0) scale(1);opacity:1;} }
+@keyframes btl-ball-open { 0%{opacity:1;transform:scale(1);} 40%{opacity:0.8;transform:scale(1.8);} 100%{opacity:0;transform:scale(2.8);} }
+@keyframes btl-poke-emerge { 0%{opacity:0;transform:scale(0.2);filter:brightness(10);} 30%{opacity:1;filter:brightness(3);transform:scale(1.15);} 60%{filter:brightness(1.5);transform:scale(0.95);} 100%{opacity:1;filter:brightness(1);transform:scale(1);} }
+@keyframes btl-shiny-star { 0%{opacity:0;transform:scale(0) rotate(0deg);} 50%{opacity:1;transform:scale(1.5) rotate(180deg);} 100%{opacity:0;transform:scale(0) rotate(360deg);} }
 @keyframes btl-confetti { 0%{transform:translateY(0) rotate(0);opacity:1;} 100%{transform:translateY(100vh) rotate(720deg);opacity:0;} }
 
-/* ===== バトルナビ landscape対応 ===== */
-#btl-root { flex-direction: column; flex-wrap: nowrap; }
-@media screen and (orientation: landscape) {
-  #btl-root { flex-direction: row !important; flex-wrap: wrap !important; }
-  #btl-turn-bar { width:100% !important; flex-shrink:0; order:-2; font-size:11px; padding:3px 8px; }
-  #btl-ball-row-wrap { width:100% !important; flex-shrink:0; order:-1; }
-  #btl-field { width:40% !important; flex-direction:column !important; padding:4px !important; min-height:unset !important; flex:1 !important; max-height:100% !important; }
-  #btl-move-area { width:60% !important; flex:1 !important; max-height:100% !important; }
-  #btl-footer { width:100% !important; flex-shrink:0; }
+/* ===== バトルナビ 横向き強制（CSS rotate偽装方式） ===== */
+#btl-rotate-wrap {
+  position: fixed; top: 0; left: 0; z-index: 100;
+  /* JS側で width/height/transform を動的設定 */
+}
+#btl-root {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: row;
+  background: linear-gradient(160deg,#0f0c29,#302b63,#24243e);
+  color: white; font-family: sans-serif; user-select: none;
+  overflow: hidden;
 }
 </style>
 </head>
@@ -2698,12 +2706,22 @@ let btl = {
   wins:0, losses:0,
   fainted: {my:[], enemy:[]},
   turn: 'my',
+  animating: false,  // 攻撃アニメ中フラグ（タップ二重防止）
 };
+
+// H: シャイニー判定（バトル参加時に1/30の確率でシャイニー化）
+function rollShiny(p){
+  if(p._shinyRolled) return;
+  p._shinyRolled=true;
+  if(Math.random()<1/30) p.shinyImg=true;
+}
 
 function battleImgUrl(p){
   if(p.shinyImg){
+    // シャイニーはフォームIDではなく基本IDを使用
     return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/'+p.id+'.png';
   }
+  // E: フォーム別スプライト対応（imgId優先）
   const id = p.imgId || p.id;
   return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/'+id+'.png';
 }
@@ -2899,6 +2917,9 @@ function startBattleNavi(){
   btl.myIdx=0; btl.enemyIdx=0;
   btl.myTeam=[]; btl.enemyTeam=[];
   btl.turn='my';
+  btl.animating=false;
+  // シャイニーロールをリセット（再戦のたびに振り直し）
+  MONKORE_LIST.forEach(function(p){ delete p._shinyRolled; delete p.shinyImg; });
   showBattleSelect('my');
 }
 
@@ -3051,26 +3072,96 @@ function showTeamConfirm(){
   const startBtn=el('button','');
   startBtn.style.cssText='width:100%;margin-top:16px;padding:18px;font-size:17px;font-weight:900;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,#e74c3c,#9b59b6);color:white;font-family:sans-serif;';
   startBtn.textContent='🔥 バトルかいし！';
-  startBtn.addEventListener('click',function(){ btl.turn='my'; showBattleMain(); });
+  startBtn.addEventListener('click',function(){
+    btl.turn='my';
+    btl.animating=false;
+    // H: シャイニーロール（全参加ポケモン）
+    btl.myTeam.concat(btl.enemyTeam).forEach(rollShiny);
+    showBattleMain();
+  });
   wrap.appendChild(startBtn);
   area.appendChild(wrap);
 }
 
+// ===== 鳴き声プリフェッチキャッシュ =====
+const _cryCache = new Map();
+const _cryAudioCtx = (function(){
+  try{ return new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+})();
+
+function preFetchCries(pokeList){
+  if(!_cryAudioCtx) return;
+  pokeList.forEach(function(p){
+    const id=p.id;
+    if(_cryCache.has(id)) return;
+    _cryCache.set(id,'loading');
+    fetch('https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/'+id+'.ogg')
+      .then(function(r){ return r.arrayBuffer(); })
+      .then(function(ab){ return _cryAudioCtx.decodeAudioData(ab); })
+      .then(function(buf){ _cryCache.set(id,buf); })
+      .catch(function(){ _cryCache.delete(id); });
+  });
+}
+
+function playCryById(id){
+  if(_cryAudioCtx && _cryCache.has(id) && _cryCache.get(id)!=='loading'){
+    try{
+      const src=_cryAudioCtx.createBufferSource();
+      src.buffer=_cryCache.get(id);
+      src.connect(_cryAudioCtx.destination);
+      src.start(0);
+    }catch(e){}
+  } else {
+    try{ new Audio('https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/'+id+'.ogg').play(); }catch(e){}
+  }
+}
+
+// ===== CSS rotate横向き強制 =====
+function applyBtlRotate(wrap){
+  const vw=window.innerWidth, vh=window.innerHeight;
+  // 端末が縦向き(vw<vh)の場合のみrotate。横向きなら通常表示
+  if(vw < vh){
+    // 縦端末を横向きに見せる: 幅←→高さ を入れ替えてrotate(-90deg)
+    wrap.style.width  = vh+'px';
+    wrap.style.height = vw+'px';
+    wrap.style.left   = '0px';
+    wrap.style.top    = (vh-vw)/2+'px'; // 上下中央
+    wrap.style.transformOrigin = 'center center';
+    // rotate(-90deg) + translate補正
+    const tx = -(vh-vw)/2;
+    wrap.style.transform = 'rotate(-90deg) translateX('+tx+'px)';
+  } else {
+    wrap.style.width  = vw+'px';
+    wrap.style.height = vh+'px';
+    wrap.style.left   = '0px';
+    wrap.style.top    = '0px';
+    wrap.style.transform = 'none';
+    wrap.style.transformOrigin = '';
+  }
+}
+
 function showBattleMain(enterAnim){
-  // 既存btl-rootがあれば削除
+  // 既存btl-rotate-wrapがあれば削除
+  const oldWrap=document.getElementById('btl-rotate-wrap');if(oldWrap)oldWrap.remove();
   const old=document.getElementById('btl-root');if(old)old.remove();
   const area=document.getElementById('main-area');
   area.style.cssText='display:block;padding:0;';
 
+  // 横向き強制ラッパー
+  const rotateWrap=el('div','');rotateWrap.id='btl-rotate-wrap';
+  rotateWrap.style.cssText='position:fixed;z-index:100;overflow:hidden;';
+  applyBtlRotate(rotateWrap);
+  document.body.appendChild(rotateWrap);
+
   const root=el('div','');root.id='btl-root';
-  root.style.cssText='display:flex;width:100vw;height:100dvh;overflow:hidden;background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);color:white;font-family:sans-serif;user-select:none;position:fixed;top:0;left:0;z-index:100;';
+  root.style.cssText='display:flex;flex-direction:row;width:100%;height:100%;overflow:hidden;';
 
   // ヘッダー
   const hdr=el('div','');
   hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:4px 10px;background:rgba(0,0,0,0.5);flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.08);';
   const backB=el('button','');backB.textContent='← もどる';
   backB.style.cssText='background:rgba(255,255,255,0.1);border:none;color:white;padding:3px 8px;border-radius:6px;font-size:11px;cursor:pointer;';
-  backB.addEventListener('click',function(){root.remove();showTop();});
+  backB.addEventListener('click',function(){rotateWrap.remove();showTop();});
   const scoreD=el('div','');scoreD.id='btl-score';
   scoreD.style.cssText='font-size:11px;font-weight:700;';
   scoreD.textContent='🏆 '+btl.wins+' 勝 / 💀 '+btl.losses+' 敗';
@@ -3120,17 +3211,25 @@ function showBattleMain(enterAnim){
     img.onerror=function(){this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+(poke.shinyImg?'shiny/':'')+poke.id+'.png';};
     const isEnemy=side==='enemy';
     img.style.cssText='width:72px;height:72px;object-fit:contain;cursor:pointer;'+(isEnemy?'transform:scaleX(-1);':'')+';transition:filter 0.2s;';
-    if(enterAnim!==false) img.style.animation=isEnemy?'btl-enter-enemy 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards':'btl-enter-my 0.45s 0.1s cubic-bezier(0.34,1.56,0.64,1) both';
-    img.addEventListener('click',function(){try{new Audio(cryUrl(poke.id)).play();}catch(e){}});
-    const nm=el('div','');nm.style.cssText='font-size:9px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,0.8);text-align:center;max-width:80px;line-height:1.2;';nm.textContent=poke.name;
+    img.addEventListener('click',function(){playCryById(poke.id);});
+    const nm=el('div','');
+    nm.style.cssText='font-size:9px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,0.8);text-align:center;max-width:80px;line-height:1.2;';
+    nm.textContent=poke.name+(poke.shinyImg?' ✨':'');
     const isCurrent=(side==='my'&&btl.turn==='my')||(side==='enemy'&&btl.turn==='enemy');
     if(isCurrent) wrap.style.filter='drop-shadow(0 0 8px '+(side==='my'?'#ff6b6b':'#6bb3ff')+')';
     wrap.appendChild(img);wrap.appendChild(nm);return wrap;
   }
-  field.appendChild(makePokeImg(btl.enemyTeam[btl.enemyIdx],'enemy'));
-  const vs=el('div','');vs.style.cssText='font-size:13px;font-weight:900;opacity:0.3;';vs.textContent='VS';field.appendChild(vs);
-  field.appendChild(makePokeImg(btl.myTeam[btl.myIdx],'my'));
+  const enemyWrap=makePokeImg(btl.enemyTeam[btl.enemyIdx],'enemy');
+  const vs=el('div','');vs.style.cssText='font-size:13px;font-weight:900;opacity:0.3;';vs.textContent='VS';
+  const myWrap=makePokeImg(btl.myTeam[btl.myIdx],'my');
+  field.appendChild(enemyWrap);field.appendChild(vs);field.appendChild(myWrap);
   root.appendChild(field);
+
+  // J: バトルログエリア
+  const logArea=el('div','');logArea.id='btl-log';
+  logArea.style.cssText='padding:3px 6px;background:rgba(0,0,0,0.35);flex-shrink:0;max-height:54px;overflow:hidden;border-bottom:1px solid rgba(255,255,255,0.06);';
+  root.appendChild(logArea);
+  _btlLog.length=0; // ログリセット
 
   // 技エリア（2分割）
   const moveArea=el('div','');
@@ -3157,31 +3256,50 @@ function showBattleMain(enterAnim){
   loseBtn.addEventListener('click',function(){btl.losses++;updateScore();showWinLose('まけた…','#c0392b');});
   footer.appendChild(changeBtn);footer.appendChild(winBtn);footer.appendChild(loseBtn);
   root.appendChild(footer);
-  document.body.appendChild(root);
+  rotateWrap.appendChild(root);
 
-  // iOS Safari対応：orientationchange時にflex-directionを強制再適用
-  function applyOrientation(){
-    const isLandscape=window.innerWidth>window.innerHeight;
-    root.style.flexDirection=isLandscape?'row':'column';
-    root.style.flexWrap=isLandscape?'wrap':'nowrap';
-  }
-  applyOrientation();
-  const _orientHandler=function(){ setTimeout(applyOrientation,50); };
-  window.addEventListener('orientationchange',_orientHandler);
-  window.addEventListener('resize',_orientHandler);
-  // root削除時にイベント解除
+  // BGM開始
+  startBattleBgm();
+  // もどるボタンにBGM停止を追加
+  backB.addEventListener('click',function(){ stopBattleBgm(); rotateWrap.remove(); showTop(); },true);
+
+  // resize時に回転補正を再適用
+  const _resizeHandler=function(){ applyBtlRotate(rotateWrap); };
+  window.addEventListener('resize',_resizeHandler);
+  window.addEventListener('orientationchange',function(){ setTimeout(function(){ applyBtlRotate(rotateWrap); },80); });
+
+  // rotateWrap削除時にイベント解除
   const _mo=new MutationObserver(function(ml){
     ml.forEach(function(m){
       m.removedNodes.forEach(function(n){
-        if(n===root){
-          window.removeEventListener('orientationchange',_orientHandler);
-          window.removeEventListener('resize',_orientHandler);
+        if(n===rotateWrap){
+          window.removeEventListener('resize',_resizeHandler);
           _mo.disconnect();
         }
       });
     });
   });
   _mo.observe(document.body,{childList:true});
+
+  // 鳴き声プリフェッチ（バトル参加ポケモン全員分）
+  preFetchCries(btl.myTeam.concat(btl.enemyTeam));
+
+  // D: ボール登場演出（初回のみ）
+  if(enterAnim!==false){
+    const eImg=enemyWrap.querySelector('img'), mImg=myWrap.querySelector('img');
+    const br=field.getBoundingClientRect();
+    setTimeout(function(){
+      playBallEntrance(eImg,'enemy',btl.enemyTeam[btl.enemyIdx].shinyImg,function(){});
+    },100);
+    setTimeout(function(){
+      playBallEntrance(mImg,'my',btl.myTeam[btl.myIdx].shinyImg,function(){
+        // J: 初期ログ
+        addBattleLog('バトルかいし！ '+(btl.myTeam[btl.myIdx].name)+' vs '+(btl.enemyTeam[btl.enemyIdx].name));
+      });
+    },400);
+  } else {
+    addBattleLog((btl.myTeam[btl.myIdx].name)+' vs '+(btl.enemyTeam[btl.enemyIdx].name)+' — こうたい！');
+  }
 }
 
 function buildMovePanel(side,team,idx){
@@ -3190,16 +3308,14 @@ function buildMovePanel(side,team,idx){
   const oppoPoke=(side==='my'?btl.enemyTeam:btl.myTeam)[(side==='my'?btl.enemyIdx:btl.myIdx)];
   const oppoDefTypes=oppoPoke.types||POKE_TYPES[oppoPoke.id]||['ノーマル'];
   const isMyPanel=side==='my';
-  const panelActive=(isMyPanel&&btl.turn==='my')||(!isMyPanel&&btl.turn==='enemy');
 
   const panel=el('div','');panel.id='btl-panel-'+side;
-  panel.style.cssText='flex:1;display:flex;flex-direction:column;padding:5px;overflow-y:auto;background:'+(isMyPanel?'rgba(100,15,15,0.55)':'rgba(15,30,90,0.55)')+(panelActive?'':';filter:brightness(0.45)');
+  panel.style.cssText='flex:1;display:flex;flex-direction:column;padding:5px;overflow-y:auto;background:'+(isMyPanel?'rgba(100,15,15,0.55)':'rgba(15,30,90,0.55)')+';';
 
   // ターン状態ラベル
   const turnLbl=el('div','');
-  turnLbl.style.cssText='font-size:9px;font-weight:900;text-align:center;padding:3px 4px;border-radius:5px;margin-bottom:4px;background:'+(panelActive?(isMyPanel?'rgba(220,50,50,0.5)':'rgba(40,100,200,0.5)'):'rgba(255,255,255,0.04)')+';color:'+(panelActive?'white':'rgba(255,255,255,0.25)')+';letter-spacing:0.3px;';
   turnLbl.id='btl-turn-lbl-'+side;
-  turnLbl.textContent=panelActive?(isMyPanel?'🔴 あなたのターン — こうげきして！':'🔵 あいてのターン — こうげきして！'):(isMyPanel?'⏳ あいてのターンを待ってね':'⏳ あなたのターンを待ってね');
+  turnLbl.style.cssText='font-size:9px;font-weight:900;text-align:center;padding:3px 4px;border-radius:5px;margin-bottom:4px;letter-spacing:0.3px;';
   panel.appendChild(turnLbl);
 
   // 防御タイプ
@@ -3211,63 +3327,71 @@ function buildMovePanel(side,team,idx){
   });
   panel.appendChild(typesDiv);
 
-  // 技ボタン
+  // 技ボタン — 常時リスナー登録、発火時にbtl.turnで判定
   poke.moves.forEach(function(mv){
     const compat=calcCompatibility(mv.type,oppoDefTypes);
     const typeColor=TYPE_COLORS_BTL[mv.type]||'#999';
     const isLight=!TYPE_TEXT_WHITE.has(mv.type);
     const btn=el('button','');
-    btn.style.cssText='width:100%;margin-bottom:4px;padding:6px 5px;border:none;border-radius:8px;cursor:'+(panelActive?'pointer':'default')+';text-align:left;position:relative;background:'+typeColor+';color:'+(isLight?'#1a1a1a':'white')+';box-shadow:0 2px 4px rgba(0,0,0,0.35);transition:transform 0.1s;';
-    btn.style.pointerEvents=panelActive?'auto':'none';
+    btn.dataset.side=side;
+    btn.style.cssText='width:100%;margin-bottom:4px;padding:6px 5px;border:none;border-radius:8px;text-align:left;position:relative;background:'+typeColor+';color:'+(isLight?'#1a1a1a':'white')+';box-shadow:0 2px 4px rgba(0,0,0,0.35);transition:transform 0.1s;touch-action:manipulation;';
     const mName=el('div','');mName.style.cssText='font-size:10px;font-weight:700;line-height:1.2;';mName.textContent=mv.name;
     const mType=el('div','');mType.style.cssText='font-size:7px;opacity:0.75;margin-top:1px;';mType.textContent=mv.type;
     const badge=el('div','');badge.style.cssText='position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:12px;';
     badge.textContent={'super':'🔴','normal':'⚪','weak':'🔵','zero':'❌'}[compat.cls];
     btn.appendChild(mName);btn.appendChild(mType);btn.appendChild(badge);
-    if(panelActive){
-      btn.addEventListener('click',function(){
-        btn.style.transform='scale(0.93)';
-        setTimeout(function(){btn.style.transform='';},120);
-        playAttackSequence(side,mv,compat);
-      });
-    }
+    // 常時リスナー — 発火条件はbtl.turn参照 + btl.animating フラグ
+    btn.addEventListener('click',function(){
+      const isMyPanelNow=side==='my';
+      const myTurn=btl.turn==='my';
+      if(btl.animating) return;          // アニメ中は無効
+      if(isMyPanelNow!==myTurn) return;  // 相手ターンは無効
+      btn.style.transform='scale(0.93)';
+      setTimeout(function(){btn.style.transform='';},120);
+      playAttackSequence(side,mv,compat);
+    });
     panel.appendChild(btn);
   });
   return panel;
 }
 
 function playAttackSequence(attackerSide,mv,compat){
-  // ターン中はすべてのパネルをロック
-  document.querySelectorAll('[id^=btl-panel-]').forEach(function(p){p.style.pointerEvents='none';});
+  btl.animating=true;  // アニメ開始フラグ
 
   const defenderSide=attackerSide==='my'?'enemy':'my';
   const attackerWrap=document.getElementById('btl-img-'+attackerSide);
   const defenderWrap=document.getElementById('btl-img-'+defenderSide);
-  if(!attackerWrap||!defenderWrap)return;
+  if(!attackerWrap||!defenderWrap){ btl.animating=false; return; }
   const attackerImg=attackerWrap.querySelector('img');
   const defenderImg=defenderWrap.querySelector('img');
+
+  // J: バトルログ記録
+  const atkName=(attackerSide==='my'?btl.myTeam[btl.myIdx]:btl.enemyTeam[btl.enemyIdx]).name;
+  const defName=(defenderSide==='my'?btl.myTeam[btl.myIdx]:btl.enemyTeam[btl.enemyIdx]).name;
+  const compatLabel={super:'ばつぐん！',normal:'',weak:'いまひとつ…',zero:'きかない！'}[compat.cls];
+  addBattleLog(atkName+'の'+mv.name+'！'+(compatLabel?' '+compatLabel:''));
 
   // 攻撃モーション
   attackerImg.style.animation='none';void attackerImg.offsetWidth;
   attackerImg.style.animation=(attackerSide==='my'?'btl-attack-my':'btl-attack-en')+' 0.35s ease forwards';
 
-  // 鳴き声
+  // 鳴き声（プリフェッチキャッシュから即時再生）
   const atkPoke=attackerSide==='my'?btl.myTeam[btl.myIdx]:btl.enemyTeam[btl.enemyIdx];
-  setTimeout(function(){try{new Audio(cryUrl(atkPoke.id)).play();}catch(e){}},100);
+  playCryById(atkPoke.id);
 
-  // パーティクル（攻撃側img → 防御側img）
+  // パーティクル
   setTimeout(function(){
     fireParticles(mv.type, compat.cls==='super'?2:compat.cls==='zero'?0:compat.cls==='weak'?0.5:1,
       attackerImg, defenderImg,
       function(){
-        // 命中時ダメージモーション
         defenderImg.style.animation='none';void defenderImg.offsetWidth;
         if(compat.cls==='zero'){ showZeroEffect(defenderSide); }
         else if(compat.cls==='super'){ defenderImg.style.animation='btl-hit-super 0.6s ease'; }
         else if(compat.cls==='weak'){ defenderImg.style.animation='btl-hit-weak 0.4s ease'; }
         else { defenderImg.style.animation='btl-hit 0.5s ease'; }
-        // 相性テキスト
         showCompatText(compat,defenderSide);
+        // G: 相性解説テキスト
+        showCompatHint(mv,defenderSide);
       }
     );
   },150);
@@ -3277,11 +3401,7 @@ function playAttackSequence(attackerSide,mv,compat){
     attackerImg.style.animation='';
     defenderImg.style.animation='';
     btl.turn=attackerSide==='my'?'enemy':'my';
-    // セーフガード：全パネルのpointerEventsを先にautoにリセットしてからupdateTurnDisplayに委ねる
-    document.querySelectorAll('[id^=btl-panel-]').forEach(function(p){
-      p.style.pointerEvents='auto';
-      p.querySelectorAll('button').forEach(function(b){ b.style.pointerEvents='auto'; });
-    });
+    btl.animating=false;  // フラグ解除
     updateTurnDisplay();
   },1100);
 }
@@ -3300,13 +3420,7 @@ function updateTurnDisplay(){
     const active=(isMyPanel&&isMyTurn)||(!isMyPanel&&!isMyTurn);
     if(panel){
       panel.style.filter=active?'':'brightness(0.45)';
-      panel.style.pointerEvents=active?'auto':'none';
-      panel.querySelectorAll('button').forEach(function(btn){
-        // インラインのpointerEventsを確実にリセット（previousセッションの残留値対策）
-        btn.style.removeProperty('pointer-events');
-        btn.style.pointerEvents=active?'auto':'none';
-        btn.style.cursor=active?'pointer':'default';
-      });
+      // pointerEvents操作は不要 — リスナー側でbtl.turn/btl.animatingを参照するため
     }
     if(lbl){
       lbl.style.background=active?(isMyPanel?'rgba(220,50,50,0.5)':'rgba(40,100,200,0.5)'):'rgba(255,255,255,0.04)';
@@ -3323,9 +3437,24 @@ function showCompatText(compat,defenderSide){
   const cfg={super:{t:'ばつぐん！',c:'#ff4444',s:'20px'},normal:{t:'',c:'white',s:'0'},weak:{t:'いまひとつ…',c:'#88aaff',s:'14px'},zero:{t:'きかない！',c:'#aaa',s:'15px'}}[compat.cls];
   if(!cfg.t)return;
   const txt=el('div','');
-  txt.style.cssText='position:absolute;'+(defenderSide==='enemy'?'left:8%':'right:8%')+';top:8%;font-size:'+cfg.s+';font-weight:900;color:'+cfg.c+';text-shadow:0 2px 6px rgba(0,0,0,0.9);pointer-events:none;z-index:30;animation:btl-compat-pop 0.9s ease forwards;white-space:nowrap;';
+  // 欠陥①修正: translateY(-50%)のみ使用し、left/right+topで位置指定
+  txt.style.cssText='position:absolute;'+(defenderSide==='enemy'?'left:6%':'right:6%')+';top:18%;transform:translateY(0);font-size:'+cfg.s+';font-weight:900;color:'+cfg.c+';text-shadow:0 2px 6px rgba(0,0,0,0.9);pointer-events:none;z-index:30;animation:btl-compat-pop2 0.9s ease forwards;white-space:nowrap;';
   txt.textContent=cfg.t;field.appendChild(txt);
   setTimeout(function(){txt.remove();},900);
+}
+
+// G: 相性解説ヒント（攻撃後に小さく表示）
+function showCompatHint(mv,defenderSide){
+  if(mv.type==='ノーマル') return; // ノーマルは説明不要
+  const field=document.getElementById('btl-field');if(!field)return;
+  const defPoke=(defenderSide==='enemy'?btl.enemyTeam[btl.enemyIdx]:btl.myTeam[btl.myIdx]);
+  const defTypes=defPoke.types||POKE_TYPES[defPoke.id]||['ノーマル'];
+  const hint=el('div','');
+  hint.style.cssText='position:absolute;'+(defenderSide==='enemy'?'left:4%':'right:4%')+';bottom:10%;font-size:8px;font-weight:700;color:rgba(255,255,0,0.85);text-shadow:0 1px 4px rgba(0,0,0,0.9);pointer-events:none;z-index:30;opacity:0;animation:btl-hint-pop 2.2s ease forwards;white-space:nowrap;line-height:1.4;';
+  hint.textContent=defPoke.name+'は'+defTypes.join('・')+'\n'+mv.type+'タイプの技だよ';
+  hint.style.whiteSpace='pre';
+  field.appendChild(hint);
+  setTimeout(function(){hint.remove();},2200);
 }
 
 function showZeroEffect(side){
@@ -3360,12 +3489,126 @@ function playSwapAnim(side,newPoke,callback){
   },300);
 }
 
+// ===== D: モンスターボール登場演出 =====
+function playBallEntrance(imgEl, side, isShiny, callback){
+  const wrap=imgEl.parentNode;
+  if(!wrap){ if(callback)callback(); return; }
+  const field=document.getElementById('btl-field');if(!field){if(callback)callback();return;}
+  const fr=wrap.getBoundingClientRect(), br=field.getBoundingClientRect();
+  const cx=fr.left-br.left+fr.width/2, cy=fr.top-br.top+fr.height/2;
+
+  // ボールSVG（モンスターボール）
+  const ball=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  ball.setAttribute('viewBox','0 0 40 40');
+  ball.setAttribute('width','40');ball.setAttribute('height','40');
+  ball.style.cssText='position:absolute;left:'+(cx-20)+'px;top:'+(cy-20)+'px;z-index:25;pointer-events:none;animation:btl-ball-drop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;';
+  ball.innerHTML='<circle cx="20" cy="20" r="19" fill="#fff" stroke="#222" stroke-width="1.5"/>'
+    +'<path d="M1 20 Q1 1 20 1 Q39 1 39 20Z" fill="#E3350D"/>'
+    +'<line x1="1" y1="20" x2="39" y2="20" stroke="#222" stroke-width="2"/>'
+    +'<circle cx="20" cy="20" r="6" fill="#fff" stroke="#222" stroke-width="1.5"/>'
+    +'<circle cx="20" cy="20" r="3" fill="'+(isShiny?'#ffe033':'#aaa')+'"/>';
+  field.appendChild(ball);
+
+  // ポケモン画像は最初非表示
+  imgEl.style.opacity='0';
+
+  // 0.65s後にボールを開いてポケモン登場
+  setTimeout(function(){
+    // ボール消去アニメ
+    ball.style.animation='btl-ball-open 0.35s ease forwards';
+    setTimeout(function(){
+      ball.remove();
+      imgEl.style.animation='btl-poke-emerge 0.5s ease forwards';
+      imgEl.style.opacity='1';
+      // H: シャイニーなら星エフェクト
+      if(isShiny) showShinyFlash(wrap, field, br);
+      setTimeout(function(){ if(callback)callback(); },500);
+    },300);
+  },650);
+}
+
+// H: シャイニー星エフェクト
+function showShinyFlash(wrap, field, br){
+  const wr=wrap.getBoundingClientRect();
+  const cx=wr.left-br.left+wr.width/2, cy=wr.top-br.top+wr.height/2;
+  const stars=['⭐','✨','💫','🌟'];
+  for(let i=0;i<8;i++){
+    const s=el('div','');
+    const angle=Math.PI*2*i/8;
+    const dist=30+Math.random()*20;
+    s.style.cssText='position:absolute;font-size:'+(10+Math.random()*8)+'px;pointer-events:none;z-index:26;'
+      +'left:'+(cx+Math.cos(angle)*dist)+'px;top:'+(cy+Math.sin(angle)*dist)+'px;'
+      +'animation:btl-shiny-star '+(0.6+Math.random()*0.4)+'s '+(i*0.06)+'s ease forwards;';
+    s.textContent=stars[i%stars.length];
+    field.appendChild(s);
+    setTimeout(function(){s.remove();},1200);
+  }
+  // シャイニーテキスト
+  const txt=el('div','');
+  txt.style.cssText='position:absolute;left:50%;top:5%;transform:translateX(-50%);font-size:11px;font-weight:900;color:#ffe033;text-shadow:0 0 8px #ff8800;pointer-events:none;z-index:27;animation:btl-hint-pop 2s ease forwards;white-space:nowrap;';
+  txt.textContent='✨ かがやくポケモン！ ✨';
+  field.appendChild(txt);
+  setTimeout(function(){txt.remove();},2000);
+}
+
+// ===== I: BGM (Web Audio API 8bit生成) =====
+let _bgmNodes=[], _bgmRunning=false;
+function startBattleBgm(){
+  if(!_cryAudioCtx||_bgmRunning) return;
+  _bgmRunning=true;
+  // ポケモンバトル風の簡易ループ（Cメジャースケールのモチーフ）
+  const notes=[523,587,659,698,784,880,988,1047,988,880,784,698,659,587,523,523];
+  const dur=0.12, ctx=_cryAudioCtx;
+  let t=ctx.currentTime+0.1;
+  function scheduleLoop(){
+    if(!_bgmRunning) return;
+    notes.forEach(function(freq,i){
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.type='square';
+      osc.frequency.value=freq;
+      gain.gain.setValueAtTime(0.04,t+i*dur);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+i*dur+dur*0.9);
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.start(t+i*dur);osc.stop(t+i*dur+dur);
+      _bgmNodes.push(osc);
+    });
+    t+=notes.length*dur;
+    // ループ継続
+    setTimeout(scheduleLoop,(notes.length*dur-0.3)*1000);
+  }
+  scheduleLoop();
+}
+function stopBattleBgm(){
+  _bgmRunning=false;
+  _bgmNodes.forEach(function(n){try{n.stop();}catch(e){}});
+  _bgmNodes=[];
+}
+
+// ===== J: バトルログ =====
+const _btlLog=[];
+function addBattleLog(msg){
+  _btlLog.push(msg);
+  if(_btlLog.length>12)_btlLog.shift();
+  const logEl=document.getElementById('btl-log');
+  if(!logEl)return;
+  logEl.innerHTML='';
+  _btlLog.slice().reverse().forEach(function(m,i){
+    const row=el('div','');
+    row.style.cssText='font-size:7.5px;color:rgba(255,255,255,'+(1-i*0.07)+');padding:1px 0;border-bottom:1px solid rgba(255,255,255,0.05);line-height:1.3;';
+    row.textContent=m;
+    logEl.appendChild(row);
+  });
+}
+
 function updateScore(){
   const s=document.getElementById('btl-score');
   if(s)s.textContent='🏆 '+btl.wins+' 勝 / 💀 '+btl.losses+' 敗';
 }
 
 function showWinLose(text,color){
+  stopBattleBgm(); // I: バトル終了時BGM停止
+  addBattleLog(text.includes('かった')?'🏆 かった！':'💀 まけた…');
   if(text.includes('かった')){
     for(let i=0;i<30;i++){
       const c=el('div','');
