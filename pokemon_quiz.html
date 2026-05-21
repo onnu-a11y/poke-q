@@ -228,13 +228,13 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 
 /* ===== バトルナビ landscape対応 ===== */
 #btl-root { flex-direction: column; flex-wrap: nowrap; }
-@media (orientation: landscape) {
-  #btl-root { flex-direction: row !important; flex-wrap: wrap; }
-  #btl-turn-bar { width:100%; flex-shrink:0; order:-2; font-size:11px; padding:3px 8px; }
-  #btl-ball-row-wrap { width:100%; flex-shrink:0; order:-1; }
-  #btl-field { width:40% !important; flex-direction:column; padding:4px; min-height:unset !important; flex:1; }
-  #btl-move-area { width:60% !important; flex:1; }
-  #btl-footer { width:100%; flex-shrink:0; }
+@media screen and (orientation: landscape) {
+  #btl-root { flex-direction: row !important; flex-wrap: wrap !important; }
+  #btl-turn-bar { width:100% !important; flex-shrink:0; order:-2; font-size:11px; padding:3px 8px; }
+  #btl-ball-row-wrap { width:100% !important; flex-shrink:0; order:-1; }
+  #btl-field { width:40% !important; flex-direction:column !important; padding:4px !important; min-height:unset !important; flex:1 !important; max-height:100% !important; }
+  #btl-move-area { width:60% !important; flex:1 !important; max-height:100% !important; }
+  #btl-footer { width:100% !important; flex-shrink:0; }
 }
 </style>
 </head>
@@ -3127,17 +3127,17 @@ function showBattleMain(enterAnim){
     if(isCurrent) wrap.style.filter='drop-shadow(0 0 8px '+(side==='my'?'#ff6b6b':'#6bb3ff')+')';
     wrap.appendChild(img);wrap.appendChild(nm);return wrap;
   }
-  field.appendChild(makePokeImg(btl.myTeam[btl.myIdx],'my'));
-  const vs=el('div','');vs.style.cssText='font-size:13px;font-weight:900;opacity:0.3;';vs.textContent='VS';field.appendChild(vs);
   field.appendChild(makePokeImg(btl.enemyTeam[btl.enemyIdx],'enemy'));
+  const vs=el('div','');vs.style.cssText='font-size:13px;font-weight:900;opacity:0.3;';vs.textContent='VS';field.appendChild(vs);
+  field.appendChild(makePokeImg(btl.myTeam[btl.myIdx],'my'));
   root.appendChild(field);
 
   // 技エリア（2分割）
   const moveArea=el('div','');
   moveArea.id='btl-move-area';
   moveArea.style.cssText='display:flex;flex:1;overflow:hidden;gap:1px;background:rgba(255,255,255,0.05);';
-  moveArea.appendChild(buildMovePanel('my',btl.myTeam,btl.myIdx));
   moveArea.appendChild(buildMovePanel('enemy',btl.enemyTeam,btl.enemyIdx));
+  moveArea.appendChild(buildMovePanel('my',btl.myTeam,btl.myIdx));
   root.appendChild(moveArea);
 
   // フッター
@@ -3158,6 +3158,30 @@ function showBattleMain(enterAnim){
   footer.appendChild(changeBtn);footer.appendChild(winBtn);footer.appendChild(loseBtn);
   root.appendChild(footer);
   document.body.appendChild(root);
+
+  // iOS Safari対応：orientationchange時にflex-directionを強制再適用
+  function applyOrientation(){
+    const isLandscape=window.innerWidth>window.innerHeight;
+    root.style.flexDirection=isLandscape?'row':'column';
+    root.style.flexWrap=isLandscape?'wrap':'nowrap';
+  }
+  applyOrientation();
+  const _orientHandler=function(){ setTimeout(applyOrientation,50); };
+  window.addEventListener('orientationchange',_orientHandler);
+  window.addEventListener('resize',_orientHandler);
+  // root削除時にイベント解除
+  const _mo=new MutationObserver(function(ml){
+    ml.forEach(function(m){
+      m.removedNodes.forEach(function(n){
+        if(n===root){
+          window.removeEventListener('orientationchange',_orientHandler);
+          window.removeEventListener('resize',_orientHandler);
+          _mo.disconnect();
+        }
+      });
+    });
+  });
+  _mo.observe(document.body,{childList:true});
 }
 
 function buildMovePanel(side,team,idx){
@@ -3253,6 +3277,11 @@ function playAttackSequence(attackerSide,mv,compat){
     attackerImg.style.animation='';
     defenderImg.style.animation='';
     btl.turn=attackerSide==='my'?'enemy':'my';
+    // セーフガード：全パネルのpointerEventsを先にautoにリセットしてからupdateTurnDisplayに委ねる
+    document.querySelectorAll('[id^=btl-panel-]').forEach(function(p){
+      p.style.pointerEvents='auto';
+      p.querySelectorAll('button').forEach(function(b){ b.style.pointerEvents='auto'; });
+    });
     updateTurnDisplay();
   },1100);
 }
@@ -3273,6 +3302,8 @@ function updateTurnDisplay(){
       panel.style.filter=active?'':'brightness(0.45)';
       panel.style.pointerEvents=active?'auto':'none';
       panel.querySelectorAll('button').forEach(function(btn){
+        // インラインのpointerEventsを確実にリセット（previousセッションの残留値対策）
+        btn.style.removeProperty('pointer-events');
         btn.style.pointerEvents=active?'auto':'none';
         btn.style.cursor=active?'pointer':'default';
       });
