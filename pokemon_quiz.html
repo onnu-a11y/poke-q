@@ -3079,7 +3079,6 @@ function showBattleMain(enterAnim){
   // ターンバー
   const turnBar=el('div','');turnBar.id='btl-turn-bar';
   const isMy=btl.turn==='my';
-  turnBar.id='btl-turn-bar';
   turnBar.style.cssText='text-align:center;padding:5px 8px;font-size:12px;font-weight:900;flex-shrink:0;background:'+(isMy?'rgba(200,40,40,0.55)':'rgba(30,90,180,0.55)')+';letter-spacing:0.5px;';
   turnBar.textContent=isMy?'🔴 チームレッドのターン — 技をえらんでこうげき！':'🔵 チームブルーのターン — 技をえらんでこうげき！';
   root.appendChild(turnBar);
