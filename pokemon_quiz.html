@@ -3194,7 +3194,8 @@ function buildMovePanel(side,team,idx){
     const typeColor=TYPE_COLORS_BTL[mv.type]||'#999';
     const isLight=!TYPE_TEXT_WHITE.has(mv.type);
     const btn=el('button','');
-    btn.style.cssText='width:100%;margin-bottom:4px;padding:6px 5px;border:none;border-radius:8px;cursor:'+(panelActive?'pointer':'default')+';text-align:left;position:relative;background:'+typeColor+';color:'+(isLight?'#1a1a1a':'white')+';box-shadow:0 2px 4px rgba(0,0,0,0.35);transition:transform 0.1s;'+(panelActive?'':'pointer-events:none;');
+    btn.style.cssText='width:100%;margin-bottom:4px;padding:6px 5px;border:none;border-radius:8px;cursor:'+(panelActive?'pointer':'default')+';text-align:left;position:relative;background:'+typeColor+';color:'+(isLight?'#1a1a1a':'white')+';box-shadow:0 2px 4px rgba(0,0,0,0.35);transition:transform 0.1s;';
+    btn.style.pointerEvents=panelActive?'auto':'none';
     const mName=el('div','');mName.style.cssText='font-size:10px;font-weight:700;line-height:1.2;';mName.textContent=mv.name;
     const mType=el('div','');mType.style.cssText='font-size:7px;opacity:0.75;margin-top:1px;';mType.textContent=mv.type;
     const badge=el('div','');badge.style.cssText='position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:12px;';
