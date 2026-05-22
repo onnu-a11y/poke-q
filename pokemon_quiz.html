@@ -2654,29 +2654,29 @@ function showMazeClear() {
 
 // ●24体の技データ
 const MONKORE_LIST = [
-  {name:'ホゲータ',           id:909,                          moves:[{name:'ひのこ',type:'ほのお'},{name:'かえんほうしゃ',type:'ほのお'},{name:'じだんだ',type:'じめん'},{name:'チャームボイス',type:'フェアリー'}]},
-  {name:'メタグロス',         id:376,                          moves:[{name:'コメットパンチ',type:'はがね'},{name:'じしん',type:'じめん'},{name:'しねんのずつき',type:'エスパー'},{name:'バレットパンチ',type:'はがね'}]},
-  {name:'ゲッコウガ',         id:658,                          moves:[{name:'みずしゅりけん',type:'みず'},{name:'みずのはどう',type:'みず'},{name:'シャドーボール',type:'ゴースト'},{name:'かげぶんしん',type:'ノーマル'}]},
-  {name:'フシギバナ',         id:3,                            moves:[{name:'はっぱカッター',type:'くさ'},{name:'ソーラービーム',type:'くさ'},{name:'やどりぎのたね',type:'くさ'},{name:'つるのむち',type:'くさ'}]},
-  {name:'ガブリアス',         id:445,                          moves:[{name:'じしん',type:'じめん'},{name:'げきりん',type:'ドラゴン'},{name:'ストーンエッジ',type:'いわ'},{name:'かみくだく',type:'あく'}]},
-  {name:'カイリュー',         id:149,                          moves:[{name:'ドラゴンクロー',type:'ドラゴン'},{name:'りゅうせいぐん',type:'ドラゴン'},{name:'ぼうふう',type:'ひこう'},{name:'ダブルウイング',type:'ひこう'}]},
-  {name:'ゲンガー',           id:94,                           moves:[{name:'シャドーボール',type:'ゴースト'},{name:'さいみんじゅつ',type:'エスパー'},{name:'ヘドロばくだん',type:'どく'},{name:'ゆめくい',type:'エスパー'}]},
-  {name:'エースバーン',       id:815,                          moves:[{name:'かえんボール',type:'ほのお'},{name:'ブレイズキック',type:'ほのお'},{name:'でんこうせっか',type:'ノーマル'},{name:'きあいだま',type:'かくとう'}]},
-  {name:'パオジアン',         id:1002,                         moves:[{name:'つららおとし',type:'こおり'},{name:'ふいうち',type:'あく'},{name:'せいなるつるぎ',type:'かくとう'},{name:'かみくだく',type:'あく'}]},
-  {name:'ボーマンダ',         id:373,                          moves:[{name:'りゅうのいぶき',type:'ドラゴン'},{name:'かえんほうしゃ',type:'ほのお'},{name:'そらをとぶ',type:'ひこう'},{name:'りゅうせいぐん',type:'ドラゴン'}]},
-  {name:'レックウザ',       id:384,                          moves:[{name:'ガリョウテンセイ',type:'ひこう'},{name:'りゅうせいぐん',type:'ドラゴン'},{name:'だいもんじ',type:'ほのお'},{name:'ふぶき',type:'こおり'}]},
-  {name:'ゼクロム',           id:644,                          moves:[{name:'クロスサンダー',type:'でんき'},{name:'らいげき',type:'でんき'},{name:'りゅうのいぶき',type:'ドラゴン'},{name:'げきりん',type:'ドラゴン'}]},
-  {name:'イベルタル',         id:717,                          moves:[{name:'デスウイング',type:'あく'},{name:'イカサマ',type:'あく'},{name:'そらをとぶ',type:'ひこう'},{name:'ぼうふう',type:'ひこう'}]},
-  {name:'ネクロズマ(たそがれ)',id:800,  imgId:10155, types:['エスパー','はがね'], moves:[{name:'フォトンゲイザー',type:'エスパー'},{name:'メテオドライブ',type:'はがね'},{name:'シャドーボール',type:'ゴースト'},{name:'サイコファング',type:'エスパー'}]},
-  {name:'ザシアン(剣の王)',    id:888, imgId:10188, types:['フェアリー','はがね'], moves:[{name:'きょじゅうざん',type:'はがね'},{name:'アイアンヘッド',type:'はがね'},{name:'でんこうせっか',type:'ノーマル'},{name:'じゃれつく',type:'フェアリー'}]},
-  {name:'ザマゼンタ(盾の王)',  id:889, imgId:10189, types:['かくとう','はがね'], moves:[{name:'きょじゅうだん',type:'かくとう'},{name:'アイアンヘッド',type:'はがね'},{name:'でんこうせっか',type:'ノーマル'},{name:'きあいだま',type:'かくとう'}]},
-  {name:'ミュウツー',         id:150,                          moves:[{name:'サイコキネシス',type:'エスパー'},{name:'シャドーボール',type:'ゴースト'},{name:'れいとうビーム',type:'こおり'},{name:'かみなり',type:'でんき'}]},
-  {name:'ムゲンダイナ',       id:890,                          moves:[{name:'ダイマックスほう',type:'どく'},{name:'りゅうのいぶき',type:'ドラゴン'},{name:'かえんほうしゃ',type:'ほのお'},{name:'ヘドロばくだん',type:'どく'}]},
-  {name:'リザードン(キョダイ)',id:6,                types:['ほのお','ひこう'], moves:[{name:'キョダイゴクエン',type:'ほのお'},{name:'かえんほうしゃ',type:'ほのお'},{name:'そらをとぶ',type:'ひこう'},{name:'りゅうのいぶき',type:'ドラゴン'}]},
-  {name:'メガリザードンX',    id:6,   imgId:10034, types:['ドラゴン','ほのお'], moves:[{name:'かえんほうしゃ',type:'ほのお'},{name:'りゅうのいぶき',type:'ドラゴン'},{name:'フレアドライブ',type:'ほのお'},{name:'そらをとぶ',type:'ひこう'}]},
-  {name:'メガバンギラス',     id:248, imgId:10049, types:['いわ','あく'],      moves:[{name:'いわなだれ',type:'いわ'},{name:'かみくだく',type:'あく'},{name:'ストーンエッジ',type:'いわ'},{name:'じしん',type:'じめん'}]},
-  {name:'メガミュウツーY',    id:150, imgId:10044, types:['エスパー'],         moves:[{name:'サイコキネシス',type:'エスパー'},{name:'シャドーボール',type:'ゴースト'},{name:'れいとうビーム',type:'こおり'},{name:'かみなり',type:'でんき'}]},
-  {name:'メガアブソル',       id:359, imgId:10057, types:['あく'],             moves:[{name:'きりさく',type:'ノーマル'},{name:'ふいうち',type:'あく'},{name:'かみくだく',type:'あく'},{name:'シャドークロー',type:'ゴースト'}]}
+  {name:'ホゲータ',           id:909,                          moves:[{name:'ひのこ',type:'ほのお',fx:'blast'},{name:'かえんほうしゃ',type:'ほのお',fx:'blast'},{name:'じだんだ',type:'じめん',fx:'strike'},{name:'チャームボイス',type:'フェアリー',fx:'wind'}]},
+  {name:'メタグロス',         id:376,                          moves:[{name:'コメットパンチ',type:'はがね',fx:'slash'},{name:'じしん',type:'じめん',fx:'strike'},{name:'しねんのずつき',type:'エスパー',fx:'beam'},{name:'バレットパンチ',type:'はがね',fx:'slash'}]},
+  {name:'ゲッコウガ',         id:658,                          moves:[{name:'みずしゅりけん',type:'みず',fx:'slash'},{name:'みずのはどう',type:'みず',fx:'beam'},{name:'シャドーボール',type:'ゴースト',fx:'beam'},{name:'かげぶんしん',type:'ノーマル',fx:'dark'}]},
+  {name:'フシギバナ',         id:3,                            moves:[{name:'はっぱカッター',type:'くさ',fx:'slash'},{name:'ソーラービーム',type:'くさ',fx:'strike'},{name:'やどりぎのたね',type:'くさ',fx:'strike'},{name:'つるのむち',type:'くさ',fx:'strike'}]},
+  {name:'ガブリアス',         id:445,                          moves:[{name:'じしん',type:'じめん',fx:'strike'},{name:'げきりん',type:'ドラゴン',fx:'dragon'},{name:'ストーンエッジ',type:'いわ',fx:'strike'},{name:'かみくだく',type:'あく',fx:'slash'}]},
+  {name:'カイリュー',         id:149,                          moves:[{name:'ドラゴンクロー',type:'ドラゴン',fx:'dragon'},{name:'りゅうせいぐん',type:'ドラゴン',fx:'dragon'},{name:'ぼうふう',type:'ひこう',fx:'wind'},{name:'ダブルウイング',type:'ひこう',fx:'wind'}]},
+  {name:'ゲンガー',           id:94,                           moves:[{name:'シャドーボール',type:'ゴースト',fx:'beam'},{name:'さいみんじゅつ',type:'エスパー',fx:'beam'},{name:'ヘドロばくだん',type:'どく',fx:'beam'},{name:'ゆめくい',type:'エスパー',fx:'beam'}]},
+  {name:'エースバーン',       id:815,                          moves:[{name:'かえんボール',type:'ほのお',fx:'slash'},{name:'ブレイズキック',type:'ほのお',fx:'blast'},{name:'でんこうせっか',type:'ノーマル',fx:'bolt'},{name:'きあいだま',type:'かくとう',fx:'strike'}]},
+  {name:'パオジアン',         id:1002,                         moves:[{name:'つららおとし',type:'こおり',fx:'freeze'},{name:'ふいうち',type:'あく',fx:'slash'},{name:'せいなるつるぎ',type:'かくとう',fx:'slash'},{name:'かみくだく',type:'あく',fx:'slash'}]},
+  {name:'ボーマンダ',         id:373,                          moves:[{name:'りゅうのいぶき',type:'ドラゴン',fx:'strike'},{name:'かえんほうしゃ',type:'ほのお',fx:'blast'},{name:'そらをとぶ',type:'ひこう',fx:'wind'},{name:'りゅうせいぐん',type:'ドラゴン',fx:'dragon'}]},
+  {name:'レックウザ',       id:384,                          moves:[{name:'ガリョウテンセイ',type:'ひこう',fx:'wind'},{name:'りゅうせいぐん',type:'ドラゴン',fx:'dragon'},{name:'だいもんじ',type:'ほのお',fx:'blast'},{name:'ふぶき',type:'こおり',fx:'freeze'}]},
+  {name:'ゼクロム',           id:644,                          moves:[{name:'クロスサンダー',type:'でんき',fx:'beam'},{name:'らいげき',type:'でんき',fx:'beam'},{name:'りゅうのいぶき',type:'ドラゴン',fx:'strike'},{name:'げきりん',type:'ドラゴン',fx:'dragon'}]},
+  {name:'イベルタル',         id:717,                          moves:[{name:'デスウイング',type:'あく',fx:'dark'},{name:'イカサマ',type:'あく',fx:'beam'},{name:'そらをとぶ',type:'ひこう',fx:'wind'},{name:'ぼうふう',type:'ひこう',fx:'wind'}]},
+  {name:'ネクロズマ(たそがれ)',id:800,  imgId:10155, types:['エスパー','はがね'], moves:[{name:'フォトンゲイザー',type:'エスパー',fx:'beam'},{name:'メテオドライブ',type:'はがね',fx:'slash'},{name:'シャドーボール',type:'ゴースト',fx:'beam'},{name:'サイコファング',type:'エスパー',fx:'beam'}]},
+  {name:'ザシアン(剣の王)',    id:888, imgId:10188, types:['フェアリー','はがね'], moves:[{name:'きょじゅうざん',type:'はがね',fx:'slash'},{name:'アイアンヘッド',type:'はがね',fx:'strike'},{name:'でんこうせっか',type:'ノーマル',fx:'bolt'},{name:'じゃれつく',type:'フェアリー',fx:'strike'}]},
+  {name:'ザマゼンタ(盾の王)',  id:889, imgId:10189, types:['かくとう','はがね'], moves:[{name:'きょじゅうだん',type:'かくとう',fx:'slash'},{name:'アイアンヘッド',type:'はがね',fx:'strike'},{name:'でんこうせっか',type:'ノーマル',fx:'bolt'},{name:'きあいだま',type:'かくとう',fx:'strike'}]},
+  {name:'ミュウツー',         id:150,                          moves:[{name:'サイコキネシス',type:'エスパー',fx:'beam'},{name:'シャドーボール',type:'ゴースト',fx:'beam'},{name:'れいとうビーム',type:'こおり',fx:'freeze'},{name:'かみなり',type:'でんき',fx:'bolt'}]},
+  {name:'ムゲンダイナ',       id:890,                          moves:[{name:'ダイマックスほう',type:'どく',fx:'beam'},{name:'りゅうのいぶき',type:'ドラゴン',fx:'strike'},{name:'かえんほうしゃ',type:'ほのお',fx:'blast'},{name:'ヘドロばくだん',type:'どく',fx:'beam'}]},
+  {name:'リザードン(キョダイ)',id:6,                types:['ほのお','ひこう'], moves:[{name:'キョダイゴクエン',type:'ほのお',fx:'blast'},{name:'かえんほうしゃ',type:'ほのお',fx:'blast'},{name:'そらをとぶ',type:'ひこう',fx:'wind'},{name:'りゅうのいぶき',type:'ドラゴン',fx:'strike'}]},
+  {name:'メガリザードンX',    id:6,   imgId:10034, types:['ドラゴン','ほのお'], moves:[{name:'かえんほうしゃ',type:'ほのお',fx:'blast'},{name:'りゅうのいぶき',type:'ドラゴン',fx:'strike'},{name:'フレアドライブ',type:'ほのお',fx:'blast'},{name:'そらをとぶ',type:'ひこう',fx:'wind'}]},
+  {name:'メガバンギラス',     id:248, imgId:10049, types:['いわ','あく'],      moves:[{name:'いわなだれ',type:'いわ',fx:'strike'},{name:'かみくだく',type:'あく',fx:'slash'},{name:'ストーンエッジ',type:'いわ',fx:'strike'},{name:'じしん',type:'じめん',fx:'strike'}]},
+  {name:'メガミュウツーY',    id:150, imgId:10044, types:['エスパー'],         moves:[{name:'サイコキネシス',type:'エスパー',fx:'beam'},{name:'シャドーボール',type:'ゴースト',fx:'beam'},{name:'れいとうビーム',type:'こおり',fx:'freeze'},{name:'かみなり',type:'でんき',fx:'bolt'}]},
+  {name:'メガアブソル',       id:359, imgId:10057, types:['あく'],             moves:[{name:'きりさく',type:'ノーマル',fx:'slash'},{name:'ふいうち',type:'あく',fx:'slash'},{name:'かみくだく',type:'あく',fx:'slash'},{name:'シャドークロー',type:'ゴースト',fx:'slash'}]}
 ];
 
 // PokeAPI 鳴き声URL
@@ -2952,7 +2952,10 @@ function rollDice(cls){
 /* ===== ターン・その他 ===== */
 @keyframes faint-fall{0%{transform:translateY(0) rotate(0) scale(1);opacity:1;}100%{transform:translateY(70px) rotate(20deg) scale(0.6);opacity:0;filter:brightness(0);}}
 @keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
-@keyframes dice-drop{0%{opacity:0;transform:translateY(-100px) scale(0.5) rotate(-180deg);}55%{opacity:1;transform:translateY(10px) scale(1.1) rotate(8deg);}75%{transform:translateY(-5px) scale(0.96) rotate(-3deg);}90%{transform:translateY(3px) scale(1.02);}100%{opacity:1;transform:translateY(0) scale(1) rotate(0);}}
+@keyframes speedlines-move{0%{background-position:0 0;}100%{background-position:40px 0;}}
+@keyframes hp-shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+@keyframes hp-shake-crit{0%,100%{transform:translateX(0);}10%{transform:translateX(-10px);}30%{transform:translateX(10px);}50%{transform:translateX(-8px);}70%{transform:translateX(8px);}90%{transform:translateX(-4px);}}
+@keyframes dmg-num-pop{0%{opacity:0;transform:translateY(0) scale(0.5);}30%{opacity:1;transform:translateY(-12px) scale(1.15);}70%{opacity:1;transform:translateY(-18px) scale(1);}100%{opacity:0;transform:translateY(-28px) scale(0.8);}}
 @keyframes dice-face-pop{0%{transform:scale(0.7);}50%{transform:scale(1.35);}75%{transform:scale(0.92);}100%{transform:scale(1.1);}}
 @keyframes dmg-slam{0%{opacity:0;transform:scale(0.2) rotate(-8deg);}55%{transform:scale(1.22) rotate(2deg);}75%{transform:scale(0.93);}100%{opacity:1;transform:scale(1);}}
 @keyframes crit-glow{0%,100%{text-shadow:0 0 16px #ff8800,0 2px 8px rgba(0,0,0,0.8);}50%{text-shadow:0 0 32px #ffe033,0 0 64px #ff8800,0 2px 8px rgba(0,0,0,0.8);}}
@@ -3320,18 +3323,18 @@ function showBattleMain(enterAnim){
   // 草原背景（空・地面グラデーション）
   root.style.cssText='background:linear-gradient(180deg,#87CEEB 0%,#b0e0ff 40%,#5a9e4a 40%,#3d7a34 55%,#2a5226 100%);';
 
-  // ヘッダー
-  const hdr=el('div','');hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:5px 12px;background:rgba(0,0,0,0.58);flex-shrink:0;';
-  const backB=el('button','btl-btn');backB.style.cssText='background:rgba(255,255,255,0.12);border:none;color:white;padding:5px 12px;border-radius:6px;font-size:11px;';backB.textContent='← もどる';backB.addEventListener('click',function(){cleanupBtlRotate();showTop();});
+  // ヘッダー（固定高さ）
+  const hdr=el('div','');hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:4px 10px;background:rgba(0,0,0,0.58);flex-shrink:0;height:36px;box-sizing:border-box;';
+  const backB=el('button','btl-btn');backB.style.cssText='background:rgba(255,255,255,0.12);border:none;color:white;padding:3px 10px;border-radius:6px;font-size:11px;';backB.textContent='← もどる';backB.addEventListener('click',function(){cleanupBtlRotate();showTop();});
   const turnBar=el('div','');turnBar.id='btl-turn-bar';
   const isMy=btl.turn==='my';
-  turnBar.style.cssText='font-size:11px;font-weight:900;padding:4px 14px;border-radius:20px;background:'+(isMy?'rgba(176,58,46,0.95)':'rgba(31,97,141,0.95)')+';color:white;letter-spacing:0.5px;';
+  turnBar.style.cssText='font-size:10px;font-weight:900;padding:3px 12px;border-radius:20px;background:'+(isMy?'rgba(176,58,46,0.95)':'rgba(31,97,141,0.95)')+';color:white;';
   turnBar.textContent=isMy?'🔴 レッドのターン':'🔵 ブルーのターン';
   const scoreD=el('div','');scoreD.id='btl-score';scoreD.style.cssText='font-size:11px;font-weight:700;color:white;';scoreD.textContent='🏆'+btl.wins+' 💀'+btl.losses;
   hdr.appendChild(backB);hdr.appendChild(turnBar);hdr.appendChild(scoreD);root.appendChild(hdr);
 
-  // フィールド
-  const field=el('div','');field.id='btl-field';field.style.cssText='position:relative;flex-shrink:0;padding:6px 10px 2px;';
+  // フィールド（固定高さ）
+  const field=el('div','');field.id='btl-field';field.style.cssText='position:relative;flex-shrink:0;padding:5px 8px 2px;height:38dvh;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;';
   const flashEl=el('div','');flashEl.id='btl-flash';flashEl.style.cssText='position:absolute;inset:0;background:white;opacity:0;pointer-events:none;z-index:10;';field.appendChild(flashEl);
 
   // HPブロック
@@ -3384,12 +3387,12 @@ function showBattleMain(enterAnim){
   });
   field.appendChild(ballRow);root.appendChild(field);
 
-  // ログ
-  const logArea=el('div','');logArea.id='btl-log';logArea.style.cssText='padding:3px 10px;background:rgba(0,0,0,0.62);flex-shrink:0;height:40px;overflow:hidden;';
+  // ログ（最小限）
+  const logArea=el('div','');logArea.id='btl-log';logArea.style.cssText='padding:2px 10px;background:rgba(0,0,0,0.7);flex-shrink:0;height:28px;overflow:hidden;font-size:9px;';
   _btlLog.length=0;root.appendChild(logArea);
 
-  // 技パネル（flex:1で均等割、スクロールなし）
-  const moveWrap=el('div','');moveWrap.style.cssText='display:flex;flex:1;min-height:0;gap:3px;padding:5px;background:rgba(0,0,0,0.52);';
+  // 技パネル（残り全部）
+  const moveWrap=el('div','');moveWrap.id='btl-move-wrap';moveWrap.style.cssText='display:flex;flex:1;min-height:0;gap:3px;padding:4px;background:rgba(0,0,0,0.52);overflow:hidden;';
   moveWrap.appendChild(buildMovePanel('enemy',btl.enemyTeam,btl.enemyIdx));
   moveWrap.appendChild(buildMovePanel('my',btl.myTeam,btl.myIdx));
   root.appendChild(moveWrap);
@@ -3547,60 +3550,54 @@ function playAttackSequence(attackerSide,mv,compat){
   if(!atkWrap||!defWrap){btl.animating=false;return;}
   const atkImg=atkWrap.querySelector('img');
   const defImg=defWrap.querySelector('img');
+  const fxKey=mv.fx||'strike';
 
-  // ①技名テロップ（画面下部にスライドイン・ゆっくり）
-  showTechTelop(atkPoke.name,mv.name,mv.type,attackerSide,function(){
+  // ① 帯演出（疾走感・タイプカラー＋速度線）
+  showTechBand(atkImg,atkPoke.name,mv.name,mv.type,attackerSide,function(){
 
-    // ②鳴き声 + 攻撃モーション（前に大きく出る）
+    // ② 鳴き声 + 攻撃ルンジ
     playCryById(atkPoke.id);
     atkImg.style.animation='none';void atkImg.offsetWidth;
     atkImg.style.animation=(attackerSide==='my'?'lunge-my':'lunge-en')+' 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards';
 
-    // ③パーティクル（少し溜めてから）
+    // ③ パーティクル
     setTimeout(function(){
       fireParticles(mv.type,compat.cls==='super'?2.2:compat.cls==='zero'?0:compat.cls==='weak'?0.55:1,atkImg,defImg,function(){
 
-        // ④ヒット！（画面ごと揺れる）
-        const root=document.getElementById('btl-root');
-        if(root){root.style.animation='screen-shake 0.4s ease';setTimeout(function(){root.style.animation='';},400);}
-
-        // ヒットフラッシュ
+        // ④ ヒット：フラッシュ＋画面揺れ
+        const rootEl=document.getElementById('btl-root');
+        if(rootEl){rootEl.style.animation='screen-shake 0.4s ease';setTimeout(function(){rootEl.style.animation='';},400);}
         const fl=document.getElementById('btl-flash');
-        if(fl){
-          fl.style.opacity=compat.cls==='super'?'0.85':'0.5';
-          fl.style.animation='flash-white 0.35s ease forwards';
-          setTimeout(function(){fl.style.opacity='0';fl.style.animation='';},350);
-        }
+        if(fl){fl.style.opacity=compat.cls==='super'?'0.85':'0.45';fl.style.transition='opacity 0.06s';setTimeout(function(){fl.style.transition='opacity 0.25s';fl.style.opacity='0';},80);}
 
-        // ヒットモーション
+        // ⑤ タイプ×FXエフェクト
+        runHitFx(fxKey,TYPE_COLORS_BTL[mv.type]||'#888',defImg,false,compat.cls);
+
+        // ⑥ ヒットモーション
         defImg.style.animation='none';void defImg.offsetWidth;
-        if(compat.cls==='super') defImg.style.animation='hit-super 0.55s ease';
-        else if(compat.cls==='zero') {defImg.style.animation='';showZeroEffect(defSide);}
+        if(compat.cls==='super')defImg.style.animation='hit-super 0.55s ease';
+        else if(compat.cls==='zero'){defImg.style.animation='';showZeroEffect(defSide);}
         else defImg.style.animation='hit-shake 0.45s ease';
 
-        // ⑤相性テキスト表示（ヒットから0.2秒後）
-        setTimeout(function(){showCompatText(compat,defSide);},200);
+        setTimeout(function(){showCompatText(compat,defSide);},150);
 
-        // ⑥ダイス演出
+        // ⑦ ダイス
         setTimeout(function(){
           showDiceOverlay(compat.cls,defSide,function(dmg,isCrit){
 
-            // ⑦HP削減
+            if(isCrit)runHitFx(fxKey,'#ffe033',defImg,true,compat.cls);
+
+            // ⑧ HPエフェクト＋削減
+            showHpDamageEffect(defSide,dmg,isCrit);
             const curHp=getHp(defSide);
             const newHp=Math.max(0,curHp-dmg);
             btl.hp[defSide][defSide==='my'?btl.myIdx:btl.enemyIdx]=newHp;
             animateHpDrain(defSide,curHp,newHp,function(){
-
-              // ⑧ログ
               showCompatHint(mv,defSide);
-              const critTxt=isCrit?' 💥きゅうしょ！':'';
-              addBattleLog(atkPoke.name+'の'+mv.name+'！'+critTxt+(dmg>0?' -'+dmg+'ダメージ！':''));
-
-              // ⑨HP0判定
+              addBattleLog(atkPoke.name+'の'+mv.name+'！'+(isCrit?' 💥きゅうしょ！':'')+(dmg>0?' -'+dmg+'ダメージ！':''));
               if(newHp<=0){
                 setTimeout(function(){handleFaint(defSide,attackerSide);},600);
               } else {
-                // ⑩ターン切替
                 setTimeout(function(){
                   atkImg.style.animation='';defImg.style.animation='';
                   btl.turn=attackerSide==='my'?'enemy':'my';
@@ -3619,21 +3616,412 @@ function playAttackSequence(attackerSide,mv,compat){
   });
 }
 
-// ===== 技名テロップ =====
-function showTechTelop(pokeName,moveName,moveType,side,callback){
+// ===== ② 疾走感のある帯演出（技名バンド）=====
+function showTechBand(atkImg,pokeName,moveName,moveType,side,callback){
   const typeColor=TYPE_COLORS_BTL[moveType]||'#888';
   const isLight=!TYPE_TEXT_WHITE.has(moveType);
-  const telop=el('div','');
-  telop.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:5000;padding:14px 18px;'
-    +'background:linear-gradient(135deg,'+typeColor+'ee,'+typeColor+'99);'
-    +'border-top:3px solid rgba(255,255,255,0.3);'
-    +'animation:telop-slide 1.8s ease forwards;pointer-events:none;';
-  const pname=el('div','');pname.style.cssText='font-size:11px;color:'+(isLight?'rgba(0,0,0,0.6)':'rgba(255,255,255,0.7)')+';font-weight:700;margin-bottom:2px;';pname.textContent=(side==='my'?'🔴 '+pokeName:'🔵 '+pokeName)+'のこうげき！';
-  const mname=el('div','');mname.style.cssText='font-size:24px;font-weight:900;color:'+(isLight?'#1a1a1a':'white')+';letter-spacing:2px;text-shadow:0 2px 8px rgba(0,0,0,0.3);';mname.textContent=moveName;
-  telop.appendChild(pname);telop.appendChild(mname);
-  document.body.appendChild(telop);
-  // 1.8s後に消えてコールバック
-  setTimeout(function(){telop.remove();if(callback)callback();},1500);
+  const textCol=isLight?'#111':'white';
+  const _rw=document.getElementById('btl-root')||document.body;
+
+  // 帯本体（画面中央を横断・斜め速度線付き）
+  const band=el('div','');
+  band.style.cssText=
+    'position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:4000;'
+    +'height:72px;overflow:hidden;pointer-events:none;'
+    +'clip-path:polygon(0 8px,100% 0,100% calc(100% - 8px),0 100%);';
+
+  // 背景（タイプカラー＋速度線）
+  const bg=el('div','');
+  bg.style.cssText=
+    'position:absolute;inset:0;'
+    +'background:'+typeColor+';'
+    +'opacity:0.96;';
+  // 速度線オーバーレイ（斜め白線）
+  const lines=el('div','');
+  lines.style.cssText=
+    'position:absolute;inset:0;'
+    +'background:repeating-linear-gradient(72deg,'
+    +'transparent,transparent 14px,'
+    +'rgba(255,255,255,0.13) 14px,rgba(255,255,255,0.13) 22px);'
+    +'animation:speedlines-move 0.4s linear infinite;';
+
+  // 帯の内容
+  const inner=el('div','');
+  inner.style.cssText=
+    'position:absolute;inset:0;display:flex;align-items:center;gap:12px;padding:0 18px;';
+
+  // ポケモンサムネイル（攻撃側）
+  const thumb=el('img','');
+  thumb.src=atkImg?atkImg.src:'';
+  thumb.style.cssText='width:54px;height:54px;object-fit:contain;flex-shrink:0;'
+    +'filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));'
+    +(side==='enemy'?'transform:scaleX(-1);':'');
+
+  // 技名（大きく）
+  const mvName=el('div','');
+  mvName.style.cssText=
+    'font-size:26px;font-weight:900;color:'+textCol+';letter-spacing:3px;'
+    +'text-shadow:0 2px 8px rgba(0,0,0,0.35);flex:1;';
+  mvName.textContent=moveName;
+
+  // タイプバッジ
+  const typBadge=el('div','');
+  typBadge.style.cssText=
+    'font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;'
+    +'background:rgba(0,0,0,0.25);color:'+textCol+';flex-shrink:0;border:1px solid rgba(255,255,255,0.3);';
+  typBadge.textContent=moveType;
+
+  inner.appendChild(thumb);inner.appendChild(mvName);inner.appendChild(typBadge);
+  band.appendChild(bg);band.appendChild(lines);band.appendChild(inner);
+
+  // 入場アニメ：左からスライドイン
+  band.style.transform='translateX(-110%) translateY(-50%)';
+  band.style.transition='transform 0.28s cubic-bezier(0.22,1,0.36,1)';
+  _rw.appendChild(band);
+  requestAnimationFrame(function(){
+    band.style.transform='translateX(0) translateY(-50%)';
+  });
+
+  // 0.85s表示→右に高速退場
+  setTimeout(function(){
+    band.style.transition='transform 0.18s cubic-bezier(0.55,0,1,0.45)';
+    band.style.transform='translateX(110%) translateY(-50%)';
+    setTimeout(function(){band.remove();if(callback)callback();},180);
+  },850);
+}
+
+// ===== ③ HPゲージリッチエフェクト =====
+function showHpDamageEffect(side,dmg,isCrit){
+  const block=document.getElementById('btl-hpblock-'+side);
+  const bar=document.getElementById('btl-hpbar-'+side);
+  if(!block||!bar)return;
+
+  // バーのフラッシュ（ダメージ前に白く光る）
+  const origBg=bar.style.background;
+  bar.style.background='white';
+  setTimeout(function(){bar.style.background=origBg||'#4caf50';},100);
+
+  // バーシェイク
+  const shakeAnim=isCrit?'hp-shake-crit 0.5s ease':'hp-shake 0.35s ease';
+  bar.parentNode.style.animation=shakeAnim;
+  setTimeout(function(){if(bar.parentNode)bar.parentNode.style.animation='';},500);
+
+  // 急所：バー発光
+  if(isCrit){
+    block.style.boxShadow='0 0 0 3px #ffe033,0 0 20px #ff8800';
+    setTimeout(function(){block.style.boxShadow='';},800);
+  }
+
+  // ダメージ数値ポップアップ（バー右端に）
+  const numEl=el('div','');
+  const col=isCrit?'#ff8800':'#e74c3c';
+  numEl.style.cssText=
+    'position:absolute;right:-8px;top:-22px;font-size:'+(isCrit?'20':'15')+'px;font-weight:900;'
+    +'color:'+col+';text-shadow:0 1px 4px rgba(0,0,0,0.6);pointer-events:none;z-index:50;'
+    +'animation:dmg-num-pop 0.9s ease forwards;white-space:nowrap;';
+  numEl.textContent='-'+dmg+(isCrit?' 💥':'');
+  block.style.position='relative';
+  block.appendChild(numEl);
+  setTimeout(function(){numEl.remove();},900);
+}
+
+// ===== ④ タイプ×FXカテゴリー ヒットエフェクト（Canvas + SVG）=====
+const FX_CATEGORY={
+  slash:{draw:drawSlash},beam:{draw:drawBeam},blast:{draw:drawBlast},
+  wind:{draw:drawWind},bolt:{draw:drawBolt},strike:{draw:drawStrike},
+  freeze:{draw:drawFreeze},dark:{draw:drawDark},dragon:{draw:drawDragon},
+};
+
+function getTypeColor(type){return TYPE_COLORS_BTL[type]||'#888';}
+
+function runHitFx(fxKey,typeColor,targetEl,isCrit,compatCls){
+  const field=document.getElementById('btl-field');if(!field)return;
+  const cv=document.createElement('canvas');
+  const fr=field.getBoundingClientRect();
+  cv.width=fr.width;cv.height=fr.height;
+  cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20;';
+  field.appendChild(cv);
+  const ctx=cv.getContext('2d');
+
+  // ターゲット中心座標
+  let tx=cv.width/2,ty=cv.height/2;
+  if(targetEl){
+    const tr=targetEl.getBoundingClientRect();
+    tx=tr.left-fr.left+tr.width/2;
+    ty=tr.top-fr.top+tr.height/2;
+  }
+
+  const cat=FX_CATEGORY[fxKey]||FX_CATEGORY.strike;
+  const intensity=compatCls==='super'?1.6:compatCls==='weak'?0.5:1;
+  cat.draw(ctx,cv.width,cv.height,tx,ty,typeColor,intensity,isCrit,function(){
+    cv.remove();
+  });
+}
+
+function drawSlash(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // 斜め閃光ライン（3〜5本）
+  const count=isCrit?5:3;
+  let frame=0;const maxFrame=18;
+  const lines=[];
+  for(let i=0;i<count;i++){
+    const ofs=(-count/2+i)*22;
+    lines.push({ofs,alpha:0,w:isCrit?6:4});
+  }
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    const p=frame/maxFrame;
+    lines.forEach(function(ln,i){
+      const delay=i*0.12;
+      const lp=Math.max(0,Math.min(1,(p-delay)/(1-delay*count/count)));
+      ln.alpha=lp<0.5?lp*2:(1-lp)*2;
+      if(ln.alpha<=0)return;
+      ctx.save();
+      ctx.globalAlpha=ln.alpha*intensity;
+      ctx.strokeStyle=isCrit?'#ffe033':col;
+      ctx.lineWidth=ln.w;
+      ctx.shadowColor=col;ctx.shadowBlur=isCrit?20:10;
+      ctx.beginPath();
+      // 斜め45度の線
+      const len=Math.max(W,H)*0.7;
+      ctx.moveTo(tx+ln.ofs-len*0.5,ty-ln.ofs-len*0.5);
+      ctx.lineTo(tx+ln.ofs+len*0.5,ty-ln.ofs+len*0.5);
+      ctx.stroke();
+      ctx.restore();
+    });
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
+}
+
+function drawBeam(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // 光球が膨らんで爆発
+  let frame=0;const maxFrame=24;
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    const p=frame/maxFrame;
+    const r=(p<0.6?p/0.6:1-(p-0.6)/0.4)*60*intensity*(isCrit?1.5:1);
+    const alpha=p<0.7?1:1-(p-0.7)/0.3;
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);
+    g.addColorStop(0,'white');
+    g.addColorStop(0.4,col);
+    g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;
+    ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.fill();
+    if(isCrit){// 追加リング
+      ctx.strokeStyle=col;ctx.lineWidth=3;ctx.globalAlpha=alpha*0.6;
+      ctx.beginPath();ctx.arc(tx,ty,r*1.3,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.restore();
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
+}
+
+function drawBlast(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // 炎の波
+  const particles=[];
+  for(let i=0;i<(isCrit?24:14)*intensity;i++){
+    const a=Math.random()*Math.PI*2;
+    const spd=(2+Math.random()*4)*intensity;
+    particles.push({x:tx,y:ty,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,size:8+Math.random()*12});
+  }
+  let frame=0;const maxFrame=28;
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(function(p){
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.3;p.life-=0.04;p.size*=0.95;
+      if(p.life<=0)return;
+      ctx.save();ctx.globalAlpha=p.life*intensity;
+      const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size);
+      g.addColorStop(0,'#fff8e1');g.addColorStop(0.5,col);g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    });
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
+}
+
+function drawWind(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // 風の渦線が横断
+  const lines=[];
+  for(let i=0;i<(isCrit?8:5);i++){
+    lines.push({y:ty-40+i*20,progress:0,speed:0.06+Math.random()*0.04});
+  }
+  let frame=0;const maxFrame=30;
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    lines.forEach(function(ln){
+      ln.progress=Math.min(1,ln.progress+ln.speed);
+      const endX=W*ln.progress;
+      ctx.save();ctx.globalAlpha=(1-ln.progress)*intensity*0.8;
+      ctx.strokeStyle=col;ctx.lineWidth=3;
+      ctx.shadowColor=col;ctx.shadowBlur=8;
+      ctx.beginPath();
+      ctx.moveTo(0,ln.y);
+      for(let x=0;x<endX;x+=10){
+        ctx.lineTo(x,ln.y+Math.sin(x/20+ln.progress*10)*8);
+      }
+      ctx.stroke();ctx.restore();
+    });
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
+}
+
+function drawBolt(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // ジグザグ稲妻
+  const bolts=isCrit?4:2;
+  let frame=0;const maxFrame=20;
+  function makeBolt(fromX,fromY,toX,toY,roughness){
+    const pts=[{x:fromX,y:fromY}];
+    const segs=8;
+    for(let i=1;i<segs;i++){
+      const t=i/segs;
+      pts.push({x:fromX+(toX-fromX)*t+(Math.random()-0.5)*roughness,
+                y:fromY+(toY-fromY)*t+(Math.random()-0.5)*roughness});
+    }
+    pts.push({x:toX,y:toY});
+    return pts;
+  }
+  const boltPaths=[];
+  for(let b=0;b<bolts;b++){
+    boltPaths.push(makeBolt(tx-40+b*20,0,tx-20+b*20,ty,60));
+  }
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    const p=frame/maxFrame;
+    boltPaths.forEach(function(pts){
+      ctx.save();ctx.globalAlpha=(1-p)*intensity;
+      ctx.strokeStyle=isCrit?'#fff176':col;ctx.lineWidth=isCrit?4:2.5;
+      ctx.shadowColor=col;ctx.shadowBlur=16;
+      ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+      pts.slice(1).forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
+      ctx.stroke();ctx.restore();
+    });
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
+}
+
+function drawStrike(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // 衝撃波（同心円）
+  const rings=isCrit?4:2;
+  let frame=0;const maxFrame=25;
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    const p=frame/maxFrame;
+    for(let i=0;i<rings;i++){
+      const delay=i*0.18;
+      const rp=Math.max(0,(p-delay)/(1-delay));
+      if(rp<=0)continue;
+      const r=rp*80*intensity;
+      const alpha=(1-rp)*intensity;
+      ctx.save();ctx.globalAlpha=alpha;
+      ctx.strokeStyle=col;ctx.lineWidth=4-rp*3;
+      ctx.shadowColor=col;ctx.shadowBlur=10;
+      ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+    }
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
+}
+
+function drawFreeze(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // 結晶が広がる
+  const crystals=[];
+  for(let i=0;i<(isCrit?12:7);i++){
+    const a=Math.PI*2/7*i;
+    crystals.push({angle:a,r:0,maxR:25+Math.random()*25,speed:3+Math.random()*2});
+  }
+  let frame=0;const maxFrame=28;
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    const p=frame/maxFrame;
+    crystals.forEach(function(c){
+      c.r=Math.min(c.maxR,c.r+c.speed);
+      const alpha=(1-p)*intensity;
+      ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=col;ctx.lineWidth=2;
+      ctx.shadowColor='#e1f5fe';ctx.shadowBlur=8;
+      // 六角形の結晶
+      for(let j=0;j<6;j++){
+        const a2=c.angle+j*Math.PI/3;
+        ctx.beginPath();
+        ctx.moveTo(tx+Math.cos(c.angle)*c.r,ty+Math.sin(c.angle)*c.r);
+        ctx.lineTo(tx+Math.cos(c.angle)*c.r+Math.cos(a2)*c.r*0.5,
+                   ty+Math.sin(c.angle)*c.r+Math.sin(a2)*c.r*0.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
+}
+
+function drawDark(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // 暗い渦が収縮→爆発
+  let frame=0;const maxFrame=26;
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    const p=frame/maxFrame;
+    const phase=p<0.5?'in':'out';
+    const rp=phase==='in'?p/0.5:1-(p-0.5)/0.5;
+    const r=60*rp*intensity;
+    ctx.save();
+    if(phase==='in'){
+      ctx.globalAlpha=rp*0.7;
+      const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);
+      g.addColorStop(0,'transparent');g.addColorStop(0.6,col+'88');g.addColorStop(1,col);
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.fill();
+    } else {
+      ctx.globalAlpha=(1-rp)*intensity;
+      const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r*2);
+      g.addColorStop(0,'white');g.addColorStop(0.3,col);g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,r*2,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
+}
+
+function drawDragon(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+  // ドラゴン：螺旋状のエネルギー
+  let frame=0;const maxFrame=30;
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    const p=frame/maxFrame;
+    for(let i=0;i<(isCrit?3:2);i++){
+      const phase=p+i*0.33;
+      const spiralR=40*intensity;
+      ctx.save();ctx.globalAlpha=(1-p)*intensity;
+      ctx.strokeStyle=col;ctx.lineWidth=3;
+      ctx.shadowColor=col;ctx.shadowBlur=14;
+      ctx.beginPath();
+      for(let t=0;t<Math.PI*4*phase;t+=0.15){
+        const r=spiralR*(t/(Math.PI*4));
+        const x=tx+Math.cos(t+frame*0.2)*r;
+        const y=ty+Math.sin(t+frame*0.2)*r;
+        if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+      ctx.stroke();ctx.restore();
+    }
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else done();
+  }
+  requestAnimationFrame(tick);
 }
 
 // ===== ダイス演出（ポケモンが見える半透明オーバーレイ）=====
