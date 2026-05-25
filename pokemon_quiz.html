@@ -2998,21 +2998,125 @@ function playFanfare(){
 function startBattleBgm(){
   if(!_cryAudioCtx||_bgmRunning)return;
   _bgmRunning=true;
-  const notes=[523,587,659,698,784,880,988,1047,988,880,784,698,659,587,523,523],dur=0.13;
-  const ctx=_cryAudioCtx;let t=ctx.currentTime+0.1;
-  function loop(){
-    if(!_bgmRunning)return;
-    notes.forEach(function(f,i){
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      o.type='square';o.frequency.value=f;
-      g.gain.setValueAtTime(0.028,t+i*dur);g.gain.exponentialRampToValueAtTime(0.001,t+i*dur+dur*0.82);
-      o.connect(g);g.connect(ctx.destination);o.start(t+i*dur);o.stop(t+i*dur+dur);
-      _bgmNodes.push(o);
-    });
-    t+=notes.length*dur;
-    _bgmTimerId=setTimeout(loop,(notes.length*dur-0.3)*1000);
+  const ctx=_cryAudioCtx;
+
+  // ワタル戦風BGM設計:
+  // Aマイナー短調 / BPM=168 / 16分音符ベース
+  // メロディ(矩形波) + ベース(三角波) + 和音(鋸波) + パーカッション(ノイズ)
+
+  const BPM=168;
+  const S=60/BPM;      // 4分音符
+  const E=S/2;         // 8分音符
+  const X=S/4;         // 16分音符
+
+  // 音名→周波数
+  const N={
+    'C3':130.8,'D3':146.8,'E3':164.8,'F3':174.6,'G3':196,'Ab3':207.7,'A3':220,'B3':246.9,'Bb3':233.1,
+    'C4':261.6,'D4':293.7,'Eb4':311.1,'E4':329.6,'F4':349.2,'G4':392,'Ab4':415.3,'A4':440,'B4':493.9,'Bb4':466.2,
+    'C5':523.3,'D5':587.3,'Eb5':622.3,'E5':659.3,'F5':698.5,'G5':784,'Ab5':830.6,'A5':880,'Bb5':932,
+    '_':0
+  };
+
+  // メロディパターン（Aマイナー、8小節ループ）
+  // 各エントリ: [音名, 長さ(×X単位)]
+  const melody=[
+    ['A4',2],['_',1],['C5',1],['B4',2],['A4',1],['G4',1],
+    ['A4',2],['_',1],['E4',1],['F4',2],['G4',2],
+    ['A4',2],['C5',1],['B4',1],['A4',1],['G4',1],['F4',1],['E4',1],
+    ['A4',2],['_',2],['G4',2],['F4',2],
+    ['E4',2],['_',1],['G4',1],['F4',2],['E4',1],['D4',1],
+    ['E4',2],['_',1],['C4',1],['D4',2],['E4',2],
+    ['F4',2],['G4',1],['Ab4',1],['G4',2],['F4',1],['E4',1],
+    ['A4',4],['_',2],['E4',2],
+  ];
+
+  // ベースパターン
+  const bass=[
+    ['A3',2],['A3',2],['C4',2],['C4',2],
+    ['F3',2],['F3',2],['E3',2],['E3',2],
+    ['A3',2],['A3',2],['G3',2],['G3',2],
+    ['F3',2],['G3',2],['A3',4],
+    ['E3',4],['C3',4],
+    ['F3',2],['F3',2],['E3',2],['E3',2],
+    ['D3',2],['E3',2],['F3',4],
+    ['A3',2],['G3',2],['E3',4],
+  ];
+
+  // 和音パターン（メロの裏）
+  const chords=[
+    [['A3','C4','E4'],4],[['F3','A3','C4'],4],
+    [['G3','B3','D4'],4],[['E3','G3','B3'],4],
+    [['A3','C4','E4'],4],[['F3','A3','C4'],4],
+    [['D3','F3','A3'],4],[['E3','G#3','B3'],4],
+  ];
+
+  function playTone(freq,startT,dur,type,vol,detune){
+    if(!freq||!_bgmRunning)return;
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.type=type||'square';
+    o.frequency.value=freq;
+    if(detune)o.detune.value=detune;
+    g.gain.setValueAtTime(0,startT);
+    g.gain.linearRampToValueAtTime(vol,startT+0.01);
+    g.gain.setValueAtTime(vol,startT+dur*0.7);
+    g.gain.linearRampToValueAtTime(0,startT+dur*0.95);
+    o.connect(g);g.connect(ctx.destination);
+    o.start(startT);o.stop(startT+dur);
+    _bgmNodes.push(o);
   }
-  loop();
+
+  function scheduleLoop(){
+    if(!_bgmRunning)return;
+    let t=ctx.currentTime+0.05;
+    const loopDur=32*X; // 8小節分
+
+    // メロディ
+    let mt=t;
+    melody.forEach(function(n){
+      if(n[0]!=='_')playTone(N[n[0]],mt,n[1]*X*0.88,'square',0.06);
+      mt+=n[1]*X;
+    });
+
+    // ベース
+    let bt=t;
+    bass.forEach(function(n){
+      if(n[0]!=='_')playTone(N[n[0]],bt,n[1]*X*0.82,'triangle',0.09);
+      bt+=n[1]*X;
+    });
+
+    // 和音（鋸波・低音量）
+    let ct=t;
+    chords.forEach(function(chord){
+      chord[0].forEach(function(note){
+        if(N[note])playTone(N[note],ct,chord[1]*X*0.78,'sawtooth',0.025,-8);
+      });
+      ct+=chord[1]*X;
+    });
+
+    // パーカッション（ノイズバースト）
+    for(let beat=0;beat<8;beat++){
+      const bT=t+beat*S;
+      // キック（低周波ノイズ）
+      const ko=ctx.createOscillator();const kg=ctx.createGain();
+      ko.type='sine';ko.frequency.setValueAtTime(80,bT);ko.frequency.exponentialRampToValueAtTime(30,bT+0.08);
+      kg.gain.setValueAtTime(0.15,bT);kg.gain.exponentialRampToValueAtTime(0.001,bT+0.12);
+      ko.connect(kg);kg.connect(ctx.destination);ko.start(bT);ko.stop(bT+0.13);_bgmNodes.push(ko);
+      // ハイハット（偶数拍）
+      if(beat%2===1){
+        const buf=ctx.createBuffer(1,ctx.sampleRate*0.04,ctx.sampleRate);
+        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+        const src=ctx.createBufferSource();src.buffer=buf;
+        const hg=ctx.createGain();hg.gain.value=0.04;
+        const hf=ctx.createBiquadFilter();hf.type='highpass';hf.frequency.value=8000;
+        src.connect(hf);hf.connect(hg);hg.connect(ctx.destination);
+        src.start(bT+S/2);_bgmNodes.push(src);
+      }
+    }
+
+    _bgmTimerId=setTimeout(scheduleLoop,(loopDur-0.1)*1000);
+  }
+  scheduleLoop();
 }
 function stopBattleBgm(){
   _bgmRunning=false;
@@ -3333,69 +3437,74 @@ function showBattleMain(enterAnim){
   const scoreD=el('div','');scoreD.id='btl-score';scoreD.style.cssText='font-size:11px;font-weight:700;color:white;';scoreD.textContent='🏆'+btl.wins+' 💀'+btl.losses;
   hdr.appendChild(backB);hdr.appendChild(turnBar);hdr.appendChild(scoreD);root.appendChild(hdr);
 
-  // フィールド（固定高さ）
-  const field=el('div','');field.id='btl-field';field.style.cssText='position:relative;flex-shrink:0;padding:5px 8px 2px;height:38dvh;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;';
+  // ① 横画面最適化: 左(ポケモン+HP) | 右(技パネル)
+  const mainRow=el('div','');mainRow.style.cssText='display:flex;flex:1;min-height:0;overflow:hidden;';
+
+  // --- 左カラム: フィールド（縦積み：敵HP→敵ポケ→自ポケ→自HP→ボール）---
+  const leftCol=el('div','');leftCol.style.cssText='display:flex;flex-direction:column;width:40%;flex-shrink:0;';
+
+  const field=el('div','');field.id='btl-field';field.style.cssText='position:relative;flex:1;display:flex;flex-direction:column;padding:3px 5px;gap:2px;';
   const flashEl=el('div','');flashEl.id='btl-flash';flashEl.style.cssText='position:absolute;inset:0;background:white;opacity:0;pointer-events:none;z-index:10;';field.appendChild(flashEl);
 
-  // HPブロック
   function makeHpBlock(side){
     const poke=side==='my'?btl.myTeam[btl.myIdx]:btl.enemyTeam[btl.enemyIdx];
-    const w=el('div','');w.id='btl-hpblock-'+side;w.style.cssText='background:rgba(255,255,255,0.93);border-radius:10px;padding:5px 9px;min-width:116px;box-shadow:0 2px 10px rgba(0,0,0,0.22);';
-    const nr=el('div','');nr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;';
-    const nm=el('span','');nm.style.cssText='font-size:11px;font-weight:900;color:#1a1a1a;';nm.textContent=poke.name+(poke.shinyImg?' ✨':'');
-    const lv=el('span','');lv.style.cssText='font-size:10px;font-weight:900;';lv.textContent=side==='my'?'🔴':'🔵';
+    const w=el('div','');w.id='btl-hpblock-'+side;w.style.cssText='background:rgba(255,255,255,0.93);border-radius:7px;padding:3px 7px;box-shadow:0 1px 6px rgba(0,0,0,0.18);flex-shrink:0;';
+    const nr=el('div','');nr.style.cssText='display:flex;justify-content:space-between;align-items:center;';
+    const nm=el('span','');nm.style.cssText='font-size:9px;font-weight:900;color:#1a1a1a;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';nm.textContent=poke.name+(poke.shinyImg?' ✨':'');
+    const lv=el('span','');lv.style.cssText='font-size:9px;font-weight:900;';lv.textContent=side==='my'?'🔴':'🔵';
     nr.appendChild(nm);nr.appendChild(lv);
-    const barBg=el('div','');barBg.style.cssText='background:#e0e0e0;border-radius:5px;height:9px;overflow:hidden;margin-bottom:2px;';
+    const barBg=el('div','');barBg.style.cssText='background:#e0e0e0;border-radius:3px;height:7px;overflow:hidden;margin:1px 0;position:relative;';
     const bar=el('div','');bar.id='btl-hpbar-'+side;
     const pct=btl.hp[side][side==='my'?btl.myIdx:btl.enemyIdx]/btl.maxHp;
-    bar.style.cssText='height:100%;border-radius:5px;width:'+(pct*100)+'%;background:'+(pct>0.5?'#4caf50':pct>0.25?'#ffb300':'#f44336')+';';
-    barBg.appendChild(bar);
-    const ht=el('div','');ht.id='btl-hptxt-'+side;ht.style.cssText='font-size:9px;color:#444;font-weight:700;text-align:right;';ht.textContent=btl.hp[side][side==='my'?btl.myIdx:btl.enemyIdx]+'/'+btl.maxHp;
+    bar.style.cssText='height:100%;border-radius:3px;width:'+(pct*100)+'%;background:'+(pct>0.5?'#4caf50':pct>0.25?'#ffb300':'#f44336')+';position:relative;overflow:hidden;';
+    // ② 引っかきエフェクト用スクラッチ
+    const scratch=el('div','');scratch.id='btl-scratch-'+side;
+    scratch.style.cssText='position:absolute;inset:0;pointer-events:none;opacity:0;background:repeating-linear-gradient(75deg,transparent 0,transparent 5px,rgba(255,255,255,0.8) 5px,rgba(255,255,255,0.8) 6px,transparent 6px,transparent 10px);';
+    bar.appendChild(scratch);barBg.appendChild(bar);
+    const ht=el('div','');ht.id='btl-hptxt-'+side;ht.style.cssText='font-size:8px;color:#444;font-weight:700;text-align:right;';ht.textContent=btl.hp[side][side==='my'?btl.myIdx:btl.enemyIdx]+'/'+btl.maxHp;
     w.appendChild(nr);w.appendChild(barBg);w.appendChild(ht);return w;
   }
 
-  // ポケモン画像
+  // ③ 交代時(enterAnim=false)は即表示、初回(enterAnim=true)は演出後表示
+  const showNow=!enterAnim;
   function makePokeImg(poke,side){
-    const wrap=el('div','');wrap.id='btl-img-'+side;wrap.style.cssText='display:flex;flex-direction:column;align-items:center;';
+    const wrap=el('div','');wrap.id='btl-img-'+side;wrap.style.cssText='display:flex;justify-content:center;align-items:center;flex:1;min-height:0;';
     const img=el('img','');img.src=battleImgUrl(poke);
     img.onerror=function(){this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+(poke.shinyImg?'shiny/':'')+poke.id+'.png';};
-    img.style.cssText='width:90px;height:90px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.3));'+(side==='enemy'?'transform:scaleX(-1);':'');
-    img.style.opacity='0'; // 登場演出前は非表示
+    img.style.cssText='width:82px;height:82px;object-fit:contain;filter:drop-shadow(0 3px 10px rgba(0,0,0,0.3));'+(side==='enemy'?'transform:scaleX(-1);':'');
+    img.style.opacity=showNow?'1':'0';
     img.addEventListener('click',function(){playCryById(poke.id);});
     wrap.appendChild(img);return wrap;
   }
 
-  const fieldInner=el('div','');fieldInner.style.cssText='display:flex;justify-content:space-between;align-items:flex-end;';
-  // ⑤ 本家SV風：敵HPが左上・自分HPが右下
-  const enemyHp=makeHpBlock('enemy');const myHp=makeHpBlock('my');
-  const pokeArea=el('div','');pokeArea.style.cssText='display:flex;justify-content:space-around;align-items:flex-end;flex:1;padding:0 6px;';
+  const enemyHp=makeHpBlock('enemy');
   const enemyWrap=makePokeImg(btl.enemyTeam[btl.enemyIdx],'enemy');
   const myWrap=makePokeImg(btl.myTeam[btl.myIdx],'my');
-  pokeArea.appendChild(enemyWrap);pokeArea.appendChild(myWrap);
-  fieldInner.appendChild(enemyHp);fieldInner.appendChild(pokeArea);fieldInner.appendChild(myHp);field.appendChild(fieldInner);
+  const myHp=makeHpBlock('my');
 
   // ボール行
-  const ballRow=el('div','');ballRow.style.cssText='display:flex;justify-content:space-between;padding:3px 4px 0;';
+  const ballRow=el('div','');ballRow.style.cssText='display:flex;justify-content:space-between;padding:1px 3px;flex-shrink:0;';
   ['my','enemy'].forEach(function(side){
     const team=side==='my'?btl.myTeam:btl.enemyTeam;
-    const row=el('div','');row.style.cssText='display:flex;gap:3px;align-items:center;';
+    const row=el('div','');row.style.cssText='display:flex;gap:2px;align-items:center;';
     team.forEach(function(_,i){
       const b=el('span','');const isC=i===(side==='my'?btl.myIdx:btl.enemyIdx);const isF=btl.fainted[side].includes(i);
-      b.style.cssText='font-size:'+(isC?'13':'10')+'px;opacity:'+(isF?'0.2':'1')+';';b.textContent=isF?'⚫':isC?(side==='my'?'🔴':'🔵'):'⚪';row.appendChild(b);
+      b.style.cssText='font-size:'+(isC?'11':'8')+'px;opacity:'+(isF?'0.2':'1')+';';b.textContent=isF?'⚫':isC?(side==='my'?'🔴':'🔵'):'⚪';row.appendChild(b);
     });
     ballRow.appendChild(row);
   });
-  field.appendChild(ballRow);root.appendChild(field);
 
-  // ログ（最小限）
-  const logArea=el('div','');logArea.id='btl-log';logArea.style.cssText='padding:2px 10px;background:rgba(0,0,0,0.7);flex-shrink:0;height:28px;overflow:hidden;font-size:9px;';
-  _btlLog.length=0;root.appendChild(logArea);
+  // 縦積み：敵HP→敵ポケ→自ポケ→自HP→ボール
+  field.appendChild(enemyHp);field.appendChild(enemyWrap);field.appendChild(myWrap);field.appendChild(myHp);field.appendChild(ballRow);
+  leftCol.appendChild(field);
+  mainRow.appendChild(leftCol);
 
-  // 技パネル（残り全部）
-  const moveWrap=el('div','');moveWrap.id='btl-move-wrap';moveWrap.style.cssText='display:flex;flex:1;min-height:0;gap:3px;padding:4px;background:rgba(0,0,0,0.52);overflow:hidden;';
+  // --- 右カラム: 技パネル2分割 ---
+  const moveWrap=el('div','');moveWrap.id='btl-move-wrap';moveWrap.style.cssText='flex:1;display:flex;gap:3px;padding:4px;background:rgba(0,0,0,0.52);min-width:0;overflow:hidden;';
   moveWrap.appendChild(buildMovePanel('enemy',btl.enemyTeam,btl.enemyIdx));
   moveWrap.appendChild(buildMovePanel('my',btl.myTeam,btl.myIdx));
-  root.appendChild(moveWrap);
+  mainRow.appendChild(moveWrap);
+  root.appendChild(mainRow);
 
   // フッター
   const footer=el('div','');footer.style.cssText='display:flex;gap:6px;padding:6px 10px;background:rgba(0,0,0,0.72);flex-shrink:0;';
@@ -3414,10 +3523,9 @@ function showBattleMain(enterAnim){
   preFetchCries(btl.myTeam.concat(btl.enemyTeam));
 
   if(enterAnim){
-    // 敵→自分の順でボール演出（間を空けてゆっくり）
-    playBallEmerge(enemyWrap.querySelector('img'),'enemy',btl.enemyTeam[btl.enemyIdx],function(){});
+    playBallEmerge(enemyWrap.querySelector('img'),'enemy',btl.enemyTeam[btl.enemyIdx],true,function(){});
     setTimeout(function(){
-      playBallEmerge(myWrap.querySelector('img'),'my',btl.myTeam[btl.myIdx],function(){
+      playBallEmerge(myWrap.querySelector('img'),'my',btl.myTeam[btl.myIdx],true,function(){
         addBattleLog('バトルかいし！ '+btl.myTeam[btl.myIdx].name+' vs '+btl.enemyTeam[btl.enemyIdx].name);
         updateTurnDisplay();
         if(btl.cpuMode&&btl.turn==='enemy')setTimeout(doCpuTurn,1000);
@@ -3430,12 +3538,13 @@ function showBattleMain(enterAnim){
 }
 
 // ===== ボール→シルエット→フラッシュ→カラー（本家風・ゆったり）=====
-function playBallEmerge(imgEl,side,poke,callback){
+function playBallEmerge(imgEl,side,poke,isInitial,callback){
   if(!imgEl){if(callback)callback();return;}
   const field=document.getElementById('btl-field');if(!field){if(callback)callback();return;}
-  imgEl.style.opacity='0';
 
-  // ボールSVG（弧を描いて飛んでくる）
+  // 初回バトルのみ opacity:0→演出。交代時は既に表示済みなのでボール演出のみ
+  if(isInitial) imgEl.style.opacity='0';
+
   const ball=document.createElementNS('http://www.w3.org/2000/svg','svg');
   ball.setAttribute('viewBox','0 0 40 40');ball.setAttribute('width','52');ball.setAttribute('height','52');
   const bx=side==='enemy'?'right:32%':'left:32%';
@@ -3447,36 +3556,38 @@ function playBallEmerge(imgEl,side,poke,callback){
     +'<circle cx="20" cy="20" r="3" fill="'+(poke.shinyImg?'#ffe033':'#ccc')+'"/>';
   field.appendChild(ball);
 
-  // 1.0s後：ボール開く（パッと光る）
   setTimeout(function(){
     ball.style.animation='ball-open 0.38s ease forwards';
     setTimeout(function(){
       ball.remove();
-      // シルエット（黒いまま登場）
       imgEl.style.opacity='1';
-      imgEl.style.filter=(side==='enemy'?'scaleX(-1) ':'')+'brightness(0)';
-      imgEl.style.animation='emerge-up 0.5s ease forwards';
-
-      // 0.7s後：フラッシュ
-      setTimeout(function(){
-        const fl=document.getElementById('btl-flash');
-        if(fl){fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},140);}
-        // カラー化（ゆっくり色が戻る）
-        imgEl.style.animation='emerge-flash 0.9s ease forwards';
+      if(isInitial){
+        // 初回のみシルエット→フラッシュ→カラー演出
+        imgEl.style.filter=(side==='enemy'?'scaleX(-1) ':'')+'brightness(0)';
+        imgEl.style.animation='emerge-up 0.5s ease forwards';
         setTimeout(function(){
-          imgEl.style.animation='';
-          imgEl.style.filter=side==='enemy'?'scaleX(-1) drop-shadow(0 4px 12px rgba(0,0,0,0.3))':'drop-shadow(0 4px 12px rgba(0,0,0,0.3))';
-          // 鳴き声（カラー化と同時に）
-          playCryById(poke.id);
-          if(poke.shinyImg)showShinyFlash(imgEl.parentNode,field);
-          // 少し間を置いてコールバック
-          if(callback)setTimeout(callback,500);
-        },850);
-      },700);
+          const fl=document.getElementById('btl-flash');
+          if(fl){fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},140);}
+          imgEl.style.animation='emerge-flash 0.9s ease forwards';
+          setTimeout(function(){
+            imgEl.style.animation='';
+            imgEl.style.filter=side==='enemy'?'scaleX(-1) drop-shadow(0 4px 12px rgba(0,0,0,0.3))':'drop-shadow(0 4px 12px rgba(0,0,0,0.3))';
+            playCryById(poke.id);
+            if(poke.shinyImg)showShinyFlash(imgEl.parentNode,field);
+            if(callback)setTimeout(callback,500);
+          },850);
+        },700);
+      } else {
+        // 交代時はシンプルにポップ登場
+        imgEl.style.animation='emerge-up 0.4s ease forwards';
+        imgEl.style.filter=side==='enemy'?'scaleX(-1) drop-shadow(0 4px 12px rgba(0,0,0,0.3))':'drop-shadow(0 4px 12px rgba(0,0,0,0.3))';
+        playCryById(poke.id);
+        if(poke.shinyImg)showShinyFlash(imgEl.parentNode,field);
+        if(callback)setTimeout(callback,400);
+      }
     },360);
   },1020);
 }
-
 // ===== シャイニー演出 =====
 function showShinyFlash(wrap,field){
   if(!field)return;
@@ -3520,7 +3631,7 @@ function buildMovePanel(side,team,idx){
     const btn=el('button','btl-btn');
     btn.style.cssText='flex:1;width:100%;border:none;border-radius:8px;text-align:left;position:relative;'
       +'background:'+typeColor+';color:'+(isLight?'#1a1a1a':'white')+';'
-      +'box-shadow:0 2px 8px rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:space-between;padding:0 8px;min-height:44px;transition:transform 0.12s,box-shadow 0.12s;';
+      +'box-shadow:0 2px 8px rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:space-between;padding:0 6px;min-height:0;overflow:hidden;transition:transform 0.12s,box-shadow 0.12s;';
     const left=el('div','');
     const mName=el('div','');mName.style.cssText='font-size:11px;font-weight:900;line-height:1.2;';mName.textContent=mv.name;
     const mType=el('div','');mType.style.cssText='font-size:7px;opacity:0.72;margin-top:1px;';mType.textContent=mv.type;
@@ -4236,7 +4347,7 @@ function doCpuChange(side){
         showBattleMain(false);
         setTimeout(function(){
           const eImg=document.querySelector('#btl-img-enemy img');
-          if(eImg)playBallEmerge(eImg,'enemy',newPoke,function(){
+          if(eImg)playBallEmerge(eImg,'enemy',newPoke,false,function(){
             addBattleLog('CPU: '+newPoke.name+'、ゆけっ！');
             btl.turn='enemy';
             turnFlash('enemy',function(){
@@ -4348,7 +4459,7 @@ function showChangeSelect(side){
             showBattleMain(false);
             setTimeout(function(){
               const imgEl=document.querySelector('#btl-img-'+side+' img');
-              if(imgEl)playBallEmerge(imgEl,side,newPoke,function(){
+              if(imgEl)playBallEmerge(imgEl,side,newPoke,false,function(){
                 addBattleLog(newPoke.name+'、ゆけっ！');
                 btl.turn=side==='my'?'my':'enemy';
                 turnFlash(btl.turn,function(){
