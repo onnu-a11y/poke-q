@@ -2892,145 +2892,160 @@ function startBattleBgm(){
   if(!_cryAudioCtx||_bgmRunning)return;
   _bgmRunning=true;
   const ctx=_cryAudioCtx;
-  // BPM155 / 16分音符基準
-  const BPM=155, S=60/BPM, X=S/4, E=S/2;
+  const BPM=156,S=60/BPM,E=S/2,X=S/4;
 
-  // 音名→Hz（Aマイナー＋モーダルインターチェンジ）
-  const H={
-    A2:110,E3:164.8,F3:174.6,G3:196,Ab3:207.7,A3:220,B3:246.9,Bb3:233.1,C4:261.6,
-    Cs4:277.2,D4:293.7,Eb4:311.1,E4:329.6,F4:349.2,Fs4:370,G4:392,Ab4:415.3,
-    A4:440,Bb4:466.2,B4:493.9,C5:523.3,Cs5:554.4,D5:587.3,Eb5:622.3,E5:659.3,
-    F5:698.5,G5:784,A5:880,'_':0
+  // 音名→Hz (A minor + chromatic)
+  const N={
+    A2:110,Bb2:116.5,B2:123.5,
+    C3:130.8,Cs3:138.6,D3:146.8,Eb3:155.6,E3:164.8,F3:174.6,Fs3:185,G3:196,Ab3:207.7,A3:220,Bb3:233.1,B3:246.9,
+    C4:261.6,Cs4:277.2,D4:293.7,Eb4:311.1,E4:329.6,F4:349.2,Fs4:370,G4:392,Ab4:415.3,A4:440,Bb4:466.2,B4:493.9,
+    C5:523.3,Cs5:554.4,D5:587.3,Eb5:622.3,E5:659.3,F5:698.5,G5:784,Ab5:830.6,A5:880,_:0
   };
 
-  // メロディ（8小節・Aマイナー主体＋C#でモーダルインターチェンジ）
-  const MEL=[
-    // 小節1-2: イントロ（減5度トリトヌス感）
-    [H.A4,2],[H._,1],[H.E5,1],[H.Eb5,2],[H.D5,1],[H.C5,1],
-    [H.B4,2],[H._,1],[H.G4,1],[H.A4,2],[H.B4,2],
-    // 小節3-4: サビ（力強く）
-    [H.C5,2],[H.B4,1],[H.A4,1],[H.G4,1],[H.Fs4,1],[H.G4,1],[H.A4,1],
-    [H.E4,4],[H._,2],[H.Cs4,2],
-    // 小節5-6: 緊張感（Cs=C#でメジャー混入）
-    [H.D5,2],[H._,1],[H.F5,1],[H.E5,2],[H.D5,1],[H.C5,1],
-    [H.B4,2],[H.A4,1],[H.G4,1],[H.Ab4,2],[H.G4,2],
-    // 小節7-8: 解決→繰り返し
-    [H.F4,2],[H.G4,1],[H.Ab4,1],[H.G4,2],[H.F4,1],[H.E4,1],
-    [H.A4,6],[H._,2],
-  ];
-
-  // ベース（16分同音連打＋オクターブ跳躍）
-  const BASS=[
-    [H.A2,1],[H.A3,1],[H.A2,1],[H.A3,1],[H.E3,1],[H.E3,1],[H.G3,1],[H.G3,1],
-    [H.A2,1],[H.A3,1],[H.A2,1],[H.A3,1],[H.F3,1],[H.F3,1],[H.E3,1],[H.E3,1],
-    [H.A2,1],[H.A3,1],[H.C4,1],[H.A3,1],[H.A2,1],[H.A3,1],[H.G3,1],[H.G3,1],
-    [H.E3,2],[H.E3,2],[H.Cs4,2],[H.E3,2],
-    [H.D4,1],[H.D4,1],[H.F3,1],[H.D4,1],[H.G3,1],[H.G3,1],[H.Ab3,1],[H.G3,1],
-    [H.A2,1],[H.A3,1],[H.A2,1],[H.A3,1],[H.Bb3,1],[H.A3,1],[H.Ab3,1],[H.A3,1],
-    [H.F3,1],[H.F3,1],[H.G3,1],[H.Ab3,1],[H.G3,2],[H.F3,1],[H.E3,1],
-    [H.A2,4],[H.E3,2],[H.A2,2],
-  ];
-
-  // 和音（Aマイナー・Fメジャー・Gメジャー・Eメジャー交代）
-  const CHORDS=[
-    [[H.A3,H.C4,H.E4],4],[[H.F3,H.A3,H.C4],4],
-    [[H.G3,H.B3,H.D4],4],[[H.E3,H.Gs3||H.Ab3,H.B3],4],
-    [[H.A3,H.C4,H.E4],4],[[H.D4,H.F4,H.A4],4],
-    [[H.Bb3,H.D4,H.F4],4],[[H.E3,H.Ab3,H.B3],4],
-  ];
-
-  function tone(freq,t0,dur,type,vol,duty,echo){
-    if(!freq||!_bgmRunning)return;
+  function tone(f,t0,dur,type,vol,echo){
+    if(!f||!_bgmRunning)return;
     const o=ctx.createOscillator(),g=ctx.createGain();
-    o.type=type||'square';o.frequency.value=freq;
-    // デューティ比エミュレーション（矩形波の音色）
-    if(duty&&duty!==0.5&&o.type==='square'){
-      // Web Audio APIにduty直接指定はないため音量で代替
-      const adj=duty===0.125?0.7:duty===0.25?0.85:1;
-      vol*=adj;
-    }
-    g.gain.setValueAtTime(0,t0);
-    g.gain.linearRampToValueAtTime(vol,t0+0.008);
+    o.type=type||'square';o.frequency.value=f;
+    g.gain.setValueAtTime(vol*1.35,t0);
+    g.gain.linearRampToValueAtTime(vol,t0+0.012);
     g.gain.setValueAtTime(vol,t0+dur*0.65);
-    g.gain.exponentialRampToValueAtTime(0.001,t0+dur*0.92);
-    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+dur);
+    g.gain.exponentialRampToValueAtTime(0.001,t0+dur*0.9);
+    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+dur+0.02);
     _bgmNodes.push(o);
-    // 疑似エコー（CH2でボリューム半分・少し遅れて同音再現）
-    if(echo){
+    if(echo&&f){
       const oe=ctx.createOscillator(),ge=ctx.createGain();
-      oe.type=type||'square';oe.frequency.value=freq;
-      ge.gain.setValueAtTime(0,t0+0.04);
-      ge.gain.linearRampToValueAtTime(vol*0.38,t0+0.055);
-      ge.gain.exponentialRampToValueAtTime(0.001,t0+dur*0.85);
-      oe.connect(ge);ge.connect(ctx.destination);oe.start(t0+0.04);oe.stop(t0+dur);
+      oe.type=type||'square';oe.frequency.value=f;
+      ge.gain.setValueAtTime(0,t0+X*0.85);
+      ge.gain.linearRampToValueAtTime(vol*0.38,t0+X*0.85+0.01);
+      ge.gain.exponentialRampToValueAtTime(0.001,t0+X*0.85+dur*0.42);
+      oe.connect(ge);ge.connect(ctx.destination);
+      oe.start(t0+X*0.85);oe.stop(t0+X*0.85+dur*0.5);
       _bgmNodes.push(oe);
     }
   }
-
+  function bass(f,t0,dur){
+    if(!f||!_bgmRunning)return;
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='triangle';o.frequency.value=f;
+    g.gain.setValueAtTime(0.13,t0);g.gain.setValueAtTime(0.13,t0+dur*0.72);
+    g.gain.exponentialRampToValueAtTime(0.001,t0+dur*0.9);
+    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+dur);_bgmNodes.push(o);
+  }
   function kick(t0){
     const o=ctx.createOscillator(),g=ctx.createGain();
-    o.type='sine';o.frequency.setValueAtTime(90,t0);
-    o.frequency.exponentialRampToValueAtTime(28,t0+0.1);
-    g.gain.setValueAtTime(0.22,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.12);
-    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+0.13);_bgmNodes.push(o);
+    o.type='sine';o.frequency.setValueAtTime(95,t0);o.frequency.exponentialRampToValueAtTime(28,t0+0.1);
+    g.gain.setValueAtTime(0.26,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.13);
+    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+0.14);_bgmNodes.push(o);
   }
-
   function snare(t0){
-    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.09),ctx.sampleRate);
+    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.1),ctx.sampleRate);
     const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=ctx.createBufferSource(),g=ctx.createGain();
-    const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=2200;f.Q.value=0.8;
-    src.buffer=buf;g.gain.setValueAtTime(0.13,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.09);
+    const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+    f.type='bandpass';f.frequency.value=2400;f.Q.value=0.7;
+    src.buffer=buf;g.gain.setValueAtTime(0.15,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.1);
     src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(t0);_bgmNodes.push(src);
   }
-
-  function hihat(t0,vol){
-    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.04),ctx.sampleRate);
+  function hihat(t0,v){
+    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.038),ctx.sampleRate);
     const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=ctx.createBufferSource(),g=ctx.createGain();
-    const f=ctx.createBiquadFilter();f.type='highpass';f.frequency.value=9000;
-    src.buffer=buf;g.gain.setValueAtTime(vol||0.05,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.04);
+    const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+    f.type='highpass';f.frequency.value=9500;
+    src.buffer=buf;g.gain.setValueAtTime(v||0.04,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.038);
     src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(t0);_bgmNodes.push(src);
   }
+  function snareRoll(t0){for(let i=0;i<4;i++)snare(t0+i*(X/2));}
 
   function scheduleLoop(){
     if(!_bgmRunning)return;
-    let t=ctx.currentTime+0.05;
-    const loopLen=32*X;
+    const t=ctx.currentTime+0.05;
+    const V=0.068;
 
-    // CH1: メロディ（矩形波25%デューティ・疑似エコーあり）
+    // === イントロ 1-8小節: トリトヌス(A3→Eb4)連打 + クロマチックメロ ===
+    const iMel=[
+      [N.E5,X],[N.F5,X],[N.E5,X],[N.Eb5,X], [N.E5,X],[N.F5,X],[N.G5,X],[N.Ab5,X],
+      [N.G5,X],[N.F5,X],[N.E5,X],[N.Eb5,X], [N.D5,X],[N.Eb5,X],[N.E5,X],[N.F5,X],
+      [N.E5,E],[N._,X],[N.D5,X],[N.E5,X],   [N.F5,X],[N.Eb5,X],[N.D5,X],[N.Cs5,X],
+      [N.D5,E],[N._,X],[N.Cs5,X],[N.D5,X],  [N.E5,S],[N._,S],
+    ];
     let mt=t;
-    MEL.forEach(function(n){
-      if(n[0])tone(n[0],mt,n[1]*X*0.88,'square',0.065,0.25,true);
-      mt+=n[1]*X;
-    });
+    iMel.forEach(function(n){if(n[0]){tone(n[0],mt,n[1]*0.85,'square',V,true);tone(n[0]*0.749,mt,n[1]*0.82,'square',V*0.5,false);}mt+=n[1];});
 
-    // CH3: ベース（波形メモリ=三角波で低域太く）
-    let bt=t;
-    BASS.forEach(function(n){
-      if(n[0])tone(n[0],bt,n[1]*X*0.78,'triangle',0.11);
-      bt+=n[1]*X;
-    });
-
-    // 和音（鋸波・低音量・帯域住み分け）
-    let ct=t;
-    CHORDS.forEach(function(chord){
-      chord[0].forEach(function(freq){
-        if(freq)tone(freq,ct,chord[1]*X*0.75,'sawtooth',0.022);
-      });
-      ct+=chord[1]*X;
-    });
-
-    // CH4: ドラム（キック+スネア+ハイハット）
-    for(let b=0;b<8;b++){
-      const bT=t+b*S;
-      kick(bT);                          // 4分音符ごとにキック
-      if(b%2===1)snare(bT);             // 裏拍にスネア
-      hihat(bT,0.04);                   // 4分ハイハット
-      hihat(bT+X*2,0.025);             // 8分ハイハット（裏）
+    // トリトヌスベース16分連打
+    for(let m=0;m<8;m++){
+      const bt=t+m*4*S;
+      [N.A2,N.A3,N.Eb3,N.A3,N.A2,N.A3,N.Eb3,N.A3,
+       N.A2,N.A3,N.Eb3,N.A3,N.A2,N.A3,N.Eb3,N.A3].forEach(function(f,i){bass(f,bt+i*X,X*0.8);});
+    }
+    // イントロドラム
+    for(let m=0;m<8;m++){
+      const bt=t+m*4*S;
+      for(let b=0;b<4;b++){kick(bt+b*S);if(b%2===1)snare(bt+b*S);hihat(bt+b*S,0.04);hihat(bt+b*S+E,0.025);}
+      snareRoll(bt+3*S+E+X);
     }
 
-    _bgmTimerId=setTimeout(scheduleLoop,(loopLen-0.15)*1000);
+    // === Aメロ 9-24小節: Am|F|G|E7 + シンコペーション ===
+    const aS=t+8*4*S;
+    const aMel=[
+      [N.A4,X],[N._,X],[N.C5,X],[N.A4,X],[N.B4,X],[N.A4,X],[N.G4,X],[N.A4,X],
+      [N.C5,E],[N._,X],[N.B4,X],[N.A4,X],[N.G4,X],[N.A4,X],[N.B4,X],
+      [N.A4,X],[N.G4,X],[N.F4,X],[N.G4,X],[N.A4,X],[N.G4,X],[N.F4,E],
+      [N.E4,X],[N._,X],[N.G4,X],[N.A4,X],[N.Bb4,X],[N.A4,X],[N.G4,X],[N.F4,X],
+      [N.G4,X],[N._,X],[N.B4,X],[N.G4,X],[N.A4,X],[N.B4,X],[N.C5,X],[N.B4,X],
+      [N.D5,E],[N._,X],[N.C5,X],[N.B4,X],[N.A4,X],[N.B4,X],[N.C5,X],
+      [N.B4,X],[N.Cs5,X],[N.D5,X],[N.Cs5,X],[N.B4,X],[N.A4,X],[N.Ab4,X],[N.A4,X],
+      [N.E4,S],[N._,X],[N.Cs4,X],[N.D4,X],[N.E4,X],
+    ];
+    let amt=aS;
+    aMel.forEach(function(n){if(n[0]){tone(n[0],amt,n[1]*0.82,'square',V*1.1,true);tone(n[0]*0.749,amt,n[1]*0.8,'square',V*0.52,false);}amt+=n[1];});
+    // シンコペーションベース (低・高・低・高・高・低・高・休)
+    const aRoots=[N.A2,N.F2||N.A2,N.G2||N.A2,N.E2||N.A2,N.A2,N.Bb2,N.G2||N.A2,N.E2||N.A2];
+    for(let m=0;m<8;m++){
+      const r=aRoots[m%8],r8=r*2,bt=aS+m*4*S;
+      [r,r8,r,r8,r8,r,r8,0].forEach(function(f,i){if(f)bass(f,bt+i*X,X*0.78);});
+    }
+    for(let m=0;m<8;m++){
+      const bt=aS+m*4*S;
+      for(let b=0;b<4;b++){kick(bt+b*S);if(b%2===1)snare(bt+b*S);for(let h=0;h<4;h++)hihat(bt+b*S+h*X,h===0?0.048:0.025);}
+      snareRoll(bt+3*S+E+X);
+    }
+
+    // === サビ 25-40小節: カントーオマージュ + 1オクターブユニゾン ===
+    const cS=t+24*4*S;
+    const cMel=[
+      [N.A4,E],[N.C5,X],[N.D5,X],[N.E5,S],[N._,X],
+      [N.D5,X],[N.C5,X],[N.A4,E],[N.C5,X],[N.D5,E],
+      [N.E5,E],[N.D5,X],[N.C5,X],[N.A4,S],[N._,X],
+      [N.G4,X],[N.A4,X],[N.C5,E],[N.D5,E],[N.E5,E],
+      [N.A5,E],[N._,X],[N.G5,X],[N.F5,X],[N.E5,X],[N.D5,X],[N.C5,X],
+      [N.D5,E],[N.E5,X],[N.F5,X],[N.E5,E],[N.D5,X],[N.C5,X],
+      [N.B4,X],[N.C5,X],[N.D5,X],[N.E5,X],[N.Cs5,X],[N.D5,X],[N.E5,X],[N.F5,X],
+      [N.E5,S],[N._,S],
+    ];
+    let cmt=cS;
+    cMel.forEach(function(n){
+      if(n[0]){
+        tone(n[0],cmt,n[1]*0.88,'sawtooth',V*0.82,true);  // CH1
+        tone(n[0]*2,cmt,n[1]*0.88,'sawtooth',V*0.68,false); // 1オクターブユニゾン
+      }
+      cmt+=n[1];
+    });
+    // カウンターメロディベース
+    const cBass=[N.A2,N.C3,N.E3,N.A3,N.G3,N.E3,N.C3,N.G2,N.F2||N.A2,N.A2,N.C3,N.F3,N.E3,N.C3,N.A2,N.E2||N.A2];
+    for(let m=0;m<8;m++){
+      const bt=cS+m*4*S;
+      for(let i=0;i<8;i++)bass(cBass[(m*4+i)%16],bt+i*X*0.5,X*0.5*0.82);
+    }
+    for(let m=0;m<8;m++){
+      const bt=cS+m*4*S;
+      for(let b=0;b<4;b++){
+        kick(bt+b*S);if(b===0||b===2)kick(bt+b*S+X);
+        if(b%2===1)snare(bt+b*S);
+        for(let h=0;h<4;h++)hihat(bt+b*S+h*X,h===0?0.055:0.03);
+      }
+      snareRoll(bt+3*S+E+X);
+    }
+
+    _bgmTimerId=setTimeout(scheduleLoop,(40*4*S-0.15)*1000);
   }
   scheduleLoop();
 }
@@ -3154,7 +3169,15 @@ function cleanupBtlRotate(){
 @keyframes lunge-en{0%{transform:translateX(0)scaleX(-1);}35%{transform:translateX(-30px)scaleX(-1)scale(1.15);}100%{transform:translateX(0)scaleX(-1)scale(1);}}
 @keyframes hit-shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-12px);}40%{transform:translateX(12px);}60%{transform:translateX(-7px);}80%{transform:translateX(7px);}}
 @keyframes hit-super{0%,100%{transform:translateX(0)scale(1);}15%{transform:translateX(-16px)scale(0.92);}35%{transform:translateX(16px)scale(1.08);}55%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
-@keyframes screen-shake{0%,100%{transform:translate(0);}20%{transform:translate(-7px,4px);}40%{transform:translate(7px,-4px);}60%{transform:translate(-4px,2px);}80%{transform:translate(4px,-2px);}}
+@keyframes screen-shake-normal{0%,100%{transform:translate(0);}10%{transform:translate(-10px,6px);}25%{transform:translate(10px,-6px);}40%{transform:translate(-8px,4px);}55%{transform:translate(8px,-4px);}70%{transform:translate(-5px,3px);}85%{transform:translate(5px,-3px);}}
+@keyframes screen-shake-super{0%,100%{transform:translate(0);}8%{transform:translate(-18px,10px)rotate(-1.5deg);}20%{transform:translate(18px,-10px)rotate(1.5deg);}32%{transform:translate(-14px,8px);}44%{transform:translate(14px,-8px);}56%{transform:translate(-9px,5px);}68%{transform:translate(9px,-5px);}80%{transform:translate(-4px,2px);}92%{transform:translate(4px,-2px);}}
+@keyframes screen-shake-weak{0%,100%{transform:translate(0);}25%{transform:translate(-5px,3px);}75%{transform:translate(5px,-3px);}}
+@keyframes hitstop-flash{0%{opacity:0;}15%{opacity:1;}40%{opacity:0.8;}100%{opacity:0;}}
+@keyframes aura-pulse{0%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.25);opacity:1;}100%{transform:scale(1.5);opacity:0;}}
+@keyframes blow-back-my{0%{transform:translateX(0);}30%{transform:translateX(28px);}100%{transform:translateX(0);}}
+@keyframes blow-back-en{0%{transform:translateX(0)scaleX(-1);}30%{transform:translateX(-28px)scaleX(-1);}100%{transform:translateX(0)scaleX(-1);}}
+@keyframes shadow-pulse{0%,100%{transform:scale(1);opacity:0.3;}50%{transform:scale(1.15);opacity:0.5;}}
+@keyframes smoke-drift{0%{opacity:0.7;transform:translateY(0)scale(1);}100%{opacity:0;transform:translateY(-30px)scale(1.8);}}
 @keyframes flash-w{0%{opacity:0;}30%{opacity:1;}100%{opacity:0;}}
 /* 帯 */
 @keyframes band-in{0%{transform:translateX(-110%);}100%{transform:translateX(0);}}
@@ -3279,7 +3302,7 @@ function showBattleSelect(phase){
         btl.selectBuf.push(idx);
         card.style.background='rgba('+(isRed?'192,57,43':'41,128,185')+',0.45)';card.style.borderColor=teamColor;card.style.borderWidth='3px';img.style.transform='scale(1.1)';
         const shine=el('div','');shine.style.cssText='position:absolute;top:0;left:-120%;width:55%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);pointer-events:none;animation:speedline 0.4s ease forwards;';card.appendChild(shine);setTimeout(function(){shine.remove();},400);
-        setTimeout(function(){playCryById(p.id);},80);
+        // 鳴き声は確認画面（3匹並んだ時）のみ再生するためここでは鳴らさない
       }
       _updateSlots(isRed,teamColor);
     });
@@ -3410,15 +3433,23 @@ function showBattleMain(enterAnim){
     w.appendChild(nr);w.appendChild(barBg);w.appendChild(ht);return w;
   }
 
-  // ② ポケモン画像（攻撃時にぬーっと動く）
+  // ② 攻撃側が下(左)・防御側が上(右)に配置。攻撃ターンで入れ替わる。
+  // my(赤)攻撃時: 赤=左下, 青=右上
+  // enemy(青)攻撃時: 青=左下, 赤=右上
   function makePokeImg(poke,side){
     const wrap=el('div','');wrap.id='btl-img-'+side;
-    // 配置：赤(my)→右下、青(enemy)→左上
-    wrap.style.cssText='position:absolute;display:flex;flex-direction:column;align-items:center;'
-      +(side==='my'?'right:8%;bottom:22%;':'left:8%;top:22%;');
+    wrap.style.cssText='position:absolute;display:flex;flex-direction:column;align-items:center;transition:top 0.5s ease,bottom 0.5s ease,left 0.5s ease,right 0.5s ease;';
+    // 初期配置（赤ターン開始）: 赤=右下, 青=左上
+    if(side==='my'){
+      wrap.style.cssText+='right:6%;bottom:18%;';
+    } else {
+      wrap.style.cssText+='left:6%;top:18%;';
+    }
     const img=el('img','');img.src=battleImgUrl(poke);
     img.onerror=function(){this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/'+(poke.shinyImg?'shiny/':'')+poke.id+'.png';};
-    img.style.cssText='width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 4px 14px rgba(0,0,0,0.35));'+(side==='enemy'?'transform:scaleX(-1);':'');
+    img.style.cssText='width:clamp(100px,18vw,150px);height:clamp(100px,18vw,150px);object-fit:contain;'
+      +'filter:drop-shadow(0 6px 18px rgba(0,0,0,0.4));'+(side==='enemy'?'transform:scaleX(-1);':'')
+      +';transition:filter 0.2s;';
     img.style.opacity=enterAnim?'0':'1';
     img.addEventListener('click',function(){playCryById(poke.id);});
     wrap.appendChild(img);return wrap;
@@ -3617,67 +3648,250 @@ function playAttackSequence(attackerSide,mv,compat){
   const atkImg=atkWrap.querySelector('img');
   const defImg=defWrap.querySelector('img');
   const fxKey=mv.fx||'strike';
+  const typeColor=TYPE_COLORS_BTL[mv.type]||'#888';
+  const field=document.getElementById('btl-field');
 
-  // ② ぬーっと前進アニメ
-  const riseAnim=attackerSide==='my'?'poke-rise':'poke-sink';
-  atkWrap.style.animation=riseAnim+' 0.7s ease forwards';
+  // ===== ① 配置切替（攻撃側=左下、防御側=右上）→ 溜め =====
+  setPokePositions(attackerSide);
+  showAuraGather(atkImg,typeColor,attackerSide,function(){
 
-  // 帯演出
-  showTechBand(atkImg,atkPoke.name,mv.name,mv.type,attackerSide,function(){
-    // 鳴き声 + ルンジ
-    playCryById(atkPoke.id);
-    atkImg.style.animation='none';void atkImg.offsetWidth;
-    atkImg.style.animation=(attackerSide==='my'?'lunge-my':'lunge-en')+' 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
+    // ===== ② 帯演出（オーラ収束直後に出る・ポケモンが光る）=====
+    // 帯と同時にポケモンをbrightnessで「構え」させる
+    atkImg.style.filter=(attackerSide==='enemy'?'scaleX(-1) ':'')
+      +'drop-shadow(0 0 16px '+typeColor+') brightness(1.4)';
 
-    setTimeout(function(){
-      fireParticles(mv.type,compat.cls==='super'?2.2:compat.cls==='zero'?0:compat.cls==='weak'?0.55:1,atkImg,defImg,function(){
-        // ヒット
-        const rootEl=document.getElementById('btl-root');
-        if(rootEl){rootEl.style.animation='screen-shake 0.38s ease';setTimeout(function(){rootEl.style.animation='';},380);}
-        const fl=document.getElementById('btl-flash');
-        if(fl){fl.style.opacity=compat.cls==='super'?'0.88':'0.42';fl.style.transition='opacity 0.06s';setTimeout(function(){fl.style.transition='opacity 0.22s';fl.style.opacity='0';},80);}
+    showTechBand(atkImg,atkPoke.name,mv.name,mv.type,attackerSide,function(){
 
-        // FXエフェクト
-        runHitFx(fxKey,TYPE_COLORS_BTL[mv.type]||'#888',defImg,false,compat.cls);
-        defImg.style.animation='none';void defImg.offsetWidth;
-        if(compat.cls==='super')defImg.style.animation='hit-super 0.5s ease';
-        else if(compat.cls==='zero'){defImg.style.animation='';showZeroEffect(defSide);}
-        else defImg.style.animation='hit-shake 0.42s ease';
-        setTimeout(function(){showCompatText(compat,defSide);},150);
+      // フィルターを戻す
+      atkImg.style.filter=(attackerSide==='enemy'?'scaleX(-1) ':'')
+        +'drop-shadow(0 6px 18px rgba(0,0,0,0.4))';
 
-        // ダイス
-        setTimeout(function(){
-          showDiceOverlay(compat.cls,function(dmg,isCrit){
-            if(isCrit)runHitFx(fxKey,'#ffe033',defImg,true,compat.cls);
-            // HPエフェクト（引っかき）
-            showHpScratchEffect(defSide,isCrit);
-            const curHp=getHp(defSide);
-            const newHp=Math.max(0,curHp-dmg);
-            btl.hp[defSide][defSide==='my'?btl.myIdx:btl.enemyIdx]=newHp;
-            animateHpDrain(defSide,curHp,newHp,function(){
-              showCompatHint(mv,defSide);
-              addBattleLog(atkPoke.name+'の'+mv.name+'！'+(isCrit?' 💥きゅうしょ！':'')+(dmg>0?' -'+dmg+'ダメージ':''));
-              // ② 攻撃後に戻る
-              atkWrap.style.animation=(attackerSide==='my'?'poke-rise-back':'poke-sink-back')+' 0.5s ease forwards';
-              if(newHp<=0){
-                setTimeout(function(){handleFaint(defSide,attackerSide);},600);
-              } else {
-                setTimeout(function(){
-                  atkImg.style.animation='';defImg.style.animation='';
-                  btl.turn=attackerSide==='my'?'enemy':'my';
-                  btl.animating=false;
-                  turnFlash(btl.turn,function(){updateTurnDisplay();if(btl.cpuMode&&btl.turn==='enemy')setTimeout(doCpuTurn,700);});
-                },500);
-              }
+      // ===== ③ 放つ：鳴き声＋ルンジ（scale1.2）=====
+      playCryById(atkPoke.id);
+      atkImg.style.animation='none';void atkImg.offsetWidth;
+      atkImg.style.animation=(attackerSide==='my'?'lunge-my':'lunge-en')+' 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards';
+      // ぬーっと前進
+      atkWrap.style.animation=(attackerSide==='my'?'poke-rise':'poke-sink')+' 0.6s ease forwards';
+
+      // ===== ④ 飛翔：パーティクルが画面横断 =====
+      setTimeout(function(){
+        fireParticles(mv.type,compat.cls==='super'?2.5:compat.cls==='zero'?0:compat.cls==='weak'?0.6:1.2,atkImg,defImg,function(){
+
+          // ===== ⑤ ヒットストップ（0.08秒白→暗転）=====
+          const fl=document.getElementById('btl-flash');
+          if(fl){
+            fl.style.background='white';fl.style.opacity='1';fl.style.transition='none';
+            setTimeout(function(){
+              fl.style.background='rgba(0,0,0,0.55)';
+              setTimeout(function(){
+                fl.style.transition='opacity 0.18s';fl.style.opacity='0';
+                fl.style.background='white';
+              },80);
+            },80);
+          }
+
+          // ===== ⑥ 受けた側が吹き飛ぶ =====
+          defImg.style.animation='none';void defImg.offsetWidth;
+          if(compat.cls==='super'){
+            defImg.style.animation='blow-back-'+(defSide==='my'?'my':'en')+' 0.35s ease forwards';
+          } else if(compat.cls==='zero'){
+            defImg.style.animation='';showZeroEffect(defSide);
+          } else if(compat.cls==='weak'){
+            defImg.style.animation='hit-shake 0.35s ease';
+          } else {
+            defImg.style.animation='blow-back-'+(defSide==='my'?'my':'en')+' 0.28s ease forwards';
+          }
+
+          // ===== ⑦ 画面揺れ（相性で強度変化）=====
+          const rootEl=document.getElementById('btl-root');
+          if(rootEl){
+            const shakeAnim=compat.cls==='super'?'screen-shake-super 0.55s ease'
+              :compat.cls==='weak'?'screen-shake-weak 0.22s ease'
+              :compat.cls==='zero'?'':'screen-shake-normal 0.42s ease';
+            if(shakeAnim){rootEl.style.animation=shakeAnim;setTimeout(function(){rootEl.style.animation='';},600);}
+          }
+
+          // ===== ⑧ タイプFX爆発（画面40%占有）=====
+          setTimeout(function(){
+            runHitFx(fxKey,typeColor,defImg,false,compat.cls);
+            showCompatText(compat,defSide);
+          },100);
+
+          // ===== ⑨ 煙・余韻 =====
+          setTimeout(function(){
+            showSmokeEffect(defImg,field,typeColor);
+          },350);
+
+          // ===== ⑩ ダイス =====
+          setTimeout(function(){
+            showDiceOverlay(compat.cls,function(dmg,isCrit){
+              if(isCrit)runHitFx(fxKey,'#ffe033',defImg,true,compat.cls);
+              showHpScratchEffect(defSide,isCrit);
+              const curHp=getHp(defSide);
+              const newHp=Math.max(0,curHp-dmg);
+              btl.hp[defSide][defSide==='my'?btl.myIdx:btl.enemyIdx]=newHp;
+              animateHpDrain(defSide,curHp,newHp,function(){
+                showCompatHint(mv,defSide);
+                addBattleLog(atkPoke.name+'の'+mv.name+'！'+(isCrit?' 💥きゅうしょ！':'')+(dmg>0?' -'+dmg+'ダメージ':''));
+                // ポケモンを元位置に戻す（次ターンの攻撃で再配置）
+                atkWrap.style.animation=(attackerSide==='my'?'poke-rise-back':'poke-sink-back')+' 0.45s ease forwards';
+                resetPokePositions();
+                defImg.style.animation='';
+                if(newHp<=0){
+                  setTimeout(function(){handleFaint(defSide,attackerSide);},600);
+                } else {
+                  setTimeout(function(){
+                    atkImg.style.animation='';
+                    btl.turn=attackerSide==='my'?'enemy':'my';
+                    btl.animating=false;
+                    turnFlash(btl.turn,function(){
+                      updateTurnDisplay();
+                      if(btl.cpuMode&&btl.turn==='enemy')setTimeout(doCpuTurn,700);
+                    });
+                  },500);
+                }
+              });
             });
-          });
-        },380);
-      });
-    },280);
+          },420);
+        });
+      },260);
+    });
   });
 }
 
-// ===== 技名帯演出 =====
+// ===== ① オーラ収束演出 =====
+// ポケモン配置の切替（攻撃側=左下、防御側=右上）
+function setPokePositions(attackerSide){
+  const myWrap=document.getElementById('btl-img-my');
+  const enWrap=document.getElementById('btl-img-enemy');
+  if(!myWrap||!enWrap)return;
+  if(attackerSide==='my'){
+    // 赤攻撃：赤=左下、青=右上
+    myWrap.style.left='6%';myWrap.style.right='';myWrap.style.bottom='18%';myWrap.style.top='';
+    enWrap.style.right='6%';enWrap.style.left='';enWrap.style.top='18%';enWrap.style.bottom='';
+  } else {
+    // 青攻撃：青=左下、赤=右上
+    enWrap.style.left='6%';enWrap.style.right='';enWrap.style.bottom='18%';enWrap.style.top='';
+    myWrap.style.right='6%';myWrap.style.left='';myWrap.style.top='18%';myWrap.style.bottom='';
+  }
+}
+// 攻撃後に初期配置（赤=右下、青=左上）に戻す
+function resetPokePositions(){
+  const myWrap=document.getElementById('btl-img-my');
+  const enWrap=document.getElementById('btl-img-enemy');
+  if(!myWrap||!enWrap)return;
+  myWrap.style.right='6%';myWrap.style.left='';myWrap.style.bottom='18%';myWrap.style.top='';
+  enWrap.style.left='6%';enWrap.style.right='';enWrap.style.top='18%';enWrap.style.bottom='';
+}
+
+function showAuraGather(atkImg,typeColor,side,callback){
+  const field=document.getElementById('btl-field');
+  if(!field||!atkImg){if(callback)setTimeout(callback,0);return;}
+  const fr=field.getBoundingClientRect();
+  const ir=atkImg.getBoundingClientRect();
+  const cx=ir.left-fr.left+ir.width/2;
+  const cy=ir.top-fr.top+ir.height/2;
+
+  const cv=document.createElement('canvas');
+  cv.width=fr.width;cv.height=fr.height;
+  cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:15;';
+  field.appendChild(cv);
+  const ctx=cv.getContext('2d');
+
+  // 粒子をランダムな位置からポケモン中心に収束させる（赤・青ともに同等の強度）
+  const particles=[];
+  const count=42; // 増量（赤も青も同等）
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const dist=50+Math.random()*100;
+    particles.push({
+      x:cx+Math.cos(angle)*dist,
+      y:cy+Math.sin(angle)*dist,
+      tx:cx,ty:cy,
+      size:4+Math.random()*5,
+      alpha:1.0,
+      speed:0.07+Math.random()*0.05,
+      progress:0,
+    });
+  }
+
+  let frame=0;const maxFrame=18;
+  function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    const p=frame/maxFrame;
+    particles.forEach(function(pt){
+      pt.progress=Math.min(1,pt.progress+pt.speed*1.5);
+      const eased=1-Math.pow(1-pt.progress,3);
+      const curX=pt.x+(pt.tx-pt.x)*eased;
+      const curY=pt.y+(pt.ty-pt.y)*eased;
+      const fadeAlpha=pt.progress<0.7?pt.alpha:pt.alpha*(1-(pt.progress-0.7)/0.3);
+      ctx.save();
+      ctx.globalAlpha=fadeAlpha;
+      ctx.fillStyle=typeColor;
+      ctx.shadowColor=typeColor;ctx.shadowBlur=8;
+      ctx.beginPath();ctx.arc(curX,curY,pt.size*(1-pt.progress*0.5),0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    });
+    // ポケモン周囲のオーラリング（赤・青ともに強く）
+    const ringR=ir.width/2*(0.85+p*0.55);
+    const ringAlpha=(1-p)*0.9;
+    ctx.save();ctx.globalAlpha=ringAlpha;
+    ctx.strokeStyle=typeColor;ctx.lineWidth=5+p*6;ctx.shadowColor=typeColor;ctx.shadowBlur=35;
+    ctx.beginPath();ctx.arc(cx,cy,ringR,0,Math.PI*2);ctx.stroke();
+    // 内側にもう一本細いリング
+    ctx.globalAlpha=ringAlpha*0.5;ctx.lineWidth=2;ctx.shadowBlur=18;
+    ctx.beginPath();ctx.arc(cx,cy,ringR*0.7,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);
+    else{cv.remove();if(callback)callback();}
+  }
+  requestAnimationFrame(tick);
+}
+
+// ===== ⑨ 煙・余韻エフェクト =====
+function showSmokeEffect(targetImg,field,typeColor){
+  if(!field||!targetImg)return;
+  const fr=field.getBoundingClientRect();
+  const ir=targetImg.getBoundingClientRect();
+  const cx=ir.left-fr.left+ir.width/2;
+  const cy=ir.top-fr.top+ir.height/2;
+
+  const cv=document.createElement('canvas');
+  cv.width=fr.width;cv.height=fr.height;
+  cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:18;';
+  field.appendChild(cv);
+  const ctx=cv.getContext('2d');
+
+  const smokes=[];
+  for(let i=0;i<12;i++){
+    const angle=Math.random()*Math.PI*2;
+    const spd=1.2+Math.random()*2;
+    smokes.push({
+      x:cx+(Math.random()-0.5)*30,y:cy+(Math.random()-0.5)*30,
+      vx:Math.cos(angle)*spd*0.4,vy:Math.sin(angle)*spd-1.5,
+      r:8+Math.random()*14,alpha:0.55+Math.random()*0.3,life:1,
+    });
+  }
+  let frame=0;const maxFrame=22;
+  function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    smokes.forEach(function(s){
+      s.x+=s.vx;s.y+=s.vy;s.life-=0.048;s.r*=1.06;
+      if(s.life<=0)return;
+      ctx.save();ctx.globalAlpha=s.alpha*s.life;
+      const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r);
+      g.addColorStop(0,typeColor+'88');g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();ctx.restore();
+    });
+    frame++;
+    if(frame<maxFrame)requestAnimationFrame(tick);else cv.remove();
+  }
+  requestAnimationFrame(tick);
+}
+
+// ===== 技名帯演出（オーラ後に出る・疾走感強化）=====
 function showTechBand(atkImg,pokeName,moveName,moveType,side,callback){
   const typeColor=TYPE_COLORS_BTL[moveType]||'#888';
   const isLight=!TYPE_TEXT_WHITE.has(moveType);
@@ -3783,53 +3997,59 @@ const FX_CATEGORY={slash:{draw:drawSlash},beam:{draw:drawBeam},blast:{draw:drawB
 function runHitFx(fxKey,typeColor,targetEl,isCrit,compatCls){
   const field=document.getElementById('btl-field');if(!field)return;
   const cv=document.createElement('canvas');const fr=field.getBoundingClientRect();
-  cv.width=fr.width;cv.height=fr.height;cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20;';
+  cv.width=fr.width;cv.height=fr.height;
+  cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20;';
   field.appendChild(cv);const ctx=cv.getContext('2d');
   let tx=cv.width/2,ty=cv.height/2;
   if(targetEl){const tr=targetEl.getBoundingClientRect();tx=tr.left-fr.left+tr.width/2;ty=tr.top-fr.top+tr.height/2;}
+  // 強度：画面の40%を使う基準スケール
+  const baseScale=Math.min(cv.width,cv.height)*0.42;
+  const intensity=(compatCls==='super'?1.8:compatCls==='weak'?0.55:1.1)*(isCrit?1.5:1);
   const cat=FX_CATEGORY[fxKey]||FX_CATEGORY.strike;
-  cat.draw(ctx,cv.width,cv.height,tx,ty,typeColor,compatCls==='super'?1.7:compatCls==='weak'?0.5:1,isCrit,function(){cv.remove();});
+  cat.draw(ctx,cv.width,cv.height,tx,ty,typeColor,intensity,isCrit,baseScale,function(){cv.remove();});
 }
-function drawSlash(ctx,W,H,tx,ty,col,intensity,isCrit,done){
-  const count=isCrit?5:3;let frame=0;const maxF=20;
-  const lines=[];for(let i=0;i<count;i++)lines.push({ofs:(-count/2+i)*24,alpha:0,w:isCrit?6:3.5});
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;lines.forEach(function(ln,i){const d=0.12*i;const lp=Math.max(0,Math.min(1,(p-d)/(1-d)));ln.alpha=lp<0.5?lp*2:(1-lp)*2;if(ln.alpha<=0)return;ctx.save();ctx.globalAlpha=ln.alpha*intensity;ctx.strokeStyle=isCrit?'#ffe033':col;ctx.lineWidth=ln.w;ctx.shadowColor=col;ctx.shadowBlur=isCrit?22:12;ctx.beginPath();const len=Math.max(W,H)*0.75;ctx.moveTo(tx+ln.ofs-len*0.5,ty-ln.ofs-len*0.5);ctx.lineTo(tx+ln.ofs+len*0.5,ty-ln.ofs+len*0.5);ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+function drawSlash(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
+  const count=isCrit?6:3;let frame=0;const maxF=22;
+  const lines=[];
+  for(let i=0;i<count;i++)lines.push({ofs:(-count/2+i)*(baseScale*0.18),alpha:0,w:isCrit?8:5});
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;lines.forEach(function(ln,i){const d=0.1*i;const lp=Math.max(0,Math.min(1,(p-d)/(1-d)));ln.alpha=lp<0.5?lp*2:(1-lp)*2;if(ln.alpha<=0)return;ctx.save();ctx.globalAlpha=ln.alpha*Math.min(intensity,2);ctx.strokeStyle=isCrit?'#ffe033':col;ctx.lineWidth=ln.w;ctx.shadowColor=col;ctx.shadowBlur=isCrit?28:16;ctx.beginPath();const len=Math.max(W,H)*0.9;ctx.moveTo(tx+ln.ofs-len*0.5,ty-ln.ofs-len*0.5);ctx.lineTo(tx+ln.ofs+len*0.5,ty-ln.ofs+len*0.5);ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
-function drawBeam(ctx,W,H,tx,ty,col,intensity,isCrit,done){
-  let frame=0;const maxF=24;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const r=(p<0.6?p/0.6:1-(p-0.6)/0.4)*65*intensity*(isCrit?1.5:1);const alpha=p<0.7?1:1-(p-0.7)/0.3;ctx.save();ctx.globalAlpha=alpha;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);g.addColorStop(0,'white');g.addColorStop(0.4,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.fill();ctx.restore();frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
-}
-function drawBlast(ctx,W,H,tx,ty,col,intensity,isCrit,done){
-  const pts=[];for(let i=0;i<(isCrit?26:15)*intensity;i++){const a=Math.random()*Math.PI*2,s=(2.5+Math.random()*4.5)*intensity;pts.push({x:tx,y:ty,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,sz:9+Math.random()*13});}
-  let frame=0;const maxF=28;
-  function tick(){ctx.clearRect(0,0,W,H);pts.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.3;p.life-=0.038;p.sz*=0.95;if(p.life<=0)return;ctx.save();ctx.globalAlpha=p.life*intensity;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.sz);g.addColorStop(0,'#fff8e1');g.addColorStop(0.5,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);ctx.fill();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
-}
-function drawWind(ctx,W,H,tx,ty,col,intensity,isCrit,done){
-  const lns=[];for(let i=0;i<(isCrit?8:5);i++)lns.push({y:ty-38+i*19,prog:0,spd:0.055+Math.random()*0.04});
-  let frame=0;const maxF=30;
-  function tick(){ctx.clearRect(0,0,W,H);lns.forEach(function(ln){ln.prog=Math.min(1,ln.prog+ln.spd);ctx.save();ctx.globalAlpha=(1-ln.prog)*intensity*0.8;ctx.strokeStyle=col;ctx.lineWidth=3;ctx.shadowColor=col;ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(0,ln.y);for(let x=0;x<W*ln.prog;x+=10)ctx.lineTo(x,ln.y+Math.sin(x/20+ln.prog*10)*8);ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
-}
-function drawBolt(ctx,W,H,tx,ty,col,intensity,isCrit,done){
-  const bPaths=[];for(let b=0;b<(isCrit?4:2);b++){const pts=[{x:tx-35+b*18,y:0}];for(let i=1;i<8;i++){const t=i/8;pts.push({x:tx-35+b*18+(tx-(-35+b*18))*t+(Math.random()-0.5)*55,y:ty*t+(Math.random()-0.5)*55});}pts.push({x:tx,y:ty});bPaths.push(pts);}
-  let frame=0;const maxF=20;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;bPaths.forEach(function(pts){ctx.save();ctx.globalAlpha=(1-p)*intensity;ctx.strokeStyle=isCrit?'#fff176':col;ctx.lineWidth=isCrit?4:2.5;ctx.shadowColor=col;ctx.shadowBlur=16;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(function(pt){ctx.lineTo(pt.x,pt.y);});ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
-}
-function drawStrike(ctx,W,H,tx,ty,col,intensity,isCrit,done){
-  const rings=isCrit?4:2;let frame=0;const maxF=25;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;for(let i=0;i<rings;i++){const d=i*0.17;const rp=Math.max(0,(p-d)/(1-d));if(rp<=0)continue;const r=rp*85*intensity;ctx.save();ctx.globalAlpha=(1-rp)*intensity;ctx.strokeStyle=col;ctx.lineWidth=4-rp*3;ctx.shadowColor=col;ctx.shadowBlur=10;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.stroke();ctx.restore();}frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
-}
-function drawFreeze(ctx,W,H,tx,ty,col,intensity,isCrit,done){
-  const crystals=[];for(let i=0;i<(isCrit?12:7);i++){const a=Math.PI*2/7*i;crystals.push({angle:a,r:0,maxR:26+Math.random()*24,spd:3+Math.random()*2});}
-  let frame=0;const maxF=28;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;crystals.forEach(function(c){c.r=Math.min(c.maxR,c.r+c.spd);ctx.save();ctx.globalAlpha=(1-p)*intensity;ctx.strokeStyle=col;ctx.lineWidth=2;ctx.shadowColor='#e1f5fe';ctx.shadowBlur=8;for(let j=0;j<6;j++){const a2=c.angle+j*Math.PI/3;ctx.beginPath();ctx.moveTo(tx+Math.cos(c.angle)*c.r,ty+Math.sin(c.angle)*c.r);ctx.lineTo(tx+Math.cos(c.angle)*c.r+Math.cos(a2)*c.r*0.5,ty+Math.sin(c.angle)*c.r+Math.sin(a2)*c.r*0.5);ctx.stroke();}ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
-}
-function drawDark(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+function drawBeam(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
   let frame=0;const maxF=26;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const phase=p<0.5?'in':'out';const rp=phase==='in'?p/0.5:1-(p-0.5)/0.5;const r=62*rp*intensity;ctx.save();if(phase==='in'){ctx.globalAlpha=rp*0.7;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);g.addColorStop(0,'transparent');g.addColorStop(0.6,col+'88');g.addColorStop(1,col);ctx.fillStyle=g;}else{ctx.globalAlpha=(1-rp)*intensity;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r*2);g.addColorStop(0,'white');g.addColorStop(0.3,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;}ctx.beginPath();ctx.arc(tx,ty,phase==='in'?r:r*2,0,Math.PI*2);ctx.fill();ctx.restore();frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const r=(p<0.55?p/0.55:1-(p-0.55)/0.45)*baseScale*intensity*(isCrit?1.4:1);const alpha=p<0.65?1:1-(p-0.65)/0.35;ctx.save();ctx.globalAlpha=alpha;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);g.addColorStop(0,'white');g.addColorStop(0.35,col);g.addColorStop(0.7,col+'88');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.fill();ctx.restore();frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
-function drawDragon(ctx,W,H,tx,ty,col,intensity,isCrit,done){
+function drawBlast(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
+  const pts=[];const n=Math.floor((isCrit?32:18)*Math.min(intensity,2));
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=(3+Math.random()*5)*intensity;pts.push({x:tx,y:ty,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,sz:(baseScale*0.12+Math.random()*baseScale*0.12)});}
   let frame=0;const maxF=30;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;for(let i=0;i<(isCrit?3:2);i++){const phase=p+i*0.33;const sr=42*intensity;ctx.save();ctx.globalAlpha=(1-p)*intensity;ctx.strokeStyle=col;ctx.lineWidth=3;ctx.shadowColor=col;ctx.shadowBlur=14;ctx.beginPath();for(let t=0;t<Math.PI*4*phase;t+=0.15){const r=sr*(t/(Math.PI*4));const x=tx+Math.cos(t+frame*0.2)*r,y=ty+Math.sin(t+frame*0.2)*r;if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();ctx.restore();}frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  function tick(){ctx.clearRect(0,0,W,H);pts.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.4;p.life-=0.036;p.sz*=0.94;if(p.life<=0)return;ctx.save();ctx.globalAlpha=p.life;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.sz);g.addColorStop(0,'#fff8e1');g.addColorStop(0.5,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);ctx.fill();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+}
+function drawWind(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
+  const lns=[];const n=isCrit?10:6;for(let i=0;i<n;i++)lns.push({y:ty-baseScale*0.5+i*(baseScale/n),prog:0,spd:0.05+Math.random()*0.04,w:2+Math.random()*3});
+  let frame=0;const maxF=32;
+  function tick(){ctx.clearRect(0,0,W,H);lns.forEach(function(ln){ln.prog=Math.min(1,ln.prog+ln.spd);ctx.save();ctx.globalAlpha=(1-ln.prog)*intensity*0.85;ctx.strokeStyle=col;ctx.lineWidth=ln.w;ctx.shadowColor=col;ctx.shadowBlur=10;ctx.beginPath();ctx.moveTo(0,ln.y);for(let x=0;x<W*ln.prog;x+=12)ctx.lineTo(x,ln.y+Math.sin(x/25+ln.prog*10)*12);ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+}
+function drawBolt(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
+  const bPaths=[];const n=isCrit?5:2;for(let b=0;b<n;b++){const pts=[{x:tx-baseScale*0.3+b*(baseScale*0.15),y:0}];for(let i=1;i<10;i++){const t=i/10;pts.push({x:tx-baseScale*0.3+b*(baseScale*0.15)+(tx-(tx-baseScale*0.3+b*(baseScale*0.15)))*t+(Math.random()-0.5)*60,y:ty*t+(Math.random()-0.5)*55});}pts.push({x:tx,y:ty});bPaths.push(pts);}
+  let frame=0;const maxF=22;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;bPaths.forEach(function(pts){ctx.save();ctx.globalAlpha=(1-p)*Math.min(intensity,2);ctx.strokeStyle=isCrit?'#fff176':col;ctx.lineWidth=isCrit?6:4;ctx.shadowColor=col;ctx.shadowBlur=22;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(function(pt){ctx.lineTo(pt.x,pt.y);});ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+}
+function drawStrike(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
+  const rings=isCrit?5:3;let frame=0;const maxF=26;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;for(let i=0;i<rings;i++){const d=i*0.15;const rp=Math.max(0,(p-d)/(1-d));if(rp<=0)continue;const r=rp*baseScale*Math.min(intensity,2);ctx.save();ctx.globalAlpha=(1-rp)*Math.min(intensity,1.5);ctx.strokeStyle=col;ctx.lineWidth=Math.max(1,5-rp*4);ctx.shadowColor=col;ctx.shadowBlur=14;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.stroke();ctx.restore();}frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+}
+function drawFreeze(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
+  const crystals=[];const n=isCrit?14:8;for(let i=0;i<n;i++){const a=Math.PI*2/n*i;crystals.push({angle:a,r:0,maxR:(baseScale*0.28+Math.random()*baseScale*0.2)*intensity,spd:3.5+Math.random()*2.5});}
+  let frame=0;const maxF=30;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;crystals.forEach(function(c){c.r=Math.min(c.maxR,c.r+c.spd);ctx.save();ctx.globalAlpha=(1-p);ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.shadowColor='#e1f5fe';ctx.shadowBlur=10;for(let j=0;j<6;j++){const a2=c.angle+j*Math.PI/3;ctx.beginPath();ctx.moveTo(tx+Math.cos(c.angle)*c.r,ty+Math.sin(c.angle)*c.r);ctx.lineTo(tx+Math.cos(c.angle)*c.r+Math.cos(a2)*c.r*0.55,ty+Math.sin(c.angle)*c.r+Math.sin(a2)*c.r*0.55);ctx.stroke();}ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+}
+function drawDark(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
+  let frame=0;const maxF=28;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const phase=p<0.5?'in':'out';const rp=phase==='in'?p/0.5:1-(p-0.5)/0.5;const r=baseScale*rp*Math.min(intensity,1.8);ctx.save();if(phase==='in'){ctx.globalAlpha=rp*0.75;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);g.addColorStop(0,'transparent');g.addColorStop(0.5,col+'88');g.addColorStop(1,col);ctx.fillStyle=g;}else{ctx.globalAlpha=(1-rp)*Math.min(intensity,1.5);const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r*2.2);g.addColorStop(0,'white');g.addColorStop(0.25,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;}ctx.beginPath();ctx.arc(tx,ty,phase==='in'?r:r*2.2,0,Math.PI*2);ctx.fill();ctx.restore();frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+}
+function drawDragon(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
+  let frame=0;const maxF=32;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const n=isCrit?4:2;for(let i=0;i<n;i++){const phase=p+i*0.28;const sr=baseScale*0.7*Math.min(intensity,1.8);ctx.save();ctx.globalAlpha=(1-p)*intensity;ctx.strokeStyle=col;ctx.lineWidth=4;ctx.shadowColor=col;ctx.shadowBlur=18;ctx.beginPath();for(let t=0;t<Math.PI*4*phase;t+=0.12){const r=sr*(t/(Math.PI*4));const x=tx+Math.cos(t+frame*0.22)*r,y=ty+Math.sin(t+frame*0.22)*r;if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();ctx.restore();}frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 
 // ===== たおれた =====
