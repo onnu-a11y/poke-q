@@ -3618,8 +3618,8 @@ function showBattleMain(enterAnim){
   function makeHpBlock(side){
     const poke=side==='my'?btl.myTeam[btl.myIdx]:btl.enemyTeam[btl.enemyIdx];
     const w=el('div','');w.id='btl-hpblock-'+side;
-    // 1: HP被り解消 → 青HP=左上固定 / 赤HP=右下固定（絶対位置・ポケモン移動と完全独立）
-    const pos=side==='enemy'?'top:30px;left:4px;':'bottom:30px;right:4px;';
+    // HP被り解消：青HP=左上、赤HP=右下。fieldのheightに関わらず重ならない位置
+    const pos=side==='enemy'?'top:4px;left:4px;':'bottom:4px;right:4px;';
     w.style.cssText='position:absolute;'+pos+'background:rgba(255,255,255,0.93);border-radius:8px;padding:4px 8px;box-shadow:0 2px 8px rgba(0,0,0,0.22);z-index:8;max-width:44%;';
     const nr=el('div','');nr.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:5px;';
     const nm=el('span','');nm.style.cssText='font-size:9px;font-weight:900;color:#1a1a1a;max-width:65px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';nm.textContent=poke.name+(poke.shinyImg?' ✨':'');
@@ -3687,10 +3687,31 @@ function showBattleMain(enterAnim){
 
   // フッター
   const footer=el('div','');footer.style.cssText='display:flex;gap:5px;padding:5px 8px;background:rgba(0,0,0,0.75);flex-shrink:0;';
+
+  // 青チームこうたい（CPUモードでない時のみ表示）
+  if(!btl.cpuMode){
+    const enemyChangeable=btl.enemyTeam.filter(function(_,i){return i!==btl.enemyIdx&&!btl.fainted.enemy.includes(i);});
+    const enemyChangeBtn=el('button','btl-btn');
+    enemyChangeBtn.textContent='🔵 こうたい';
+    enemyChangeBtn.disabled=enemyChangeable.length===0;
+    enemyChangeBtn.style.cssText='flex:1;padding:7px;background:rgba(41,128,185,0.35);border:1px solid rgba(52,152,219,0.5);color:white;border-radius:8px;font-size:11px;font-weight:700;opacity:'+(enemyChangeable.length>0?'1':'0.32')+';';
+    enemyChangeBtn.addEventListener('click',function(){
+      if(btl.animating)return;
+      showChangeSelect('enemy');
+    });
+    footer.appendChild(enemyChangeBtn);
+  }
+
+  // 赤チームこうたい
   const myChangeable=btl.myTeam.filter(function(_,i){return i!==btl.myIdx&&!btl.fainted.my.includes(i);});
-  const changeBtn=el('button','btl-btn');changeBtn.textContent='🔄 こうたい';changeBtn.disabled=myChangeable.length===0;
-  changeBtn.style.cssText='flex:1;padding:7px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:8px;font-size:11px;font-weight:700;opacity:'+(myChangeable.length>0?'1':'0.32')+';';
-  changeBtn.addEventListener('click',function(){showChangeSelect('my');});
+  const changeBtn=el('button','btl-btn');
+  changeBtn.textContent='🔴 こうたい';
+  changeBtn.disabled=myChangeable.length===0;
+  changeBtn.style.cssText='flex:1;padding:7px;background:rgba(192,57,43,0.35);border:1px solid rgba(231,76,60,0.5);color:white;border-radius:8px;font-size:11px;font-weight:700;opacity:'+(myChangeable.length>0?'1':'0.32')+';';
+  changeBtn.addEventListener('click',function(){
+    if(btl.animating)return;
+    showChangeSelect('my');
+  });
   const winBtn=el('button','btl-btn');winBtn.textContent='🏆 かった！';winBtn.style.cssText='flex:2;padding:7px;background:linear-gradient(135deg,#1e8449,#27ae60);border:none;color:white;border-radius:8px;font-size:12px;font-weight:900;';
   winBtn.addEventListener('click',function(){btl.wins++;updateScore();showWinLose('かった！','#1e8449');});
   const loseBtn=el('button','btl-btn');loseBtn.textContent='💀 まけた';loseBtn.style.cssText='flex:2;padding:7px;background:linear-gradient(135deg,#922b21,#e74c3c);border:none;color:white;border-radius:8px;font-size:12px;font-weight:900;';
