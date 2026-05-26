@@ -3780,8 +3780,6 @@ function showBattleMain(enterAnim){
   winBtn.addEventListener('click',function(){btl.wins++;updateScore();showWinLose('かった！','#1e8449');});
   const loseBtn=el('button','btl-btn');loseBtn.textContent='💀 まけた';loseBtn.style.cssText='flex:2;padding:7px;background:linear-gradient(135deg,#922b21,#e74c3c);border:none;color:white;border-radius:8px;font-size:12px;font-weight:900;';
   loseBtn.addEventListener('click',function(){btl.losses++;updateScore();showWinLose('まけた…','#922b21');});
-
-  // ⑦ もう一度ボタン
   const retryBtn=el('button','btl-btn');retryBtn.textContent='🔁 もう一度';retryBtn.style.cssText='flex:1.5;padding:7px;background:linear-gradient(135deg,#7d3c98,#8e44ad);border:none;color:white;border-radius:8px;font-size:11px;font-weight:900;';
   retryBtn.addEventListener('click',function(){
     phaseFlash('linear-gradient(135deg,#1a1a2e,#2c3e50)','🔁 もう一度！','チームをえらびなおそう',function(){
@@ -3791,7 +3789,9 @@ function showBattleMain(enterAnim){
       showBattleSelect('my');
     },900);
   });
-  footer.appendChild(changeBtn);footer.appendChild(winBtn);footer.appendChild(loseBtn);footer.appendChild(retryBtn);root.appendChild(footer);
+  if(!btl.cpuMode)footer.appendChild(makeChangeBtn('enemy'));
+  footer.appendChild(makeChangeBtn('my'));
+  footer.appendChild(winBtn);footer.appendChild(loseBtn);footer.appendChild(retryBtn);root.appendChild(footer);
   document.body.appendChild(root);
   startBattleBgm();
   preFetchCries(btl.myTeam.concat(btl.enemyTeam));
