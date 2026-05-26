@@ -2890,6 +2890,7 @@ const _cryCache=new Map();
 
 function startBattleBgm(){
   if(!_cryAudioCtx||_bgmRunning)return;
+  if(_cryAudioCtx.state==='suspended')_cryAudioCtx.resume();
   _bgmRunning=true;
   const ctx=_cryAudioCtx;
   const BPM=156,S=60/BPM,E=S/2,X=S/4;
@@ -2902,88 +2903,127 @@ function startBattleBgm(){
     C5:523.3,Cs5:554.4,D5:587.3,Eb5:622.3,E5:659.3,F5:698.5,G5:784,Ab5:830.6,A5:880,_:0
   };
 
+  // ④ AudioContext再開チェック付き発音
   function tone(f,t0,dur,type,vol,echo){
     if(!f||!_bgmRunning)return;
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.type=type||'square';o.frequency.value=f;
-    g.gain.setValueAtTime(vol*1.35,t0);
-    g.gain.linearRampToValueAtTime(vol,t0+0.012);
-    g.gain.setValueAtTime(vol,t0+dur*0.65);
-    g.gain.exponentialRampToValueAtTime(0.001,t0+dur*0.9);
-    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+dur+0.02);
-    _bgmNodes.push(o);
-    if(echo&&f){
-      const oe=ctx.createOscillator(),ge=ctx.createGain();
-      oe.type=type||'square';oe.frequency.value=f;
-      ge.gain.setValueAtTime(0,t0+X*0.85);
-      ge.gain.linearRampToValueAtTime(vol*0.38,t0+X*0.85+0.01);
-      ge.gain.exponentialRampToValueAtTime(0.001,t0+X*0.85+dur*0.42);
-      oe.connect(ge);ge.connect(ctx.destination);
-      oe.start(t0+X*0.85);oe.stop(t0+X*0.85+dur*0.5);
-      _bgmNodes.push(oe);
-    }
+    try{
+      const osc=ctx.createOscillator(),g=ctx.createGain();
+      osc.type=type||'square';osc.frequency.value=f;
+      g.gain.setValueAtTime(vol*1.3,t0);
+      g.gain.linearRampToValueAtTime(vol,t0+0.01);
+      g.gain.setValueAtTime(vol,t0+dur*0.62);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      osc.connect(g);g.connect(ctx.destination);osc.start(t0);osc.stop(t0+dur+0.02);
+      _bgmNodes.push(osc);
+      // ④ 疑似エコー（フレーズ語尾の残響）
+      if(echo&&f){
+        const oe=ctx.createOscillator(),ge=ctx.createGain();
+        oe.type=type||'square';oe.frequency.value=f;
+        ge.gain.setValueAtTime(0,t0+X*0.88);
+        ge.gain.linearRampToValueAtTime(vol*0.35,t0+X*0.88+0.01);
+        ge.gain.exponentialRampToValueAtTime(0.0001,t0+X*0.88+dur*0.4);
+        oe.connect(ge);ge.connect(ctx.destination);
+        oe.start(t0+X*0.88);oe.stop(t0+X*0.88+dur*0.45);
+        _bgmNodes.push(oe);
+      }
+    }catch(e){}
+  }
+  // ④ アルペジオ和音（ジャカジャカ感）
+  function arp(freqs,t0,dur,vol){
+    if(!_bgmRunning)return;
+    freqs.forEach(function(f,i){
+      if(!f)return;
+      try{
+        const osc=ctx.createOscillator(),g=ctx.createGain();
+        osc.type='square';osc.frequency.value=f;
+        const at=t0+i*X*0.35;
+        g.gain.setValueAtTime(0,at);
+        g.gain.linearRampToValueAtTime(vol,at+0.008);
+        g.gain.exponentialRampToValueAtTime(0.0001,at+dur);
+        osc.connect(g);g.connect(ctx.destination);osc.start(at);osc.stop(at+dur+0.02);
+        _bgmNodes.push(osc);
+      }catch(e){}
+    });
   }
   function bass(f,t0,dur){
     if(!f||!_bgmRunning)return;
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.type='triangle';o.frequency.value=f;
-    g.gain.setValueAtTime(0.13,t0);g.gain.setValueAtTime(0.13,t0+dur*0.72);
-    g.gain.exponentialRampToValueAtTime(0.001,t0+dur*0.9);
-    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+dur);_bgmNodes.push(o);
+    try{
+      const osc=ctx.createOscillator(),g=ctx.createGain();
+      osc.type='triangle';osc.frequency.value=f;
+      g.gain.setValueAtTime(0.14,t0);g.gain.setValueAtTime(0.14,t0+dur*0.7);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      osc.connect(g);g.connect(ctx.destination);osc.start(t0);osc.stop(t0+dur+0.02);
+      _bgmNodes.push(osc);
+    }catch(e){}
   }
   function kick(t0){
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.type='sine';o.frequency.setValueAtTime(95,t0);o.frequency.exponentialRampToValueAtTime(28,t0+0.1);
-    g.gain.setValueAtTime(0.26,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.13);
-    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+0.14);_bgmNodes.push(o);
+    try{
+      const osc=ctx.createOscillator(),g=ctx.createGain();
+      osc.type='sine';osc.frequency.setValueAtTime(95,t0);osc.frequency.exponentialRampToValueAtTime(28,t0+0.1);
+      g.gain.setValueAtTime(0.28,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+0.13);
+      osc.connect(g);g.connect(ctx.destination);osc.start(t0);osc.stop(t0+0.15);_bgmNodes.push(osc);
+    }catch(e){}
   }
   function snare(t0){
-    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.1),ctx.sampleRate);
-    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
-    f.type='bandpass';f.frequency.value=2400;f.Q.value=0.7;
-    src.buffer=buf;g.gain.setValueAtTime(0.15,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.1);
-    src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(t0);_bgmNodes.push(src);
+    try{
+      const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.1),ctx.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+      f.type='bandpass';f.frequency.value=2400;f.Q.value=0.7;
+      src.buffer=buf;g.gain.setValueAtTime(0.16,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+0.1);
+      src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(t0);_bgmNodes.push(src);
+    }catch(e){}
   }
   function hihat(t0,v){
-    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.038),ctx.sampleRate);
-    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
-    f.type='highpass';f.frequency.value=9500;
-    src.buffer=buf;g.gain.setValueAtTime(v||0.04,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+0.038);
-    src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(t0);_bgmNodes.push(src);
+    try{
+      const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.038),ctx.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+      f.type='highpass';f.frequency.value=9500;
+      src.buffer=buf;g.gain.setValueAtTime(v||0.042,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+0.038);
+      src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(t0);_bgmNodes.push(src);
+    }catch(e){}
   }
   function snareRoll(t0){for(let i=0;i<4;i++)snare(t0+i*(X/2));}
 
   function scheduleLoop(){
     if(!_bgmRunning)return;
     const t=ctx.currentTime+0.05;
-    const V=0.068;
+    const V=0.072; // メロディ音量
 
-    // === イントロ 1-8小節: トリトヌス(A3→Eb4)連打 + クロマチックメロ ===
+    // ======== イントロ 1-8小節: トリトヌス＋クロマチックメロ ========
     const iMel=[
-      [N.E5,X],[N.F5,X],[N.E5,X],[N.Eb5,X], [N.E5,X],[N.F5,X],[N.G5,X],[N.Ab5,X],
-      [N.G5,X],[N.F5,X],[N.E5,X],[N.Eb5,X], [N.D5,X],[N.Eb5,X],[N.E5,X],[N.F5,X],
-      [N.E5,E],[N._,X],[N.D5,X],[N.E5,X],   [N.F5,X],[N.Eb5,X],[N.D5,X],[N.Cs5,X],
-      [N.D5,E],[N._,X],[N.Cs5,X],[N.D5,X],  [N.E5,S],[N._,S],
+      [N.E5,X],[N.F5,X],[N.E5,X],[N.Eb5,X],[N.E5,X],[N.F5,X],[N.G5,X],[N.Ab5,X],
+      [N.G5,X],[N.F5,X],[N.E5,X],[N.Eb5,X],[N.D5,X],[N.Eb5,X],[N.E5,X],[N.F5,X],
+      [N.E5,E],[N._,X],[N.D5,X],[N.E5,X],  [N.F5,X],[N.Eb5,X],[N.D5,X],[N.Cs5,X],
+      [N.D5,E],[N._,X],[N.Cs5,X],[N.D5,X], [N.E5,S],[N._,S],
     ];
     let mt=t;
-    iMel.forEach(function(n){if(n[0]){tone(n[0],mt,n[1]*0.85,'square',V,true);tone(n[0]*0.749,mt,n[1]*0.82,'square',V*0.5,false);}mt+=n[1];});
-
-    // トリトヌスベース16分連打
+    iMel.forEach(function(nn){
+      if(nn[0]){
+        tone(nn[0],mt,nn[1]*0.85,'square',V,true);          // CH1 メロ
+        tone(nn[0]*0.5,mt,nn[1]*0.82,'square',V*0.45,false); // ④ 1オクターブ下ユニゾン
+      }
+      mt+=nn[1];
+    });
+    // イントロベース: トリトヌス16分連打
     for(let m=0;m<8;m++){
       const bt=t+m*4*S;
       [N.A2,N.A3,N.Eb3,N.A3,N.A2,N.A3,N.Eb3,N.A3,
-       N.A2,N.A3,N.Eb3,N.A3,N.A2,N.A3,N.Eb3,N.A3].forEach(function(f,i){bass(f,bt+i*X,X*0.8);});
+       N.A2,N.A3,N.Eb3,N.A3,N.A2,N.A3,N.Eb3,N.A3].forEach(function(f,i){bass(f,bt+i*X,X*0.78);});
+      // ④ アルペジオ和音（イントロのAm→Ebトリトヌス）
+      arp([N.A3,N.C4,N.E4],bt,E,0.032);
+      arp([N.Eb3,N.Ab3,N.B3],bt+2*S,E,0.028);
+      arp([N.A3,N.C4,N.E4],bt+4*S*0.5,E,0.032);
+      arp([N.G3,N.B3,N.D4],bt+3*S,E,0.026);
     }
-    // イントロドラム
     for(let m=0;m<8;m++){
       const bt=t+m*4*S;
-      for(let b=0;b<4;b++){kick(bt+b*S);if(b%2===1)snare(bt+b*S);hihat(bt+b*S,0.04);hihat(bt+b*S+E,0.025);}
+      for(let b=0;b<4;b++){kick(bt+b*S);if(b%2===1)snare(bt+b*S);hihat(bt+b*S,0.042);hihat(bt+b*S+E,0.022);}
       snareRoll(bt+3*S+E+X);
     }
 
-    // === Aメロ 9-24小節: Am|F|G|E7 + シンコペーション ===
+    // ======== Aメロ 9-24小節: Am|F|G|E7＋シンコペーション強化 ========
     const aS=t+8*4*S;
     const aMel=[
       [N.A4,X],[N._,X],[N.C5,X],[N.A4,X],[N.B4,X],[N.A4,X],[N.G4,X],[N.A4,X],
@@ -2996,20 +3036,33 @@ function startBattleBgm(){
       [N.E4,S],[N._,X],[N.Cs4,X],[N.D4,X],[N.E4,X],
     ];
     let amt=aS;
-    aMel.forEach(function(n){if(n[0]){tone(n[0],amt,n[1]*0.82,'square',V*1.1,true);tone(n[0]*0.749,amt,n[1]*0.8,'square',V*0.52,false);}amt+=n[1];});
-    // シンコペーションベース (低・高・低・高・高・低・高・休)
-    const aRoots=[N.A2,N.F2||N.A2,N.G2||N.A2,N.E2||N.A2,N.A2,N.Bb2,N.G2||N.A2,N.E2||N.A2];
+    aMel.forEach(function(nn){
+      if(nn[0]){
+        tone(nn[0],amt,nn[1]*0.82,'square',V*1.1,true);         // CH1
+        tone(nn[0]*0.749,amt,nn[1]*0.8,'square',V*0.5,false);   // 短3度下ハモリ
+        tone(nn[0]*0.5,amt,nn[1]*0.78,'square',V*0.38,false);   // ④ 1オクターブ下ユニゾン
+      }
+      amt+=nn[1];
+    });
+    // ④ シンコペーションベース強化（低・高・低・高・高・低・高・休の8分パターン）
+    const aRoots=[N.A2,N.F2||N.A2*0.75,N.G2||N.A2*0.84,N.E2||N.A2*0.67,N.A2,N.Bb2,N.G2||N.A2*0.84,N.E2||N.A2*0.67];
     for(let m=0;m<8;m++){
       const r=aRoots[m%8],r8=r*2,bt=aS+m*4*S;
-      [r,r8,r,r8,r8,r,r8,0].forEach(function(f,i){if(f)bass(f,bt+i*X,X*0.78);});
+      // シンコペーション: 低・高・低・高・高・低・高・（休）
+      [r,r8,r,r8,r8,r,r8,0].forEach(function(f,i){if(f)bass(f,bt+i*X,X*0.76);});
+      // ④ アルペジオ和音（Aメロの各コード）
+      const chords=[[N.A3,N.C4,N.E4],[N.F3,N.A3,N.C4],[N.G3,N.B3,N.D4],[N.E3,N.Ab3,N.B3]];
+      const ch=chords[m%4];
+      arp(ch,bt+S,E*0.8,0.026);             // ④ 裏拍アルペジオ
+      arp(ch,bt+3*S,E*0.8,0.022);
     }
     for(let m=0;m<8;m++){
       const bt=aS+m*4*S;
-      for(let b=0;b<4;b++){kick(bt+b*S);if(b%2===1)snare(bt+b*S);for(let h=0;h<4;h++)hihat(bt+b*S+h*X,h===0?0.048:0.025);}
+      for(let b=0;b<4;b++){kick(bt+b*S);if(b%2===1)snare(bt+b*S);for(let h=0;h<4;h++)hihat(bt+b*S+h*X,h===0?0.05:0.025);}
       snareRoll(bt+3*S+E+X);
     }
 
-    // === サビ 25-40小節: カントーオマージュ + 1オクターブユニゾン ===
+    // ======== サビ 25-40小節: カントーオマージュ＋1オクターブユニゾン ========
     const cS=t+24*4*S;
     const cMel=[
       [N.A4,E],[N.C5,X],[N.D5,X],[N.E5,S],[N._,X],
@@ -3022,31 +3075,35 @@ function startBattleBgm(){
       [N.E5,S],[N._,S],
     ];
     let cmt=cS;
-    cMel.forEach(function(n){
-      if(n[0]){
-        tone(n[0],cmt,n[1]*0.88,'sawtooth',V*0.82,true);  // CH1
-        tone(n[0]*2,cmt,n[1]*0.88,'sawtooth',V*0.68,false); // 1オクターブユニゾン
+    cMel.forEach(function(nn){
+      if(nn[0]){
+        tone(nn[0],cmt,nn[1]*0.88,'sawtooth',V*0.9,true);   // CH1 (鋸波でリッチに)
+        tone(nn[0]*2,cmt,nn[1]*0.88,'sawtooth',V*0.72,false); // ④ 完全1オクターブ上ユニゾン
+        tone(nn[0]*0.5,cmt,nn[1]*0.85,'square',V*0.42,false); // ④ 1オクターブ下
       }
-      cmt+=n[1];
+      cmt+=nn[1];
     });
     // カウンターメロディベース
-    const cBass=[N.A2,N.C3,N.E3,N.A3,N.G3,N.E3,N.C3,N.G2,N.F2||N.A2,N.A2,N.C3,N.F3,N.E3,N.C3,N.A2,N.E2||N.A2];
+    const cBass=[N.A2,N.C3,N.E3,N.A3,N.G3,N.E3,N.C3,N.G2,N.F2||N.A2*0.75,N.A2,N.C3,N.F3,N.E3,N.C3,N.A2,N.E2||N.A2*0.67];
     for(let m=0;m<8;m++){
       const bt=cS+m*4*S;
-      for(let i=0;i<8;i++)bass(cBass[(m*4+i)%16],bt+i*X*0.5,X*0.5*0.82);
+      for(let i=0;i<8;i++)bass(cBass[(m*4+i)%16],bt+i*X*0.5,X*0.5*0.8);
+      // ④ サビのアルペジオ（より派手に3音同時）
+      const schords=[[N.A3,N.C4,N.E4,N.A4],[N.F3,N.A3,N.C4,N.F4],[N.G3,N.B3,N.D4,N.G4],[N.E3,N.Ab3,N.B3,N.E4]];
+      arp(schords[m%4],bt,E,0.034);
+      arp(schords[(m+2)%4],bt+2*S,E,0.03);
     }
     for(let m=0;m<8;m++){
       const bt=cS+m*4*S;
       for(let b=0;b<4;b++){
-        kick(bt+b*S);if(b===0||b===2)kick(bt+b*S+X);
+        kick(bt+b*S);if(b===0||b===2)kick(bt+b*S+X); // サビはダブルキック
         if(b%2===1)snare(bt+b*S);
         for(let h=0;h<4;h++)hihat(bt+b*S+h*X,h===0?0.055:0.03);
       }
       snareRoll(bt+3*S+E+X);
     }
 
-    // ループ長ぴったりに次を予約（途切れ防止）
-    _bgmTimerId=setTimeout(scheduleLoop,(40*4*S-0.08)*1000);
+    _bgmTimerId=setTimeout(scheduleLoop,(40*4*S-0.1)*1000);
   }
   scheduleLoop();
 }
@@ -3061,187 +3118,181 @@ function stopBattleBgm(){
 // ===== ④ 攻撃音・ヒット音 =====
 function playAttackSound(fxKey){
   if(!_cryAudioCtx)return;
-  const ctx=_cryAudioCtx,now=ctx.currentTime;
+  // AudioContextのsuspend対策
+  if(_cryAudioCtx.state==='suspended')_cryAudioCtx.resume();
+  const ctx=_cryAudioCtx;
+  const now=ctx.currentTime;
 
-  // 共通ユーティリティ
-  function osc(type,freq,t0,t1,freqEnd,vol0,vol1,dest){
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.type=type;o.frequency.setValueAtTime(freq,t0);
-    if(freqEnd!==null)o.frequency.exponentialRampToValueAtTime(freqEnd,t1);
-    g.gain.setValueAtTime(vol0,t0);g.gain.exponentialRampToValueAtTime(0.001,t1);
-    o.connect(g);g.connect(dest||ctx.destination);o.start(t0);o.stop(t1+0.02);
-    return o;
+  // ===== バグ修正済みユーティリティ =====
+  function o(type,freq,t0,dur,freqEnd,vol){
+    // freqEndは必ず正の値のみ受け付ける
+    try{
+      const osc=ctx.createOscillator(),g=ctx.createGain();
+      osc.type=type;
+      osc.frequency.setValueAtTime(Math.max(1,freq),t0);
+      if(freqEnd&&freqEnd>0)osc.frequency.exponentialRampToValueAtTime(Math.max(1,freqEnd),t0+dur);
+      g.gain.setValueAtTime(Math.max(0,vol),t0);
+      g.gain.setValueAtTime(Math.max(0,vol)*0.9,t0+dur*0.6);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      osc.connect(g);g.connect(ctx.destination);
+      osc.start(t0);osc.stop(t0+dur+0.05);
+    }catch(e){}
   }
-  function noise(dur,lpFreq,bpFreq,bpQ,vol,t0,dest){
-    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*dur),ctx.sampleRate);
-    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=ctx.createBufferSource(),g=ctx.createGain();
-    src.buffer=buf;g.gain.setValueAtTime(vol,t0||now);g.gain.exponentialRampToValueAtTime(0.001,t0||now+dur);
-    let node=src;
-    if(lpFreq){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lpFreq;node.connect(f);node=f;}
-    if(bpFreq){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bpFreq;f.Q.value=bpQ||1;node.connect(f);node=f;}
-    node.connect(g);g.connect(dest||ctx.destination);src.start(t0||now);
-    return src;
+  function n(dur,lp,bp,bpQ,vol,t0){
+    // ノイズ：t0+durで確実に終わるよう修正
+    try{
+      const st=t0||now;
+      const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*dur),ctx.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const src=ctx.createBufferSource(),g=ctx.createGain();
+      src.buffer=buf;
+      g.gain.setValueAtTime(Math.max(0,vol),st);
+      g.gain.exponentialRampToValueAtTime(0.0001,st+dur); // 修正: st+dur（t0+dur）
+      let node=src;
+      if(lp>0){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lp;node.connect(f);node=f;}
+      if(bp>0){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bp;f.Q.value=bpQ||1;node.connect(f);node=f;}
+      node.connect(g);g.connect(ctx.destination);
+      src.start(st);
+    }catch(e){}
   }
 
-  const S={
-    // ===== slash: シュキィィン！（3層：ノイズスイープ＋金属共鳴＋低域衝撃）=====
+  const sounds={
+    // ===== slash: シュキィィン（斬撃・4層）=====
     slash:function(){
-      // L1: 高周波ノイズ（シュッ）
-      noise(0.18,null,4500,0.4,0.22,now);
-      // L2: 金属共鳴トーン（キィィン・長め）
-      osc('sawtooth',2200,now,now+0.35,800,0.14,0.001,null);
-      // L3: 2倍速で下がる金属ハモリ
-      osc('square',1100,now,now+0.22,400,0.08,0.001,null);
-      // L4: 低域衝撃（ドン）
-      osc('sine',160,now,now+0.08,35,0.26,0.001,null);
+      n(0.04,0,6000,0.3,0.5,now);          // L1: 鋭いノイズバースト（シュッ）
+      o('sawtooth',2400,now,0.4,500,0.18);  // L2: 金属共鳴（キィィン）
+      o('sawtooth',1200,now,0.25,350,0.1);  // L3: ハモリ（キン）
+      o('sine',180,now,0.12,25,0.32);       // L4: 低域衝撃（ドン）
     },
-    // ===== beam: ビュゥゥゥン！（3層：上昇→下降トーン＋高周波＋ノイズ）=====
+    // ===== beam: ビュゥゥン（光線・3層）=====
     beam:function(){
-      // L1: メインビーム音（上昇→下降）
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      o.type='sine';o.frequency.setValueAtTime(300,now);
-      o.frequency.exponentialRampToValueAtTime(1800,now+0.12);
-      o.frequency.exponentialRampToValueAtTime(180,now+0.45);
-      g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(0.2,now+0.06);
-      g.gain.exponentialRampToValueAtTime(0.001,now+0.48);
-      o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.5);
-      // L2: 高周波ビーム（持続）
-      osc('sawtooth',1400,now+0.04,now+0.4,600,0.09,0.001,null);
-      // L3: ホワイトノイズ持続（放電感）
-      noise(0.38,null,3000,0.3,0.07,now+0.02,null);
+      o('sine',280,now,0.5,160,0.22);       // L1: メイン上昇→下降
+      try{// L1追加: 上昇部分
+        const osc=ctx.createOscillator(),g=ctx.createGain();
+        osc.type='sine';osc.frequency.setValueAtTime(280,now);
+        osc.frequency.exponentialRampToValueAtTime(1600,now+0.1);
+        osc.frequency.exponentialRampToValueAtTime(200,now+0.5);
+        g.gain.setValueAtTime(0.22,now);g.gain.exponentialRampToValueAtTime(0.0001,now+0.52);
+        osc.connect(g);g.connect(ctx.destination);osc.start(now);osc.stop(now+0.55);
+      }catch(e){}
+      o('sawtooth',1200,now+0.04,0.35,400,0.11); // L2: 高周波ビーム
+      n(0.4,0,3500,0.25,0.08,now+0.02);    // L3: 放電ノイズ
     },
-    // ===== blast: ドォゴォォ！（4層：爆発衝撃＋炎持続＋高域クラック＋低域ウーファー）=====
+    // ===== blast: ドォゴォォ（炎爆発・4層）=====
     blast:function(){
-      // L1: 爆発衝撃（ローパスノイズ・瞬発的）
-      noise(0.25,350,null,null,0.45,now,null);
-      // L2: 炎の持続音（バンドパスノイズ・長め）
-      noise(0.55,null,500,0.25,0.22,now+0.04,null);
-      // L3: 高域クラック（パチパチ）
-      noise(0.12,null,4000,0.6,0.14,now+0.01,null);
-      // L4: 超低域ウーファー（ドスン）
-      osc('sine',80,now,now+0.18,18,0.35,0.001,null);
+      n(0.18,400,0,0,0.55,now);            // L1: 爆発衝撃（ドォン）
+      n(0.55,0,550,0.22,0.28,now+0.03);   // L2: 炎持続（ゴォォ）
+      n(0.1,0,4500,0.5,0.18,now+0.01);    // L3: 高域クラック（パチ）
+      o('sine',80,now,0.2,18,0.42);        // L4: 超低域ウーファー
     },
-    // ===== bolt: バチビィィン！（4層：放電クラック＋ビーム＋ピッチダウン＋残響）=====
+    // ===== bolt: バチビィィン（電撃・4層）=====
     bolt:function(){
-      // L1: 放電クラック（バチッ！）
-      noise(0.06,null,5000,0.4,0.32,now,null);
-      // L2: 高周波トーン（ビィィィ）
-      osc('sawtooth',3500,now+0.01,now+0.28,1200,0.16,0.001,null);
-      // L3: ピッチダウン（ズバン）
-      osc('square',600,now+0.04,now+0.2,60,0.12,0.001,null);
-      // L4: 2発目クラック（残響）
-      noise(0.05,null,4000,0.5,0.18,now+0.08,null);
+      n(0.05,0,5500,0.35,0.4,now);         // L1: 放電クラック（バチッ）
+      o('sawtooth',3200,now+0.01,0.3,800,0.2); // L2: 高周波ビーム（ビィィ）
+      o('square',500,now+0.02,0.22,45,0.15);   // L3: ピッチダウン（ズバン）
+      n(0.04,0,4500,0.4,0.22,now+0.07);    // L4: 残響クラック
     },
-    // ===== strike: ズドォン！（3層：低域衝撃＋中域ボディ＋ノイズ衝撃）=====
+    // ===== strike: ズドォン（打撃・3層）=====
     strike:function(){
-      // L1: 低域衝撃（ズン）
-      osc('sine',100,now,now+0.22,20,0.38,0.001,null);
-      // L2: 中域ボディ（ドン）
-      osc('triangle',200,now,now+0.16,40,0.22,0.001,null);
-      // L3: ノイズ衝撃（バッ）
-      noise(0.1,800,null,null,0.28,now,null);
+      o('sine',110,now,0.25,18,0.45);      // L1: 低域衝撃（ズン）
+      o('triangle',220,now,0.18,35,0.28);  // L2: 中域ボディ（ドン）
+      n(0.1,900,0,0,0.32,now);             // L3: ノイズ衝撃（バッ）
     },
-    // ===== wind: ビュォォォ！（3層：低域→高域スイープ＋中域持続＋高周波）=====
+    // ===== wind: ビュォォォ（飛行・3層）=====
     wind:function(){
-      // L1: ベースの風音（持続するバンドパスノイズ）
-      const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.6),ctx.sampleRate);
-      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-      const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
-      f.type='bandpass';f.frequency.setValueAtTime(200,now);f.frequency.exponentialRampToValueAtTime(800,now+0.2);f.frequency.exponentialRampToValueAtTime(400,now+0.6);f.Q.value=0.35;
-      src.buffer=buf;g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(0.28,now+0.1);g.gain.exponentialRampToValueAtTime(0.001,now+0.6);
-      src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(now);
-      // L2: 高域風（ヒュッ）
-      noise(0.35,null,1800,0.4,0.12,now+0.05,null);
-      // L3: 超低域うなり（ゴォ）
-      osc('sine',55,now+0.02,now+0.4,30,0.15,0.001,null);
+      try{// L1: 変化するバンドパスノイズ
+        const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.65),ctx.sampleRate);
+        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+        const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+        f.type='bandpass';f.frequency.setValueAtTime(180,now);
+        f.frequency.exponentialRampToValueAtTime(900,now+0.22);
+        f.frequency.exponentialRampToValueAtTime(380,now+0.65);f.Q.value=0.3;
+        src.buffer=buf;
+        g.gain.setValueAtTime(0.0001,now);g.gain.linearRampToValueAtTime(0.32,now+0.08);
+        g.gain.exponentialRampToValueAtTime(0.0001,now+0.65);
+        src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(now);
+      }catch(e){}
+      n(0.35,0,2000,0.38,0.14,now+0.05);  // L2: 高域風（ヒュッ）
+      o('sine',50,now+0.02,0.42,25,0.18); // L3: 低域うなり
     },
-    // ===== freeze: シャリィィン！（4層：氷結音＋高域共鳴＋クリスタル音＋破砕ノイズ）=====
+    // ===== freeze: シャリィィン（氷・4層）=====
     freeze:function(){
-      // L1: 氷結衝撃（シャッ）
-      noise(0.08,null,5000,0.5,0.2,now,null);
-      // L2〜4: クリスタル共鳴（和音で重ねる）
-      [[880,0],[1108,0.05],[1320,0.1],[1760,0.15]].forEach(function(p){
-        osc('triangle',p[0],now+p[1],now+p[1]+0.55,p[0]*0.5,0.1,0.001,null);
+      n(0.06,0,5500,0.45,0.25,now);        // L1: 氷結衝撃（シャッ）
+      [[900,0],[1100,0.06],[1350,0.12],[1800,0.18]].forEach(function(p){
+        o('triangle',p[0],now+p[1],0.55,p[0]*0.48,0.11); // L2-5: クリスタル和音
       });
-      // L5: 高域キラキラ（持続）
-      osc('sine',3200,now+0.02,now+0.4,1800,0.06,0.001,null);
+      o('sine',3400,now+0.02,0.38,1600,0.06); // L6: 高域キラキラ
     },
-    // ===== dark: ドロォォン！（3層：低域サブベース＋うなり＋ノイズ渦）=====
+    // ===== dark: ドロォォン（あく・4層）=====
     dark:function(){
-      // L1: 超低域サブベース（ドロ）
-      osc('sine',55,now,now+0.5,18,0.28,0.001,null);
-      // L2: 中低域のうなり（ォォン）
-      osc('sawtooth',110,now+0.05,now+0.55,35,0.18,0.001,null);
-      // L3: ローパスノイズ（渦）
-      noise(0.5,300,null,null,0.2,now+0.02,null);
-      // L4: 高域妨害ノイズ（シュ）
-      noise(0.15,null,2500,0.8,0.08,now,null);
+      o('sine',52,now,0.55,16,0.32);       // L1: 超低域サブベース
+      o('sawtooth',105,now+0.04,0.52,32,0.2); // L2: 中低域うなり
+      n(0.5,280,0,0,0.22,now+0.02);        // L3: 渦ノイズ
+      n(0.12,0,2800,0.7,0.1,now);          // L4: 高域妨害
     },
-    // ===== dragon: グォォォン！（4層：低域グロール＋中域唸り＋倍音＋ノイズ）=====
+    // ===== dragon: グォォォン（ドラゴン・4層）=====
     dragon:function(){
-      // L1: 低域グロール（グォ）
-      osc('sawtooth',55,now,now+0.55,30,0.25,0.001,null);
-      // L2: 中域唸り（ォォン）
-      osc('square',110,now+0.03,now+0.5,60,0.18,0.001,null);
-      // L3: 倍音（180Hz）
-      osc('sawtooth',180,now+0.06,now+0.4,80,0.12,0.001,null);
-      // L4: ローパスノイズ（息感）
-      noise(0.45,600,null,null,0.16,now+0.02,null);
+      o('sawtooth',52,now,0.6,28,0.3);     // L1: 低域グロール
+      o('square',105,now+0.03,0.52,55,0.22); // L2: 中域唸り
+      o('sawtooth',175,now+0.06,0.42,75,0.14); // L3: 倍音
+      n(0.48,650,0,0,0.18,now+0.02);       // L4: 息感ノイズ
     },
   };
-  try{(S[fxKey]||S.strike)();}catch(e){}
+  (sounds[fxKey]||sounds.strike)();
 }
 
 function playHitSound(compatCls,isCrit){
   if(!_cryAudioCtx)return;
+  if(_cryAudioCtx.state==='suspended')_cryAudioCtx.resume();
   const ctx=_cryAudioCtx,now=ctx.currentTime;
-  function osc(type,freq,t0,t1,freqEnd,vol){
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.type=type;o.frequency.setValueAtTime(freq,t0);
-    if(freqEnd)o.frequency.exponentialRampToValueAtTime(freqEnd,t1);
-    g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(0.001,t1);
-    o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t1+0.02);
+
+  function o(type,freq,t0,dur,freqEnd,vol){
+    try{
+      const osc=ctx.createOscillator(),g=ctx.createGain();
+      osc.type=type;osc.frequency.setValueAtTime(Math.max(1,freq),t0);
+      if(freqEnd&&freqEnd>0)osc.frequency.exponentialRampToValueAtTime(Math.max(1,freqEnd),t0+dur);
+      g.gain.setValueAtTime(Math.max(0,vol),t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      osc.connect(g);g.connect(ctx.destination);osc.start(t0);osc.stop(t0+dur+0.05);
+    }catch(e){}
   }
-  function noise(dur,lpFreq,bpFreq,bpQ,vol,t0){
-    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*dur),ctx.sampleRate);
-    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=ctx.createBufferSource(),g=ctx.createGain();
-    src.buffer=buf;g.gain.setValueAtTime(vol,t0||now);g.gain.exponentialRampToValueAtTime(0.001,(t0||now)+dur);
-    let node=src;
-    if(lpFreq){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lpFreq;node.connect(f);node=f;}
-    if(bpFreq){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bpFreq;f.Q.value=bpQ||1;node.connect(f);node=f;}
-    node.connect(g);g.connect(ctx.destination);src.start(t0||now);
+  function n(dur,lp,bp,bpQ,vol,t0){
+    try{
+      const st=t0||now;
+      const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*dur),ctx.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const src=ctx.createBufferSource(),g=ctx.createGain();
+      src.buffer=buf;g.gain.setValueAtTime(Math.max(0,vol),st);g.gain.exponentialRampToValueAtTime(0.0001,st+dur);
+      let node=src;
+      if(lp>0){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lp;node.connect(f);node=f;}
+      if(bp>0){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bp;f.Q.value=bpQ||1;node.connect(f);node=f;}
+      node.connect(g);g.connect(ctx.destination);src.start(st);
+    }catch(e){}
   }
 
   if(isCrit){
-    // 急所：ズガァァン！（超重い4層）
-    osc('sine',180,now,now+0.35,20,0.42);
-    osc('square',220,now,now+0.28,40,0.22);
-    noise(0.3,500,null,null,0.38,now);
-    noise(0.1,null,4500,0.5,0.2,now);
-    // 0.06s後に追加衝撃
-    setTimeout(function(){
-      const t=ctx.currentTime;
-      osc('sine',120,t,t+0.2,25,0.28);
-      noise(0.15,400,null,null,0.22,t);
-    },60);
+    // 急所：ズガァァン！（5層・超重い）
+    o('sine',200,now,0.4,18,0.52);
+    o('square',240,now,0.3,38,0.28);
+    n(0.32,550,0,0,0.45,now);
+    n(0.08,0,5000,0.4,0.25,now);
+    o('sine',130,now+0.06,0.22,22,0.32); // 追加衝撃
   } else if(compatCls==='super'){
-    // ばつぐん：ズドォン！（重い3層）
-    osc('sine',150,now,now+0.28,22,0.35);
-    osc('triangle',200,now,now+0.22,35,0.2);
-    noise(0.22,600,null,null,0.28,now);
+    // ばつぐん：ズドォン！（3層・重い）
+    o('sine',160,now,0.3,20,0.42);
+    o('triangle',210,now,0.22,32,0.25);
+    n(0.22,650,0,0,0.35,now);
   } else if(compatCls==='normal'){
-    // ふつう：バシッ！（2層・歯切れよく）
-    noise(0.1,null,1500,0.7,0.22,now);
-    osc('sine',90,now,now+0.12,30,0.18);
+    // ふつう：バシッ！（2層・歯切れ）
+    n(0.09,0,1600,0.65,0.28,now);
+    o('sine',95,now,0.14,28,0.22);
   } else if(compatCls==='weak'){
-    // いまひとつ：ぽすっ（こもった2層）
-    osc('sine',120,now,now+0.15,55,0.14);
-    noise(0.12,250,null,null,0.12,now);
-  } else if(compatCls==='zero'){
-    // きかない：コツン（乾いた単音）
-    osc('triangle',400,now,now+0.07,280,0.07);
+    // いまひとつ：ぽすっ（2層・こもる）
+    o('sine',130,now,0.18,52,0.16);
+    n(0.14,260,0,0,0.14,now);
+  } else {
+    // きかない：コツン（1層・小さく乾いた）
+    o('triangle',420,now,0.08,290,0.08);
   }
 }
 
@@ -3340,7 +3391,7 @@ function animateHpDrain(side,fromVal,toVal,callback){
 
 function cleanupBtlRotate(){
   const r=document.getElementById('btl-root');if(r)r.remove();
-  stopBattleBgm();
+  // BGMはバトル終了時のみ停止（cleanupでは止めない）
 }
 
 // ===== CSS一括注入 =====
@@ -3618,8 +3669,8 @@ function showBattleMain(enterAnim){
   function makeHpBlock(side){
     const poke=side==='my'?btl.myTeam[btl.myIdx]:btl.enemyTeam[btl.enemyIdx];
     const w=el('div','');w.id='btl-hpblock-'+side;
-    // HP被り解消：青HP=左上、赤HP=右下。fieldのheightに関わらず重ならない位置
-    const pos=side==='enemy'?'top:4px;left:4px;':'bottom:4px;right:4px;';
+    // ③ HP被り防止：既存のHPブロックを確実に除去してから追加
+    const pos=side==='enemy'?'top:34px;left:4px;':'bottom:32px;right:4px;';
     w.style.cssText='position:absolute;'+pos+'background:rgba(255,255,255,0.93);border-radius:8px;padding:4px 8px;box-shadow:0 2px 8px rgba(0,0,0,0.22);z-index:8;max-width:44%;';
     const nr=el('div','');nr.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:5px;';
     const nm=el('span','');nm.style.cssText='font-size:9px;font-weight:900;color:#1a1a1a;max-width:65px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';nm.textContent=poke.name+(poke.shinyImg?' ✨':'');
@@ -3670,6 +3721,8 @@ function showBattleMain(enterAnim){
   });
   field.appendChild(ballRow);
 
+  // ③ HP被り根本対策：既存HPブロックを除去してから追加
+  ['my','enemy'].forEach(function(s){const old=document.getElementById('btl-hpblock-'+s);if(old)old.remove();});
   const enemyHp=makeHpBlock('enemy');field.appendChild(enemyHp);
   const enemyWrap=makePokeImg(btl.enemyTeam[btl.enemyIdx],'enemy');field.appendChild(enemyWrap);
   const myWrap=makePokeImg(btl.myTeam[btl.myIdx],'my');field.appendChild(myWrap);
@@ -3688,30 +3741,41 @@ function showBattleMain(enterAnim){
   // フッター
   const footer=el('div','');footer.style.cssText='display:flex;gap:5px;padding:5px 8px;background:rgba(0,0,0,0.75);flex-shrink:0;';
 
-  // 青チームこうたい（CPUモードでない時のみ表示）
-  if(!btl.cpuMode){
-    const enemyChangeable=btl.enemyTeam.filter(function(_,i){return i!==btl.enemyIdx&&!btl.fainted.enemy.includes(i);});
-    const enemyChangeBtn=el('button','btl-btn');
-    enemyChangeBtn.textContent='🔵 こうたい';
-    enemyChangeBtn.disabled=enemyChangeable.length===0;
-    enemyChangeBtn.style.cssText='flex:1;padding:7px;background:rgba(41,128,185,0.35);border:1px solid rgba(52,152,219,0.5);color:white;border-radius:8px;font-size:11px;font-weight:700;opacity:'+(enemyChangeable.length>0?'1':'0.32')+';';
-    enemyChangeBtn.addEventListener('click',function(){
+  // 交代ボタン生成ヘルパー（ターンと残りポケモン数で活性/非活性）
+  function makeChangeBtn(side){
+    const team=side==='my'?btl.myTeam:btl.enemyTeam;
+    const curIdx=side==='my'?btl.myIdx:btl.enemyIdx;
+    const fainted=side==='my'?btl.fainted.my:btl.fainted.enemy;
+    const changeable=team.filter(function(_,i){return i!==curIdx&&!fainted.includes(i);});
+    const isMyTurn=btl.turn==='my';
+    const isActive=(side==='my')===isMyTurn; // 自分のターンのみ使える
+    const hasChoice=changeable.length>0;
+    const enabled=isActive&&hasChoice;
+    const btn=el('button','btl-btn');
+    btn.id='btl-change-btn-'+side;
+    btn.textContent=side==='my'?'🔴 こうたい':'🔵 こうたい';
+    btn.disabled=!enabled;
+    // 使えないボタンは暗く（ターン外 or 交代できるポケモンなし）
+    btn.style.cssText='flex:1;padding:7px;border-radius:8px;font-size:11px;font-weight:700;border:none;color:white;transition:opacity 0.2s;'
+      +'background:'+(side==='my'?'rgba(192,57,43,0.5)':'rgba(41,128,185,0.5)')+';'
+      +'opacity:'+(enabled?'1':'0.25')+';';
+    btn.addEventListener('click',function(){
       if(btl.animating)return;
-      showChangeSelect('enemy');
+      const myTurn=btl.turn==='my';
+      if(side==='my'&&!myTurn)return;
+      if(side==='enemy'&&myTurn)return;
+      if(changeable.length===0)return;
+      showChangeSelect(side);
     });
-    footer.appendChild(enemyChangeBtn);
+    return btn;
   }
 
-  // 赤チームこうたい
-  const myChangeable=btl.myTeam.filter(function(_,i){return i!==btl.myIdx&&!btl.fainted.my.includes(i);});
-  const changeBtn=el('button','btl-btn');
-  changeBtn.textContent='🔴 こうたい';
-  changeBtn.disabled=myChangeable.length===0;
-  changeBtn.style.cssText='flex:1;padding:7px;background:rgba(192,57,43,0.35);border:1px solid rgba(231,76,60,0.5);color:white;border-radius:8px;font-size:11px;font-weight:700;opacity:'+(myChangeable.length>0?'1':'0.32')+';';
-  changeBtn.addEventListener('click',function(){
-    if(btl.animating)return;
-    showChangeSelect('my');
-  });
+  // 青こうたい（2人対戦のみ）
+  if(!btl.cpuMode){
+    footer.appendChild(makeChangeBtn('enemy'));
+  }
+  // 赤こうたい（常時）
+  footer.appendChild(makeChangeBtn('my'));
   const winBtn=el('button','btl-btn');winBtn.textContent='🏆 かった！';winBtn.style.cssText='flex:2;padding:7px;background:linear-gradient(135deg,#1e8449,#27ae60);border:none;color:white;border-radius:8px;font-size:12px;font-weight:900;';
   winBtn.addEventListener('click',function(){btl.wins++;updateScore();showWinLose('かった！','#1e8449');});
   const loseBtn=el('button','btl-btn');loseBtn.textContent='💀 まけた';loseBtn.style.cssText='flex:2;padding:7px;background:linear-gradient(135deg,#922b21,#e74c3c);border:none;color:white;border-radius:8px;font-size:12px;font-weight:900;';
@@ -4357,6 +4421,17 @@ function updateTurnDisplay(){
     if(lbl){lbl.style.background=active?(side==='my'?'rgba(176,58,46,0.6)':'rgba(31,97,141,0.6)'):'rgba(255,255,255,0.05)';lbl.style.color=active?'white':'rgba(255,255,255,0.3)';lbl.textContent=active?(side==='my'?'🔴 こうげきして！':'🔵 こうげきして！'):'⏳ まってね…';}
     const wrap=document.getElementById('btl-img-'+side);
     if(wrap){const img=wrap.querySelector('img');if(img)img.style.filter=(side==='enemy'?'scaleX(-1) ':'')+(active?'drop-shadow(0 0 14px '+(side==='my'?'#ff6b6b':'#6bb3ff')+') brightness(1.1)':'drop-shadow(0 4px 10px rgba(0,0,0,0.3))');}
+    // ① 交代ボタンのターン連動（自ターンのみ光る）
+    const changeBtn=document.getElementById('btl-change-btn-'+side);
+    if(changeBtn){
+      const team=side==='my'?btl.myTeam:btl.enemyTeam;
+      const curIdx=side==='my'?btl.myIdx:btl.enemyIdx;
+      const fainted=side==='my'?btl.fainted.my:btl.fainted.enemy;
+      const hasChoice=team.filter(function(_,i){return i!==curIdx&&!fainted.includes(i);}).length>0;
+      const enabled=active&&hasChoice;
+      changeBtn.disabled=!enabled;
+      changeBtn.style.opacity=enabled?'1':'0.25';
+    }
   });
 }
 function updateScore(){
