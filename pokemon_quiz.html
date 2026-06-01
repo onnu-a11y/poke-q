@@ -855,7 +855,9 @@ function pickTypeAnswer(btn,chosen,q){
 function showTypeScore(){
   const pct=Math.round((tcScore/currentTypeQuestions.length)*100);
   const medal=calcMedal(pct);
-  saveTrophy('typequiz',difficulty,medal);
+  // タイプクイズとタイプ相性クイズで共用のため、currentModeで分岐
+  const isCompat=currentMode==='typecomp';
+  saveTrophy(isCompat?'typecomp':'typequiz',difficulty,medal);
   if(pct>0)launchConfetti();
   const area=document.getElementById('main-area');area.innerHTML='';
   const sc=el('div','score-screen');
@@ -870,7 +872,9 @@ function showTypeScore(){
   const te=el('div','score-trophy-earned');te.textContent=trophyIcon(medal)+'  ゲット！';sc.appendChild(te);
   const sm=el('div','score-msg');sm.textContent=msg;sc.appendChild(sm);
   const btns=el('div','score-btns');
-  const rb=el('button','restart-btn');rb.textContent='🔄 もういちどあそぶ';rb.addEventListener('click',startTypeQuiz);btns.appendChild(rb);
+  const rb=el('button','restart-btn');rb.textContent='🔄 もういちどあそぶ';
+  // もういちど：現在のモードに応じて正しいクイズへ戻る
+  rb.addEventListener('click',isCompat?showTypeCompTop:startTypeQuiz);btns.appendChild(rb);
   const tb=el('button','top-btn');tb.textContent='🏠 モードをえらびなおす';tb.addEventListener('click',showTop);btns.appendChild(tb);
   sc.appendChild(btns);area.appendChild(sc);
 }
