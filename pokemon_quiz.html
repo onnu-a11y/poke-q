@@ -235,7 +235,7 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
 /* ===== バトルナビ（方法B: position:fixed 全画面、rotateなし） ===== */
 #btl-root {
   position: fixed; top: 0; left: 0; z-index: 100;
-  width: 100vw; height: 100dvh;
+  width: 100vw; height: 100vh; height: 100svh;
   display: flex; flex-direction: column;
   background: linear-gradient(160deg,#0f0c29,#302b63,#24243e);
   color: white; font-family: sans-serif; user-select: none;
@@ -1306,6 +1306,9 @@ function makeMathQ(){
 // ===== トップ画面 =====
 function showTop(){
   cleanupBtlRotate(); // バトル画面からの遷移フェイルセーフ
+  _btlActive=false;   // バトル終了：BGM監視を止める
+  stopBattleBgm();    // BGMを確実に停止
+  if(window._bgmWatchdog){clearInterval(window._bgmWatchdog);window._bgmWatchdog=null;}
   currentMode='top';isRetryMode=false;
   const area=document.getElementById('main-area');area.innerHTML='';
   const wrap=el('div','top-screen');
@@ -2662,6 +2665,7 @@ const MONKORE_LIST = [
   {name:'カイリュー',         id:149,                          moves:[{name:'ドラゴンクロー',type:'ドラゴン',fx:'dragon'},{name:'りゅうせいぐん',type:'ドラゴン',fx:'dragon'},{name:'ぼうふう',type:'ひこう',fx:'wind'},{name:'ダブルウイング',type:'ひこう',fx:'wind'}]},
   {name:'ゲンガー',           id:94,                           moves:[{name:'シャドーボール',type:'ゴースト',fx:'beam'},{name:'ナイトヘッド',type:'ゴースト',fx:'beam'},{name:'ヘドロばくだん',type:'どく',fx:'beam'},{name:'サイコキネシス',type:'エスパー',fx:'beam'}]},
   {name:'エースバーン',       id:815,                          moves:[{name:'かえんボール',type:'ほのお',fx:'slash'},{name:'ブレイズキック',type:'ほのお',fx:'blast'},{name:'でんこうせっか',type:'ノーマル',fx:'bolt'},{name:'インファイト',type:'かくとう',fx:'strike'}]},
+  {name:'バシャーモ',         id:257, types:['ほのお','かくとう'], moves:[{name:'とびひざげり',type:'かくとう',fx:'strike'},{name:'かみなりパンチ',type:'でんき',fx:'bolt'},{name:'インファイト',type:'かくとう',fx:'strike'},{name:'フレアドライブ',type:'ほのお',fx:'blast'}]},
   {name:'パオジアン',         id:1002,                         moves:[{name:'つららおとし',type:'こおり',fx:'freeze'},{name:'ふいうち',type:'あく',fx:'slash'},{name:'せいなるつるぎ',type:'かくとう',fx:'slash'},{name:'かみくだく',type:'あく',fx:'slash'}]},
   {name:'ボーマンダ',         id:373,                          moves:[{name:'りゅうのいぶき',type:'ドラゴン',fx:'strike'},{name:'かえんほうしゃ',type:'ほのお',fx:'blast'},{name:'そらをとぶ',type:'ひこう',fx:'wind'},{name:'りゅうせいぐん',type:'ドラゴン',fx:'dragon'}]},
   {name:'レックウザ',       id:384,                          moves:[{name:'ガリョウテンセイ',type:'ひこう',fx:'wind'},{name:'りゅうせいぐん',type:'ドラゴン',fx:'dragon'},{name:'だいもんじ',type:'ほのお',fx:'blast'},{name:'ふぶき',type:'こおり',fx:'freeze'}]},
@@ -2884,9 +2888,40 @@ function fireParticles(type, compat, fromEl, toEl, onHit){
 // 参考：金銀GB音源 LR35902仕様
 // CH1:矩形波メロ / CH2:3度下ハモり+疑似エコー / CH3:16分ドライブベース / CH4:ノイズドラム
 
-let _bgmNodes=[],_bgmRunning=false,_bgmTimerId=null;
+let _bgmNodes=[],_bgmRunning=false,_bgmTimerId=null,_btlActive=false;
 const _cryAudioCtx=(function(){try{return new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}})();
 const _cryCache=new Map();
+// ④ 効果音用リバーブ（軽量ディレイ方式）— Convolverは重くBGMを止めるので使わない
+let _sfxReverb=null;
+function getSfxReverb(){
+  if(!_cryAudioCtx)return null;
+  if(_sfxReverb)return _sfxReverb;
+  try{
+    const ctx=_cryAudioCtx;
+    // 入力 → ディレイ → フィードバック → 出力 の軽量残響
+    const input=ctx.createGain();
+    const delay=ctx.createDelay(1.0);delay.delayTime.value=0.12;
+    const fb=ctx.createGain();fb.gain.value=0.32;
+    const wet=ctx.createGain();wet.gain.value=0.3;
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2500;
+    input.connect(delay);delay.connect(lp);lp.connect(fb);fb.connect(delay); // フィードバックループ
+    delay.connect(wet);wet.connect(ctx.destination);
+    _sfxReverb=input;
+    return input;
+  }catch(e){return null;}
+}
+// ユーザー最初の操作でAudioContextをアンロック（ブラウザのautoplay制限対策）
+(function(){
+  if(!_cryAudioCtx)return;
+  function unlock(){
+    if(_cryAudioCtx.state==='suspended')_cryAudioCtx.resume();
+    // 無音バッファを1回再生してiOS等を確実にアンロック
+    try{const b=_cryAudioCtx.createBuffer(1,1,22050);const s=_cryAudioCtx.createBufferSource();s.buffer=b;s.connect(_cryAudioCtx.destination);s.start(0);}catch(e){}
+  }
+  ['touchstart','touchend','mousedown','click','keydown'].forEach(function(ev){
+    document.addEventListener(ev,unlock,{passive:true});
+  });
+})();
 
 function startBattleBgm(){
   if(!_cryAudioCtx||_bgmRunning)return;
@@ -2903,19 +2938,22 @@ function startBattleBgm(){
     C5:523.3,Cs5:554.4,D5:587.3,Eb5:622.3,E5:659.3,F5:698.5,G5:784,Ab5:830.6,A5:880,_:0
   };
 
-  // ④ AudioContext再開チェック付き発音
+  // ④ AudioContext再開チェック付き発音（メタリックアタックのみ・軽量）
   function tone(f,t0,dur,type,vol,echo){
     if(!f||!_bgmRunning)return;
     try{
       const osc=ctx.createOscillator(),g=ctx.createGain();
-      osc.type=type||'square';osc.frequency.value=f;
-      g.gain.setValueAtTime(vol*1.3,t0);
-      g.gain.linearRampToValueAtTime(vol,t0+0.01);
+      osc.type=type||'square';
+      // メタリックアタック：発音頭だけピッチを少し上から落とす（GB音源風）
+      osc.frequency.setValueAtTime(f*1.05,t0);
+      osc.frequency.exponentialRampToValueAtTime(f,t0+0.016);
+      g.gain.setValueAtTime(vol*1.35,t0);
+      g.gain.linearRampToValueAtTime(vol,t0+0.012);
       g.gain.setValueAtTime(vol,t0+dur*0.62);
       g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
       osc.connect(g);g.connect(ctx.destination);osc.start(t0);osc.stop(t0+dur+0.02);
       _bgmNodes.push(osc);
-      // ④ 疑似エコー（フレーズ語尾の残響）
+      // 疑似エコー（フレーズ語尾の残響）
       if(echo&&f){
         const oe=ctx.createOscillator(),ge=ctx.createGain();
         oe.type=type||'square';oe.frequency.value=f;
@@ -2986,12 +3024,13 @@ function startBattleBgm(){
   }
   function snareRoll(t0){for(let i=0;i<4;i++)snare(t0+i*(X/2));}
 
-  function scheduleLoop(){
+  const LOOP_DUR=40*4*S; // 1ループの長さ(秒)
+  // 1ループ分の全パートを絶対時刻tから組み立てる
+  function buildLoop(t){
     if(!_bgmRunning)return;
-    const t=ctx.currentTime+0.05;
-    const V=0.072; // メロディ音量
+    const V=0.072;
 
-    // ======== イントロ 1-8小節: トリトヌス＋クロマチックメロ ========
+    // ======== イントロ 1-8小節 ========
     const iMel=[
       [N.E5,X],[N.F5,X],[N.E5,X],[N.Eb5,X],[N.E5,X],[N.F5,X],[N.G5,X],[N.Ab5,X],
       [N.G5,X],[N.F5,X],[N.E5,X],[N.Eb5,X],[N.D5,X],[N.Eb5,X],[N.E5,X],[N.F5,X],
@@ -3001,17 +3040,15 @@ function startBattleBgm(){
     let mt=t;
     iMel.forEach(function(nn){
       if(nn[0]){
-        tone(nn[0],mt,nn[1]*0.85,'square',V,true);          // CH1 メロ
-        tone(nn[0]*0.5,mt,nn[1]*0.82,'square',V*0.45,false); // ④ 1オクターブ下ユニゾン
+        tone(nn[0],mt,nn[1]*0.85,'square',V,true);
+        tone(nn[0]*0.5,mt,nn[1]*0.82,'square',V*0.45,false);
       }
       mt+=nn[1];
     });
-    // イントロベース: トリトヌス16分連打
     for(let m=0;m<8;m++){
       const bt=t+m*4*S;
       [N.A2,N.A3,N.Eb3,N.A3,N.A2,N.A3,N.Eb3,N.A3,
        N.A2,N.A3,N.Eb3,N.A3,N.A2,N.A3,N.Eb3,N.A3].forEach(function(f,i){bass(f,bt+i*X,X*0.78);});
-      // ④ アルペジオ和音（イントロのAm→Ebトリトヌス）
       arp([N.A3,N.C4,N.E4],bt,E,0.032);
       arp([N.Eb3,N.Ab3,N.B3],bt+2*S,E,0.028);
       arp([N.A3,N.C4,N.E4],bt+4*S*0.5,E,0.032);
@@ -3023,7 +3060,7 @@ function startBattleBgm(){
       snareRoll(bt+3*S+E+X);
     }
 
-    // ======== Aメロ 9-24小節: Am|F|G|E7＋シンコペーション強化 ========
+    // ======== Aメロ 9-24小節 ========
     const aS=t+8*4*S;
     const aMel=[
       [N.A4,X],[N._,X],[N.C5,X],[N.A4,X],[N.B4,X],[N.A4,X],[N.G4,X],[N.A4,X],
@@ -3038,22 +3075,19 @@ function startBattleBgm(){
     let amt=aS;
     aMel.forEach(function(nn){
       if(nn[0]){
-        tone(nn[0],amt,nn[1]*0.82,'square',V*1.1,true);         // CH1
-        tone(nn[0]*0.749,amt,nn[1]*0.8,'square',V*0.5,false);   // 短3度下ハモリ
-        tone(nn[0]*0.5,amt,nn[1]*0.78,'square',V*0.38,false);   // ④ 1オクターブ下ユニゾン
+        tone(nn[0],amt,nn[1]*0.82,'square',V*1.1,true);
+        tone(nn[0]*0.749,amt,nn[1]*0.8,'square',V*0.5,false);
+        tone(nn[0]*0.5,amt,nn[1]*0.78,'square',V*0.38,false);
       }
       amt+=nn[1];
     });
-    // ④ シンコペーションベース強化（低・高・低・高・高・低・高・休の8分パターン）
     const aRoots=[N.A2,N.F2||N.A2*0.75,N.G2||N.A2*0.84,N.E2||N.A2*0.67,N.A2,N.Bb2,N.G2||N.A2*0.84,N.E2||N.A2*0.67];
     for(let m=0;m<8;m++){
       const r=aRoots[m%8],r8=r*2,bt=aS+m*4*S;
-      // シンコペーション: 低・高・低・高・高・低・高・（休）
       [r,r8,r,r8,r8,r,r8,0].forEach(function(f,i){if(f)bass(f,bt+i*X,X*0.76);});
-      // ④ アルペジオ和音（Aメロの各コード）
       const chords=[[N.A3,N.C4,N.E4],[N.F3,N.A3,N.C4],[N.G3,N.B3,N.D4],[N.E3,N.Ab3,N.B3]];
       const ch=chords[m%4];
-      arp(ch,bt+S,E*0.8,0.026);             // ④ 裏拍アルペジオ
+      arp(ch,bt+S,E*0.8,0.026);
       arp(ch,bt+3*S,E*0.8,0.022);
     }
     for(let m=0;m<8;m++){
@@ -3062,7 +3096,7 @@ function startBattleBgm(){
       snareRoll(bt+3*S+E+X);
     }
 
-    // ======== サビ 25-40小節: カントーオマージュ＋1オクターブユニゾン ========
+    // ======== サビ 25-40小節 ========
     const cS=t+24*4*S;
     const cMel=[
       [N.A4,E],[N.C5,X],[N.D5,X],[N.E5,S],[N._,X],
@@ -3077,18 +3111,16 @@ function startBattleBgm(){
     let cmt=cS;
     cMel.forEach(function(nn){
       if(nn[0]){
-        tone(nn[0],cmt,nn[1]*0.88,'sawtooth',V*0.9,true);   // CH1 (鋸波でリッチに)
-        tone(nn[0]*2,cmt,nn[1]*0.88,'sawtooth',V*0.72,false); // ④ 完全1オクターブ上ユニゾン
-        tone(nn[0]*0.5,cmt,nn[1]*0.85,'square',V*0.42,false); // ④ 1オクターブ下
+        tone(nn[0],cmt,nn[1]*0.88,'sawtooth',V*0.9,true);
+        tone(nn[0]*2,cmt,nn[1]*0.88,'sawtooth',V*0.72,false);
+        tone(nn[0]*0.5,cmt,nn[1]*0.85,'square',V*0.42,false);
       }
       cmt+=nn[1];
     });
-    // カウンターメロディベース
     const cBass=[N.A2,N.C3,N.E3,N.A3,N.G3,N.E3,N.C3,N.G2,N.F2||N.A2*0.75,N.A2,N.C3,N.F3,N.E3,N.C3,N.A2,N.E2||N.A2*0.67];
     for(let m=0;m<8;m++){
       const bt=cS+m*4*S;
       for(let i=0;i<8;i++)bass(cBass[(m*4+i)%16],bt+i*X*0.5,X*0.5*0.8);
-      // ④ サビのアルペジオ（より派手に3音同時）
       const schords=[[N.A3,N.C4,N.E4,N.A4],[N.F3,N.A3,N.C4,N.F4],[N.G3,N.B3,N.D4,N.G4],[N.E3,N.Ab3,N.B3,N.E4]];
       arp(schords[m%4],bt,E,0.034);
       arp(schords[(m+2)%4],bt+2*S,E,0.03);
@@ -3096,16 +3128,29 @@ function startBattleBgm(){
     for(let m=0;m<8;m++){
       const bt=cS+m*4*S;
       for(let b=0;b<4;b++){
-        kick(bt+b*S);if(b===0||b===2)kick(bt+b*S+X); // サビはダブルキック
+        kick(bt+b*S);if(b===0||b===2)kick(bt+b*S+X);
         if(b%2===1)snare(bt+b*S);
         for(let h=0;h<4;h++)hihat(bt+b*S+h*X,h===0?0.055:0.03);
       }
       snareRoll(bt+3*S+E+X);
     }
-
-    _bgmTimerId=setTimeout(scheduleLoop,(40*4*S-0.1)*1000);
   }
-  scheduleLoop();
+
+  // ===== 先読みスケジューラ（途切れ防止の定石）=====
+  // 「次にビルドすべきループの絶対時刻」を保持し、現在時刻が近づいたら先に組み立てる
+  let _nextLoopTime=ctx.currentTime+0.1;
+  function scheduler(){
+    if(!_bgmRunning)return;
+    // 現在時刻から2秒先までにループ開始が来るなら、今のうちに組み立てておく
+    while(_nextLoopTime < ctx.currentTime + 2.0){
+      buildLoop(_nextLoopTime);
+      _nextLoopTime += LOOP_DUR;
+      if(_bgmNodes.length>1200)_bgmNodes=_bgmNodes.slice(-300);
+    }
+    // 250msごとにチェック（setTimeoutが多少遅延しても2秒の余裕があるので途切れない）
+    _bgmTimerId=setTimeout(scheduler,250);
+  }
+  scheduler();
 }
 
 function stopBattleBgm(){
@@ -3118,28 +3163,38 @@ function stopBattleBgm(){
 // ===== ④ 攻撃音・ヒット音 =====
 function playAttackSound(fxKey){
   if(!_cryAudioCtx)return;
-  // AudioContextのsuspend対策
   if(_cryAudioCtx.state==='suspended')_cryAudioCtx.resume();
   const ctx=_cryAudioCtx;
   const now=ctx.currentTime;
 
-  // ===== バグ修正済みユーティリティ =====
-  function o(type,freq,t0,dur,freqEnd,vol){
-    // freqEndは必ず正の値のみ受け付ける
+  // ディストーションカーブ（音に厚み・歪みを与える）
+  function makeDistortion(amount){
+    const k=amount||50,n=44100,curve=new Float32Array(n),deg=Math.PI/180;
+    for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=(3+k)*x*20*deg/(Math.PI+k*Math.abs(x));}
+    return curve;
+  }
+  const distCurve=makeDistortion(40);
+  const reverb=getSfxReverb();
+
+  // オシレーター（音量大幅アップ＋任意でディストーション＋リバーブ送り）
+  function o(type,freq,t0,dur,freqEnd,vol,dist){
     try{
       const osc=ctx.createOscillator(),g=ctx.createGain();
       osc.type=type;
       osc.frequency.setValueAtTime(Math.max(1,freq),t0);
       if(freqEnd&&freqEnd>0)osc.frequency.exponentialRampToValueAtTime(Math.max(1,freqEnd),t0+dur);
-      g.gain.setValueAtTime(Math.max(0,vol),t0);
-      g.gain.setValueAtTime(Math.max(0,vol)*0.9,t0+dur*0.6);
+      g.gain.setValueAtTime(Math.max(0.0001,vol),t0);
+      g.gain.setValueAtTime(Math.max(0.0001,vol)*0.85,t0+dur*0.55);
       g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-      osc.connect(g);g.connect(ctx.destination);
+      let node=osc;
+      if(dist){const ws=ctx.createWaveShaper();ws.curve=distCurve;ws.oversample='4x';node.connect(ws);node=ws;}
+      node.connect(g);g.connect(ctx.destination);
+      if(reverb)g.connect(reverb); // 残響送り
       osc.start(t0);osc.stop(t0+dur+0.05);
     }catch(e){}
   }
+  // ノイズ（音量大幅アップ＋リバーブ送り）
   function n(dur,lp,bp,bpQ,vol,t0){
-    // ノイズ：t0+durで確実に終わるよう修正
     try{
       const st=t0||now;
       const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*dur),ctx.sampleRate);
@@ -3147,96 +3202,102 @@ function playAttackSound(fxKey){
       for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
       const src=ctx.createBufferSource(),g=ctx.createGain();
       src.buffer=buf;
-      g.gain.setValueAtTime(Math.max(0,vol),st);
-      g.gain.exponentialRampToValueAtTime(0.0001,st+dur); // 修正: st+dur（t0+dur）
+      g.gain.setValueAtTime(Math.max(0.0001,vol),st);
+      g.gain.exponentialRampToValueAtTime(0.0001,st+dur);
       let node=src;
       if(lp>0){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lp;node.connect(f);node=f;}
       if(bp>0){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bp;f.Q.value=bpQ||1;node.connect(f);node=f;}
       node.connect(g);g.connect(ctx.destination);
+      if(reverb)g.connect(reverb); // 残響送り
       src.start(st);
     }catch(e){}
   }
 
+  // 各カテゴリー：タメ(charge)→発射(fire)の2段構成＋多層
   const sounds={
-    // ===== slash: シュキィィン（斬撃・4層）=====
+    // ===== slash 斬撃: シュンッ→シュキィィン =====
     slash:function(){
-      n(0.04,0,6000,0.3,0.5,now);          // L1: 鋭いノイズバースト（シュッ）
-      o('sawtooth',2400,now,0.4,500,0.18);  // L2: 金属共鳴（キィィン）
-      o('sawtooth',1200,now,0.25,350,0.1);  // L3: ハモリ（キン）
-      o('sine',180,now,0.12,25,0.32);       // L4: 低域衝撃（ドン）
+      n(0.08,0,3000,0.4,0.25,now);              // タメ：空気を切る
+      n(0.05,0,7000,0.3,0.7,now+0.08);          // 発射：鋭いノイズ
+      o('sawtooth',2600,now+0.08,0.45,400,0.32,true); // 金属共鳴（歪み）
+      o('sawtooth',1300,now+0.08,0.3,300,0.2,true);   // ハモリ
+      o('sine',180,now+0.1,0.15,30,0.5);              // 低域衝撃
     },
-    // ===== beam: ビュゥゥン（光線・3層）=====
+    // ===== beam 光線: キュイーン→ドビュゥゥン =====
     beam:function(){
-      o('sine',280,now,0.5,160,0.22);       // L1: メイン上昇→下降
-      try{// L1追加: 上昇部分
-        const osc=ctx.createOscillator(),g=ctx.createGain();
-        osc.type='sine';osc.frequency.setValueAtTime(280,now);
-        osc.frequency.exponentialRampToValueAtTime(1600,now+0.1);
-        osc.frequency.exponentialRampToValueAtTime(200,now+0.5);
-        g.gain.setValueAtTime(0.22,now);g.gain.exponentialRampToValueAtTime(0.0001,now+0.52);
-        osc.connect(g);g.connect(ctx.destination);osc.start(now);osc.stop(now+0.55);
+      o('sine',200,now,0.12,800,0.25);          // タメ：チャージ上昇
+      try{
+        const osc=ctx.createOscillator(),g=ctx.createGain(),ws=ctx.createWaveShaper();
+        ws.curve=distCurve;ws.oversample='4x';
+        osc.type='sawtooth';osc.frequency.setValueAtTime(900,now+0.12);
+        osc.frequency.exponentialRampToValueAtTime(250,now+0.55);
+        g.gain.setValueAtTime(0.45,now+0.12);g.gain.exponentialRampToValueAtTime(0.0001,now+0.58);
+        osc.connect(ws);ws.connect(g);g.connect(ctx.destination);osc.start(now+0.12);osc.stop(now+0.6);
       }catch(e){}
-      o('sawtooth',1200,now+0.04,0.35,400,0.11); // L2: 高周波ビーム
-      n(0.4,0,3500,0.25,0.08,now+0.02);    // L3: 放電ノイズ
+      o('sine',600,now+0.12,0.4,180,0.3);       // メインビーム
+      n(0.42,0,3000,0.25,0.18,now+0.14);        // 放電ノイズ
     },
-    // ===== blast: ドォゴォォ（炎爆発・4層）=====
+    // ===== blast 爆発: ゴォォ→ドッゴォォン =====
     blast:function(){
-      n(0.18,400,0,0,0.55,now);            // L1: 爆発衝撃（ドォン）
-      n(0.55,0,550,0.22,0.28,now+0.03);   // L2: 炎持続（ゴォォ）
-      n(0.1,0,4500,0.5,0.18,now+0.01);    // L3: 高域クラック（パチ）
-      o('sine',80,now,0.2,18,0.42);        // L4: 超低域ウーファー
+      n(0.12,800,0,0,0.3,now);                  // タメ：炎が集まる
+      n(0.25,500,0,0,0.85,now+0.1);             // 爆発本体（大音量）
+      n(0.5,0,400,0.3,0.4,now+0.12);            // 炎持続
+      o('sine',70,now+0.1,0.25,20,0.7,true);    // 超低域ウーファー（歪み）
+      n(0.1,0,5000,0.5,0.3,now+0.11);           // 高域クラック
     },
-    // ===== bolt: バチビィィン（電撃・4層）=====
+    // ===== bolt 電撃: ビリビリ→バチビィィン =====
     bolt:function(){
-      n(0.05,0,5500,0.35,0.4,now);         // L1: 放電クラック（バチッ）
-      o('sawtooth',3200,now+0.01,0.3,800,0.2); // L2: 高周波ビーム（ビィィ）
-      o('square',500,now+0.02,0.22,45,0.15);   // L3: ピッチダウン（ズバン）
-      n(0.04,0,4500,0.4,0.22,now+0.07);    // L4: 残響クラック
+      n(0.06,0,4000,0.4,0.3,now);               // タメ：帯電
+      n(0.06,0,6000,0.35,0.7,now+0.06);         // 放電クラック
+      o('sawtooth',3500,now+0.06,0.32,700,0.4,true); // 高周波ビーム（歪み）
+      o('square',550,now+0.07,0.22,50,0.3,true);     // ピッチダウン
+      n(0.05,0,4500,0.4,0.35,now+0.14);         // 残響クラック
     },
-    // ===== strike: ズドォン（打撃・3層）=====
+    // ===== strike 打撃: ヒュッ→ズドォン =====
     strike:function(){
-      o('sine',110,now,0.25,18,0.45);      // L1: 低域衝撃（ズン）
-      o('triangle',220,now,0.18,35,0.28);  // L2: 中域ボディ（ドン）
-      n(0.1,900,0,0,0.32,now);             // L3: ノイズ衝撃（バッ）
+      n(0.06,1200,0,0,0.3,now);                 // タメ：振りかぶり
+      o('sine',130,now+0.06,0.28,18,0.8,true);  // 低域衝撃（大・歪み）
+      o('triangle',240,now+0.06,0.2,40,0.45);   // 中域ボディ
+      n(0.12,1000,0,0,0.55,now+0.06);           // ノイズ衝撃
     },
-    // ===== wind: ビュォォォ（飛行・3層）=====
+    // ===== wind 飛行: ヒュゥゥゥ =====
     wind:function(){
-      try{// L1: 変化するバンドパスノイズ
-        const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.65),ctx.sampleRate);
+      try{
+        const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*0.7),ctx.sampleRate);
         const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
         const src=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
-        f.type='bandpass';f.frequency.setValueAtTime(180,now);
-        f.frequency.exponentialRampToValueAtTime(900,now+0.22);
-        f.frequency.exponentialRampToValueAtTime(380,now+0.65);f.Q.value=0.3;
+        f.type='bandpass';f.frequency.setValueAtTime(200,now);
+        f.frequency.exponentialRampToValueAtTime(1000,now+0.25);
+        f.frequency.exponentialRampToValueAtTime(350,now+0.7);f.Q.value=0.4;
         src.buffer=buf;
-        g.gain.setValueAtTime(0.0001,now);g.gain.linearRampToValueAtTime(0.32,now+0.08);
-        g.gain.exponentialRampToValueAtTime(0.0001,now+0.65);
+        g.gain.setValueAtTime(0.0001,now);g.gain.linearRampToValueAtTime(0.5,now+0.1);
+        g.gain.exponentialRampToValueAtTime(0.0001,now+0.7);
         src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(now);
       }catch(e){}
-      n(0.35,0,2000,0.38,0.14,now+0.05);  // L2: 高域風（ヒュッ）
-      o('sine',50,now+0.02,0.42,25,0.18); // L3: 低域うなり
+      n(0.4,0,2200,0.4,0.25,now+0.05);          // 高域風
+      o('sine',55,now+0.02,0.45,28,0.3);        // 低域うなり
     },
-    // ===== freeze: シャリィィン（氷・4層）=====
+    // ===== freeze 氷: シャラ→シャリィィン =====
     freeze:function(){
-      n(0.06,0,5500,0.45,0.25,now);        // L1: 氷結衝撃（シャッ）
-      [[900,0],[1100,0.06],[1350,0.12],[1800,0.18]].forEach(function(p){
-        o('triangle',p[0],now+p[1],0.55,p[0]*0.48,0.11); // L2-5: クリスタル和音
+      n(0.06,0,5500,0.45,0.4,now);              // 氷結衝撃
+      [[900,0],[1150,0.05],[1400,0.1],[1900,0.15]].forEach(function(p){
+        o('triangle',p[0],now+p[1],0.55,p[0]*0.45,0.22); // クリスタル和音
       });
-      o('sine',3400,now+0.02,0.38,1600,0.06); // L6: 高域キラキラ
+      o('sine',3600,now+0.02,0.4,1500,0.12);    // 高域キラキラ
     },
-    // ===== dark: ドロォォン（あく・4層）=====
+    // ===== dark あく: ドロロ→ドロォォン =====
     dark:function(){
-      o('sine',52,now,0.55,16,0.32);       // L1: 超低域サブベース
-      o('sawtooth',105,now+0.04,0.52,32,0.2); // L2: 中低域うなり
-      n(0.5,280,0,0,0.22,now+0.02);        // L3: 渦ノイズ
-      n(0.12,0,2800,0.7,0.1,now);          // L4: 高域妨害
+      o('sine',50,now,0.55,15,0.6,true);        // 超低域サブベース（歪み）
+      o('sawtooth',105,now+0.04,0.52,30,0.4,true); // 中低域うなり（歪み）
+      n(0.5,260,0,0,0.4,now+0.02);              // 渦ノイズ
+      n(0.15,0,2500,0.7,0.2,now);               // 高域妨害
     },
-    // ===== dragon: グォォォン（ドラゴン・4層）=====
+    // ===== dragon ドラゴン: グルル→グォォォン =====
     dragon:function(){
-      o('sawtooth',52,now,0.6,28,0.3);     // L1: 低域グロール
-      o('square',105,now+0.03,0.52,55,0.22); // L2: 中域唸り
-      o('sawtooth',175,now+0.06,0.42,75,0.14); // L3: 倍音
-      n(0.48,650,0,0,0.18,now+0.02);       // L4: 息感ノイズ
+      o('sawtooth',50,now,0.6,26,0.6,true);     // 低域グロール（歪み）
+      o('square',105,now+0.03,0.52,52,0.45,true); // 中域唸り（歪み）
+      o('sawtooth',175,now+0.06,0.42,72,0.3,true); // 倍音
+      n(0.48,600,0,0,0.35,now+0.02);            // 息感ノイズ
     },
   };
   (sounds[fxKey]||sounds.strike)();
@@ -3247,13 +3308,23 @@ function playHitSound(compatCls,isCrit){
   if(_cryAudioCtx.state==='suspended')_cryAudioCtx.resume();
   const ctx=_cryAudioCtx,now=ctx.currentTime;
 
-  function o(type,freq,t0,dur,freqEnd,vol){
+  function makeDistortion(amount){
+    const k=amount||50,nn=44100,curve=new Float32Array(nn),deg=Math.PI/180;
+    for(let i=0;i<nn;i++){const x=i*2/nn-1;curve[i]=(3+k)*x*20*deg/(Math.PI+k*Math.abs(x));}
+    return curve;
+  }
+  const distCurve=makeDistortion(50);
+  const reverb=getSfxReverb();
+
+  function o(type,freq,t0,dur,freqEnd,vol,dist){
     try{
       const osc=ctx.createOscillator(),g=ctx.createGain();
       osc.type=type;osc.frequency.setValueAtTime(Math.max(1,freq),t0);
       if(freqEnd&&freqEnd>0)osc.frequency.exponentialRampToValueAtTime(Math.max(1,freqEnd),t0+dur);
-      g.gain.setValueAtTime(Math.max(0,vol),t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-      osc.connect(g);g.connect(ctx.destination);osc.start(t0);osc.stop(t0+dur+0.05);
+      g.gain.setValueAtTime(Math.max(0.0001,vol),t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      let node=osc;
+      if(dist){const ws=ctx.createWaveShaper();ws.curve=distCurve;ws.oversample='4x';node.connect(ws);node=ws;}
+      node.connect(g);g.connect(ctx.destination);if(reverb)g.connect(reverb);osc.start(t0);osc.stop(t0+dur+0.05);
     }catch(e){}
   }
   function n(dur,lp,bp,bpQ,vol,t0){
@@ -3262,40 +3333,39 @@ function playHitSound(compatCls,isCrit){
       const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*dur),ctx.sampleRate);
       const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
       const src=ctx.createBufferSource(),g=ctx.createGain();
-      src.buffer=buf;g.gain.setValueAtTime(Math.max(0,vol),st);g.gain.exponentialRampToValueAtTime(0.0001,st+dur);
+      src.buffer=buf;g.gain.setValueAtTime(Math.max(0.0001,vol),st);g.gain.exponentialRampToValueAtTime(0.0001,st+dur);
       let node=src;
       if(lp>0){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lp;node.connect(f);node=f;}
       if(bp>0){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bp;f.Q.value=bpQ||1;node.connect(f);node=f;}
-      node.connect(g);g.connect(ctx.destination);src.start(st);
+      node.connect(g);g.connect(ctx.destination);if(reverb)g.connect(reverb);src.start(st);
     }catch(e){}
   }
 
   if(isCrit){
-    // 急所：ズガァァン！（5層・超重い）
-    o('sine',200,now,0.4,18,0.52);
-    o('square',240,now,0.3,38,0.28);
-    n(0.32,550,0,0,0.45,now);
-    n(0.08,0,5000,0.4,0.25,now);
-    o('sine',130,now+0.06,0.22,22,0.32); // 追加衝撃
+    // 急所：ズガァァン！（5層・超重い・歪み）
+    o('sine',200,now,0.4,16,0.85,true);
+    o('square',240,now,0.3,38,0.45,true);
+    n(0.32,550,0,0,0.7,now);
+    n(0.1,0,5000,0.4,0.4,now);
+    o('sine',120,now+0.06,0.22,20,0.5,true);
   } else if(compatCls==='super'){
-    // ばつぐん：ズドォン！（3層・重い）
-    o('sine',160,now,0.3,20,0.42);
-    o('triangle',210,now,0.22,32,0.25);
-    n(0.22,650,0,0,0.35,now);
+    // ばつぐん：ズドォン！（重い3層）
+    o('sine',160,now,0.32,18,0.75,true);
+    o('triangle',210,now,0.22,32,0.4);
+    n(0.24,650,0,0,0.55,now);
   } else if(compatCls==='normal'){
-    // ふつう：バシッ！（2層・歯切れ）
-    n(0.09,0,1600,0.65,0.28,now);
-    o('sine',95,now,0.14,28,0.22);
+    // ふつう：バシッ！（2層）
+    n(0.1,0,1600,0.65,0.5,now);
+    o('sine',95,now,0.14,28,0.4);
   } else if(compatCls==='weak'){
-    // いまひとつ：ぽすっ（2層・こもる）
-    o('sine',130,now,0.18,52,0.16);
-    n(0.14,260,0,0,0.14,now);
+    // いまひとつ：ぽすっ（こもった2層）
+    o('sine',130,now,0.18,52,0.3);
+    n(0.14,260,0,0,0.25,now);
   } else {
-    // きかない：コツン（1層・小さく乾いた）
-    o('triangle',420,now,0.08,290,0.08);
+    // きかない：コツン（乾いた単音）
+    o('triangle',420,now,0.08,290,0.18);
   }
 }
-
 
 function preFetchCries(list){
   if(!_cryAudioCtx)return;
@@ -3399,7 +3469,7 @@ function cleanupBtlRotate(){
   if(document.getElementById('btl-navi-style'))return;
   const st=document.createElement('style');st.id='btl-navi-style';
   st.textContent=`
-#btl-root{position:fixed;top:0;left:0;z-index:100;width:100vw;height:100dvh;display:flex;flex-direction:column;font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;overflow:hidden;user-select:none;}
+#btl-root{position:fixed;top:0;left:0;z-index:100;width:100vw;height:100vh;height:100svh;display:flex;flex-direction:column;font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;overflow:hidden;user-select:none;}
 .btl-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;}
 /* フェーズ演出 */
 @keyframes phase-in{0%{opacity:0;transform:scale(1.06);}100%{opacity:1;transform:scale(1);}}
@@ -3478,6 +3548,9 @@ function turnFlash(nextSide,callback){
 
 // ===== 開始 =====
 function startBattleNavi(){
+  // バトル本編に入るまでBGMは鳴らさない
+  _btlActive=false;stopBattleBgm();
+  if(window._bgmWatchdog){clearInterval(window._bgmWatchdog);window._bgmWatchdog=null;}
   btl.wins=0;btl.losses=0;btl.fainted={my:[],enemy:[]};btl.myIdx=0;btl.enemyIdx=0;
   btl.myTeam=[];btl.enemyTeam=[];btl.hp={my:[],enemy:[]};
   btl.turn='my';btl.animating=false;btl.cpuMode=false;
@@ -3669,8 +3742,8 @@ function showBattleMain(enterAnim){
   function makeHpBlock(side){
     const poke=side==='my'?btl.myTeam[btl.myIdx]:btl.enemyTeam[btl.enemyIdx];
     const w=el('div','');w.id='btl-hpblock-'+side;
-    // ③ HP被り防止：既存のHPブロックを確実に除去してから追加
-    const pos=side==='enemy'?'top:34px;left:4px;':'bottom:32px;right:4px;';
+    // ③ HP配置：敵=左上(ballRowの下)、自分=右下。確実に離す
+    const pos=side==='enemy'?'top:38px;left:4px;':'bottom:34px;right:4px;';
     w.style.cssText='position:absolute;'+pos+'background:rgba(255,255,255,0.93);border-radius:8px;padding:4px 8px;box-shadow:0 2px 8px rgba(0,0,0,0.22);z-index:8;max-width:44%;';
     const nr=el('div','');nr.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:5px;';
     const nm=el('span','');nm.style.cssText='font-size:9px;font-weight:900;color:#1a1a1a;max-width:65px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';nm.textContent=poke.name+(poke.shinyImg?' ✨':'');
@@ -3722,7 +3795,8 @@ function showBattleMain(enterAnim){
   field.appendChild(ballRow);
 
   // ③ HP被り根本対策：既存HPブロックを除去してから追加
-  ['my','enemy'].forEach(function(s){const old=document.getElementById('btl-hpblock-'+s);if(old)old.remove();});
+  // ③ HP被り根本対策：document全体から既存HPブロックを全て除去（複数あっても全部）
+  document.querySelectorAll('[id^="btl-hpblock-"]').forEach(function(e){e.remove();});
   const enemyHp=makeHpBlock('enemy');field.appendChild(enemyHp);
   const enemyWrap=makePokeImg(btl.enemyTeam[btl.enemyIdx],'enemy');field.appendChild(enemyWrap);
   const myWrap=makePokeImg(btl.myTeam[btl.myIdx],'my');field.appendChild(myWrap);
@@ -3770,17 +3844,12 @@ function showBattleMain(enterAnim){
     return btn;
   }
 
-  // 青こうたい（2人対戦のみ）
-  if(!btl.cpuMode){
-    footer.appendChild(makeChangeBtn('enemy'));
-  }
-  // 赤こうたい（常時）
+  // 青こうたい（2人対戦のみ）＋赤こうたい（各1つ）
+  if(!btl.cpuMode)footer.appendChild(makeChangeBtn('enemy'));
   footer.appendChild(makeChangeBtn('my'));
-  const winBtn=el('button','btl-btn');winBtn.textContent='🏆 かった！';winBtn.style.cssText='flex:2;padding:7px;background:linear-gradient(135deg,#1e8449,#27ae60);border:none;color:white;border-radius:8px;font-size:12px;font-weight:900;';
-  winBtn.addEventListener('click',function(){btl.wins++;updateScore();showWinLose('かった！','#1e8449');});
-  const loseBtn=el('button','btl-btn');loseBtn.textContent='💀 まけた';loseBtn.style.cssText='flex:2;padding:7px;background:linear-gradient(135deg,#922b21,#e74c3c);border:none;color:white;border-radius:8px;font-size:12px;font-weight:900;';
-  loseBtn.addEventListener('click',function(){btl.losses++;updateScore();showWinLose('まけた…','#922b21');});
-  const retryBtn=el('button','btl-btn');retryBtn.textContent='🔁 もう一度';retryBtn.style.cssText='flex:1.5;padding:7px;background:linear-gradient(135deg,#7d3c98,#8e44ad);border:none;color:white;border-radius:8px;font-size:11px;font-weight:900;';
+
+  // もう一度ボタンのみ（かった/まけたは削除）
+  const retryBtn=el('button','btl-btn');retryBtn.textContent='🔁 もう一度';retryBtn.style.cssText='flex:1.5;padding:7px;background:linear-gradient(135deg,#7d3c98,#8e44ad);border:none;color:white;border-radius:8px;font-size:12px;font-weight:900;';
   retryBtn.addEventListener('click',function(){
     phaseFlash('linear-gradient(135deg,#1a1a2e,#2c3e50)','🔁 もう一度！','チームをえらびなおそう',function(){
       btl.wins=0;btl.losses=0;btl.fainted={my:[],enemy:[]};btl.myIdx=0;btl.enemyIdx=0;
@@ -3789,11 +3858,20 @@ function showBattleMain(enterAnim){
       showBattleSelect('my');
     },900);
   });
-  if(!btl.cpuMode)footer.appendChild(makeChangeBtn('enemy'));
-  footer.appendChild(makeChangeBtn('my'));
-  footer.appendChild(winBtn);footer.appendChild(loseBtn);footer.appendChild(retryBtn);root.appendChild(footer);
+  footer.appendChild(retryBtn);root.appendChild(footer);
   document.body.appendChild(root);
+  _btlActive=true;
   startBattleBgm();
+  // BGM監視：_btlActiveのみで判定（btl-rootは演出中に一瞬消えるので見ない）
+  if(window._bgmWatchdog)clearInterval(window._bgmWatchdog);
+  window._bgmWatchdog=setInterval(function(){
+    if(!_btlActive){
+      clearInterval(window._bgmWatchdog);window._bgmWatchdog=null;
+      return;
+    }
+    if(_cryAudioCtx&&_cryAudioCtx.state==='suspended')_cryAudioCtx.resume();
+    if(!_bgmRunning)startBattleBgm();
+  },1500);
   preFetchCries(btl.myTeam.concat(btl.enemyTeam));
   updateTurnDisplay();
 
@@ -4002,6 +4080,13 @@ function playAttackSequence(attackerSide,mv,compat){
             playHitSound(compat.cls,false); // 4: 相性別ヒット音
             runHitFx(fxKey,typeColor,defImg,false,compat.cls);
             showCompatText(compat,defSide);
+            // 被弾ポケモンを赤くフラッシュ（リッチ化）
+            if(defImg&&compat.cls!=='zero'){
+              const origFilter=defImg.style.filter;
+              const flashStrength=compat.cls==='super'?'brightness(2.2) sepia(1) saturate(6) hue-rotate(-30deg)':'brightness(1.6) sepia(0.6) saturate(3) hue-rotate(-20deg)';
+              defImg.style.filter=(defSide==='enemy'?'scaleX(-1) ':'')+flashStrength;
+              setTimeout(function(){defImg.style.filter=origFilter;},compat.cls==='super'?200:130);
+            }
           },100);
 
           // ===== ⑨ 煙・余韻 =====
@@ -4245,14 +4330,15 @@ function showDiceOverlay(compatCls,callback){
 // ===== HPスクラッチ =====
 function showHpScratchEffect(side,isCrit){
   const block=document.getElementById('btl-hpblock-'+side);if(!block)return;
+  // HPブロックはposition:absoluteのまま維持（relativeに変えると固定座標が無効になり重なる）
   const scratch=el('div','');
   scratch.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:5;border-radius:8px;overflow:hidden;';
   const lines=el('div','');lines.style.cssText='position:absolute;inset:0;background:repeating-linear-gradient(78deg,transparent 0,transparent 5px,rgba(255,255,255,'+(isCrit?'0.85':'0.55')+') 5px,rgba(255,255,255,'+(isCrit?'0.85':'0.55')+') 6px,transparent 6px,transparent 11px);animation:hp-scratch 0.5s ease forwards;';
-  scratch.appendChild(lines);block.style.position='relative';block.appendChild(scratch);
+  scratch.appendChild(lines);block.appendChild(scratch);
   setTimeout(function(){scratch.remove();},500);
   if(isCrit){
     block.style.boxShadow='0 0 0 3px #ffe033,0 0 18px #ff8800';
-    setTimeout(function(){block.style.boxShadow='';},700);
+    setTimeout(function(){block.style.boxShadow='0 2px 8px rgba(0,0,0,0.22)';},700);
   }
   // ダメージ数値ポップ
   const numEl=el('div','');
@@ -4283,60 +4369,124 @@ function showZeroEffect(side){
 const FX_CATEGORY={slash:{draw:drawSlash},beam:{draw:drawBeam},blast:{draw:drawBlast},wind:{draw:drawWind},bolt:{draw:drawBolt},strike:{draw:drawStrike},freeze:{draw:drawFreeze},dark:{draw:drawDark},dragon:{draw:drawDragon}};
 function runHitFx(fxKey,typeColor,targetEl,isCrit,compatCls){
   const field=document.getElementById('btl-field');if(!field)return;
-  const cv=document.createElement('canvas');const fr=field.getBoundingClientRect();
-  cv.width=fr.width;cv.height=fr.height;
+  // カクツキ防止：古いFXキャンバスが残っていたら除去
+  field.querySelectorAll('canvas.btl-fx').forEach(function(c){c.remove();});
+  const cv=document.createElement('canvas');cv.className='btl-fx';const fr=field.getBoundingClientRect();
+  // 解像度を実寸の0.6倍に抑えて描画負荷を軽減（見た目はCSSで100%に拡大）
+  const scale=0.6;
+  cv.width=Math.max(1,Math.floor(fr.width*scale));cv.height=Math.max(1,Math.floor(fr.height*scale));
   cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20;';
   field.appendChild(cv);const ctx=cv.getContext('2d');
   let tx=cv.width/2,ty=cv.height/2;
-  if(targetEl){const tr=targetEl.getBoundingClientRect();tx=tr.left-fr.left+tr.width/2;ty=tr.top-fr.top+tr.height/2;}
-  // 強度：画面の40%を使う基準スケール
+  if(targetEl){const tr=targetEl.getBoundingClientRect();tx=(tr.left-fr.left+tr.width/2)*scale;ty=(tr.top-fr.top+tr.height/2)*scale;}
   const baseScale=Math.min(cv.width,cv.height)*0.42;
   const intensity=(compatCls==='super'?1.8:compatCls==='weak'?0.55:1.1)*(isCrit?1.5:1);
   const cat=FX_CATEGORY[fxKey]||FX_CATEGORY.strike;
   cat.draw(ctx,cv.width,cv.height,tx,ty,typeColor,intensity,isCrit,baseScale,function(){cv.remove();});
 }
 function drawSlash(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  const count=isCrit?6:3;let frame=0;const maxF=22;
+  // 斬撃：X字の鋭い閃光が走り、切断線が光る
+  const count=isCrit?7:4;let frame=0;const maxF=24;
   const lines=[];
-  for(let i=0;i<count;i++)lines.push({ofs:(-count/2+i)*(baseScale*0.18),alpha:0,w:isCrit?8:5});
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;lines.forEach(function(ln,i){const d=0.1*i;const lp=Math.max(0,Math.min(1,(p-d)/(1-d)));ln.alpha=lp<0.5?lp*2:(1-lp)*2;if(ln.alpha<=0)return;ctx.save();ctx.globalAlpha=ln.alpha*Math.min(intensity,2);ctx.strokeStyle=isCrit?'#ffe033':col;ctx.lineWidth=ln.w;ctx.shadowColor=col;ctx.shadowBlur=isCrit?28:16;ctx.beginPath();const len=Math.max(W,H)*0.9;ctx.moveTo(tx+ln.ofs-len*0.5,ty-ln.ofs-len*0.5);ctx.lineTo(tx+ln.ofs+len*0.5,ty-ln.ofs+len*0.5);ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  for(let i=0;i<count;i++)lines.push({ofs:(-count/2+i)*(baseScale*0.16),alpha:0,w:isCrit?10:6,dir:i%2?1:-1});
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;
+    lines.forEach(function(ln,i){const d=0.08*i;const lp=Math.max(0,Math.min(1,(p-d)/(1-d)));ln.alpha=lp<0.4?lp*2.5:(1-lp)*1.6;if(ln.alpha<=0)return;
+      ctx.save();ctx.globalAlpha=ln.alpha*Math.min(intensity,2);ctx.strokeStyle=isCrit?'#ffe033':'#ffffff';ctx.lineWidth=ln.w;ctx.shadowColor=col;ctx.shadowBlur=isCrit?32:20;ctx.lineCap='round';
+      const len=Math.max(W,H)*1.0;ctx.beginPath();ctx.moveTo(tx+ln.ofs-len*0.5*ln.dir,ty-ln.ofs-len*0.5);ctx.lineTo(tx+ln.ofs+len*0.5*ln.dir,ty-ln.ofs+len*0.5);ctx.stroke();
+      ctx.globalAlpha=ln.alpha*0.5;ctx.strokeStyle=col;ctx.lineWidth=ln.w*2.2;ctx.stroke();ctx.restore();});
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 function drawBeam(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  let frame=0;const maxF=26;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const r=(p<0.55?p/0.55:1-(p-0.55)/0.45)*baseScale*intensity*(isCrit?1.4:1);const alpha=p<0.65?1:1-(p-0.65)/0.35;ctx.save();ctx.globalAlpha=alpha;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);g.addColorStop(0,'white');g.addColorStop(0.35,col);g.addColorStop(0.7,col+'88');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.fill();ctx.restore();frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  // 光線：左から太いビームが貫通し、着弾点で爆発
+  let frame=0;const maxF=28;const fromX=0,fromY=ty;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;
+    // ビーム本体（横一直線）
+    if(p<0.7){const beamProg=Math.min(1,p/0.4);const bw=(isCrit?28:18)*intensity*(p<0.5?1:1.4);
+      ctx.save();ctx.globalAlpha=p<0.5?1:(1-(p-0.5)/0.2);ctx.strokeStyle=col;ctx.lineWidth=bw;ctx.shadowColor=col;ctx.shadowBlur=30;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(fromX,fromY);ctx.lineTo(fromX+(tx-fromX)*beamProg,fromY+(ty-fromY)*beamProg);ctx.stroke();
+      ctx.globalAlpha*=0.6;ctx.strokeStyle='#fff';ctx.lineWidth=bw*0.4;ctx.stroke();ctx.restore();}
+    // 着弾爆発
+    if(p>0.35){const ep=(p-0.35)/0.65;const r=ep*baseScale*1.1*intensity;
+      ctx.save();ctx.globalAlpha=(1-ep)*1;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);g.addColorStop(0,'#fff');g.addColorStop(0.4,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.fill();ctx.restore();}
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 function drawBlast(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  const pts=[];const n=Math.floor((isCrit?32:18)*Math.min(intensity,2));
-  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=(3+Math.random()*5)*intensity;pts.push({x:tx,y:ty,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,sz:(baseScale*0.12+Math.random()*baseScale*0.12)});}
-  let frame=0;const maxF=30;
-  function tick(){ctx.clearRect(0,0,W,H);pts.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.4;p.life-=0.036;p.sz*=0.94;if(p.life<=0)return;ctx.save();ctx.globalAlpha=p.life;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.sz);g.addColorStop(0,'#fff8e1');g.addColorStop(0.5,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);ctx.fill();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  // 炎・爆発：火球が飛び散り、中心に大爆発＋衝撃波リング
+  const pts=[];const n=Math.floor((isCrit?40:24)*Math.min(intensity,2));
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=(4+Math.random()*7)*intensity;pts.push({x:tx,y:ty,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,sz:(baseScale*0.14+Math.random()*baseScale*0.14)});}
+  let frame=0;const maxF=32;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;
+    // 中心の大火球
+    if(p<0.5){const cr=baseScale*(0.3+p*0.8)*intensity;ctx.save();ctx.globalAlpha=(1-p*2);const cg=ctx.createRadialGradient(tx,ty,0,tx,ty,cr);cg.addColorStop(0,'#fffde7');cg.addColorStop(0.3,'#ffb300');cg.addColorStop(0.6,col);cg.addColorStop(1,'transparent');ctx.fillStyle=cg;ctx.beginPath();ctx.arc(tx,ty,cr,0,Math.PI*2);ctx.fill();ctx.restore();}
+    // 飛散する火の粉
+    pts.forEach(function(pt){pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=0.45;pt.life-=0.034;pt.sz*=0.95;if(pt.life<=0)return;ctx.save();ctx.globalAlpha=pt.life;const g=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,pt.sz);g.addColorStop(0,'#fff8e1');g.addColorStop(0.5,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(pt.x,pt.y,pt.sz,0,Math.PI*2);ctx.fill();ctx.restore();});
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 function drawWind(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  const lns=[];const n=isCrit?10:6;for(let i=0;i<n;i++)lns.push({y:ty-baseScale*0.5+i*(baseScale/n),prog:0,spd:0.05+Math.random()*0.04,w:2+Math.random()*3});
-  let frame=0;const maxF=32;
-  function tick(){ctx.clearRect(0,0,W,H);lns.forEach(function(ln){ln.prog=Math.min(1,ln.prog+ln.spd);ctx.save();ctx.globalAlpha=(1-ln.prog)*intensity*0.85;ctx.strokeStyle=col;ctx.lineWidth=ln.w;ctx.shadowColor=col;ctx.shadowBlur=10;ctx.beginPath();ctx.moveTo(0,ln.y);for(let x=0;x<W*ln.prog;x+=12)ctx.lineTo(x,ln.y+Math.sin(x/25+ln.prog*10)*12);ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  // 飛行・風：渦巻く三日月状の風刃が回転しながら広がる
+  const blades=[];const n=isCrit?9:6;for(let i=0;i<n;i++)blades.push({ang:Math.PI*2/n*i,r:baseScale*0.15,spd:0.13+Math.random()*0.05});
+  let frame=0;const maxF=30;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;
+    blades.forEach(function(bl){bl.ang+=bl.spd;bl.r+=baseScale*0.04;ctx.save();ctx.globalAlpha=(1-p)*intensity;ctx.strokeStyle=col;ctx.lineWidth=isCrit?5:3.5;ctx.shadowColor=col;ctx.shadowBlur=12;ctx.lineCap='round';
+      // 三日月の弧
+      ctx.beginPath();ctx.arc(tx,ty,bl.r,bl.ang,bl.ang+Math.PI*0.5);ctx.stroke();ctx.restore();});
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 function drawBolt(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  const bPaths=[];const n=isCrit?5:2;for(let b=0;b<n;b++){const pts=[{x:tx-baseScale*0.3+b*(baseScale*0.15),y:0}];for(let i=1;i<10;i++){const t=i/10;pts.push({x:tx-baseScale*0.3+b*(baseScale*0.15)+(tx-(tx-baseScale*0.3+b*(baseScale*0.15)))*t+(Math.random()-0.5)*60,y:ty*t+(Math.random()-0.5)*55});}pts.push({x:tx,y:ty});bPaths.push(pts);}
-  let frame=0;const maxF=22;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;bPaths.forEach(function(pts){ctx.save();ctx.globalAlpha=(1-p)*Math.min(intensity,2);ctx.strokeStyle=isCrit?'#fff176':col;ctx.lineWidth=isCrit?6:4;ctx.shadowColor=col;ctx.shadowBlur=22;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(function(pt){ctx.lineTo(pt.x,pt.y);});ctx.stroke();ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  // 電撃：上空から複数の稲妻が落ち、着弾点で放電スパーク
+  const bPaths=[];const n=isCrit?6:3;
+  for(let b=0;b<n;b++){const pts=[{x:tx-baseScale*0.4+Math.random()*baseScale*0.8,y:0}];for(let i=1;i<11;i++){const t=i/11;pts.push({x:pts[0].x+(tx-pts[0].x)*t+(Math.random()-0.5)*70,y:ty*t+(Math.random()-0.5)*50});}pts.push({x:tx,y:ty});bPaths.push(pts);}
+  let frame=0;const maxF=24;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const flick=Math.random()>0.3?1:0.4;
+    bPaths.forEach(function(pts){ctx.save();ctx.globalAlpha=(1-p)*Math.min(intensity,2)*flick;ctx.strokeStyle='#fff';ctx.lineWidth=isCrit?5:3;ctx.shadowColor=col;ctx.shadowBlur=26;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(function(pt){ctx.lineTo(pt.x,pt.y);});ctx.stroke();
+      ctx.globalAlpha*=0.5;ctx.strokeStyle=col;ctx.lineWidth=(isCrit?5:3)*2.5;ctx.stroke();ctx.restore();});
+    // 着弾スパーク
+    if(p>0.3){ctx.save();ctx.globalAlpha=(1-p)*1.2;for(let i=0;i<8;i++){const a=Math.PI*2/8*i+frame*0.3;const sr=baseScale*0.4*((p-0.3)/0.7);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.shadowColor=col;ctx.shadowBlur=14;ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx+Math.cos(a)*sr,ty+Math.sin(a)*sr);ctx.stroke();}ctx.restore();}
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 function drawStrike(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  const rings=isCrit?5:3;let frame=0;const maxF=26;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;for(let i=0;i<rings;i++){const d=i*0.15;const rp=Math.max(0,(p-d)/(1-d));if(rp<=0)continue;const r=rp*baseScale*Math.min(intensity,2);ctx.save();ctx.globalAlpha=(1-rp)*Math.min(intensity,1.5);ctx.strokeStyle=col;ctx.lineWidth=Math.max(1,5-rp*4);ctx.shadowColor=col;ctx.shadowBlur=14;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.stroke();ctx.restore();}frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  // 打撃・物理：着弾点に星形の衝撃マーク＋同心円の衝撃波
+  let frame=0;const maxF=26;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;
+    // 衝撃波リング（複数）
+    for(let i=0;i<(isCrit?4:3);i++){const d=i*0.13;const rp=Math.max(0,(p-d)/(1-d));if(rp<=0)continue;const r=rp*baseScale*1.1*Math.min(intensity,2);ctx.save();ctx.globalAlpha=(1-rp)*Math.min(intensity,1.5);ctx.strokeStyle=col;ctx.lineWidth=Math.max(1,7-rp*6);ctx.shadowColor=col;ctx.shadowBlur=16;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.stroke();ctx.restore();}
+    // 中心の星形閃光（ヒット記号）
+    if(p<0.5){const sr=baseScale*0.4*(1-p*2)*intensity;ctx.save();ctx.globalAlpha=(1-p*2);ctx.fillStyle=isCrit?'#ffe033':'#fff';ctx.shadowColor=col;ctx.shadowBlur=20;ctx.beginPath();for(let i=0;i<8;i++){const a=Math.PI/4*i;const rr=i%2?sr*0.4:sr;const x=tx+Math.cos(a)*rr,y=ty+Math.sin(a)*rr;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.closePath();ctx.fill();ctx.restore();}
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 function drawFreeze(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  const crystals=[];const n=isCrit?14:8;for(let i=0;i<n;i++){const a=Math.PI*2/n*i;crystals.push({angle:a,r:0,maxR:(baseScale*0.28+Math.random()*baseScale*0.2)*intensity,spd:3.5+Math.random()*2.5});}
-  let frame=0;const maxF=30;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;crystals.forEach(function(c){c.r=Math.min(c.maxR,c.r+c.spd);ctx.save();ctx.globalAlpha=(1-p);ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.shadowColor='#e1f5fe';ctx.shadowBlur=10;for(let j=0;j<6;j++){const a2=c.angle+j*Math.PI/3;ctx.beginPath();ctx.moveTo(tx+Math.cos(c.angle)*c.r,ty+Math.sin(c.angle)*c.r);ctx.lineTo(tx+Math.cos(c.angle)*c.r+Math.cos(a2)*c.r*0.55,ty+Math.sin(c.angle)*c.r+Math.sin(a2)*c.r*0.55);ctx.stroke();}ctx.restore();});frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  // 氷：六角形の氷晶が結晶化して広がり、キラキラ光る
+  const crystals=[];const n=isCrit?16:10;for(let i=0;i<n;i++){const a=Math.PI*2/n*i;crystals.push({angle:a,r:0,maxR:(baseScale*0.3+Math.random()*baseScale*0.25)*intensity,spd:4+Math.random()*3});}
+  let frame=0;const maxF=32;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;
+    crystals.forEach(function(c){c.r=Math.min(c.maxR,c.r+c.spd);const cx=tx+Math.cos(c.angle)*c.r,cy=ty+Math.sin(c.angle)*c.r;ctx.save();ctx.globalAlpha=(1-p);ctx.strokeStyle='#e1f5fe';ctx.fillStyle=col+'66';ctx.lineWidth=2.5;ctx.shadowColor='#b3e5fc';ctx.shadowBlur=12;
+      // 六角形の氷晶
+      const hr=baseScale*0.08;ctx.beginPath();for(let j=0;j<6;j++){const a=Math.PI/3*j;const x=cx+Math.cos(a)*hr,y=cy+Math.sin(a)*hr;if(j===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();});
+    // 中心の氷バースト
+    if(p<0.4){ctx.save();ctx.globalAlpha=(1-p*2.5);const g=ctx.createRadialGradient(tx,ty,0,tx,ty,baseScale*0.5);g.addColorStop(0,'#fff');g.addColorStop(0.5,'#b3e5fc');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,baseScale*0.5*(1-p*2.5),0,Math.PI*2);ctx.fill();ctx.restore();}
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 function drawDark(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  let frame=0;const maxF=28;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const phase=p<0.5?'in':'out';const rp=phase==='in'?p/0.5:1-(p-0.5)/0.5;const r=baseScale*rp*Math.min(intensity,1.8);ctx.save();if(phase==='in'){ctx.globalAlpha=rp*0.75;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);g.addColorStop(0,'transparent');g.addColorStop(0.5,col+'88');g.addColorStop(1,col);ctx.fillStyle=g;}else{ctx.globalAlpha=(1-rp)*Math.min(intensity,1.5);const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r*2.2);g.addColorStop(0,'white');g.addColorStop(0.25,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;}ctx.beginPath();ctx.arc(tx,ty,phase==='in'?r:r*2.2,0,Math.PI*2);ctx.fill();ctx.restore();frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  // あく：黒い渦が収縮してから爆発、紫黒のオーラが渦巻く
+  let frame=0;const maxF=30;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;
+    if(p<0.5){// 収縮する闇の渦
+      const swirl=8;for(let i=0;i<swirl;i++){const a=Math.PI*2/swirl*i+p*8;const r=baseScale*(1-p*1.8)*0.9;const x=tx+Math.cos(a)*r,y=ty+Math.sin(a)*r;ctx.save();ctx.globalAlpha=p*1.5;const g=ctx.createRadialGradient(x,y,0,x,y,baseScale*0.2);g.addColorStop(0,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,baseScale*0.2,0,Math.PI*2);ctx.fill();ctx.restore();}
+    }else{// 闇の爆発
+      const ep=(p-0.5)/0.5;const r=baseScale*1.3*ep*intensity;ctx.save();ctx.globalAlpha=(1-ep);const g=ctx.createRadialGradient(tx,ty,0,tx,ty,r);g.addColorStop(0,'#4a148c');g.addColorStop(0.4,col);g.addColorStop(0.7,'#1a0033');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.fill();ctx.restore();}
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 function drawDragon(ctx,W,H,tx,ty,col,intensity,isCrit,baseScale,done){
-  let frame=0;const maxF=32;
-  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const n=isCrit?4:2;for(let i=0;i<n;i++){const phase=p+i*0.28;const sr=baseScale*0.7*Math.min(intensity,1.8);ctx.save();ctx.globalAlpha=(1-p)*intensity;ctx.strokeStyle=col;ctx.lineWidth=4;ctx.shadowColor=col;ctx.shadowBlur=18;ctx.beginPath();for(let t=0;t<Math.PI*4*phase;t+=0.12){const r=sr*(t/(Math.PI*4));const x=tx+Math.cos(t+frame*0.22)*r,y=ty+Math.sin(t+frame*0.22)*r;if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();ctx.restore();}frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
+  // ドラゴン：二重螺旋のエネルギー渦が突進、龍が巻きつくイメージ
+  let frame=0;const maxF=34;
+  function tick(){ctx.clearRect(0,0,W,H);const p=frame/maxF;const n=isCrit?3:2;
+    for(let i=0;i<n;i++){const phaseOff=i*Math.PI;ctx.save();ctx.globalAlpha=(1-p)*intensity;ctx.strokeStyle=i%2?col:'#fff';ctx.lineWidth=isCrit?6:4.5;ctx.shadowColor=col;ctx.shadowBlur=22;ctx.lineCap='round';ctx.beginPath();
+      // 二重螺旋
+      let first=true;for(let t=0;t<Math.PI*5*(p+0.3);t+=0.12){const prog=t/(Math.PI*5);const r=baseScale*0.85*prog;const ang=t+frame*0.18+phaseOff;const x=tx+Math.cos(ang)*r,y=ty+Math.sin(ang)*r*0.7;if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);}
+      ctx.stroke();ctx.restore();}
+    // 中心グロー
+    if(p<0.6){ctx.save();ctx.globalAlpha=(1-p/0.6)*0.8;const g=ctx.createRadialGradient(tx,ty,0,tx,ty,baseScale*0.4);g.addColorStop(0,'#fff');g.addColorStop(0.5,col);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(tx,ty,baseScale*0.4,0,Math.PI*2);ctx.fill();ctx.restore();}
+    frame++;if(frame<maxF)requestAnimationFrame(tick);else done();}requestAnimationFrame(tick);
 }
 
 // ===== たおれた =====
@@ -4441,7 +4591,10 @@ function updateScore(){
 
 // ===== 勝敗 =====
 function showWinLose(text,color){
-  stopBattleBgm();addBattleLog(text);
+  _btlActive=false;  // バトル終了：監視タイマーがBGMを再開しないように
+  stopBattleBgm();
+  if(window._bgmWatchdog){clearInterval(window._bgmWatchdog);window._bgmWatchdog=null;}
+  addBattleLog(text);
   const isWin=text.includes('かち')||text.includes('かった');
   if(isWin)playFanfare();
   const _rw=document.getElementById('btl-root')||document.body;
