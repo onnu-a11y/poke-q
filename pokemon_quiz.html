@@ -241,6 +241,25 @@ body::after{content:'';position:fixed;bottom:-80px;left:-80px;width:200px;height
   color: white; font-family: sans-serif; user-select: none;
   overflow: hidden;
 }
+
+/* ===== タイプ相性チェッカー ===== */
+.checker-wrap{padding:0.5rem 0;}
+.checker-section-title{font-size:13px;font-weight:700;color:#1a5276;letter-spacing:1px;text-align:center;margin-bottom:0.75rem;}
+.checker-step-label{font-size:15px;font-weight:900;color:#E3350D;margin-bottom:0.6rem;text-align:center;letter-spacing:1px;}
+.checker-type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:1.1rem;}
+.checker-type-btn{padding:0.55rem 0;border-radius:10px;border:2.5px solid transparent;font-size:13px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;color:#fff;transition:all 0.15s;box-shadow:0 2px 5px rgba(0,0,0,0.13);opacity:0.85;}
+.checker-type-btn:hover{opacity:1;transform:translateY(-1px);}
+.checker-type-btn.selected{border-color:#fff;opacity:1;transform:scale(1.06);box-shadow:0 4px 12px rgba(0,0,0,0.25);}
+.checker-type-btn.disabled-btn{opacity:0.35;pointer-events:none;}
+.checker-nashi-btn{display:block;width:100%;padding:0.55rem 0;border-radius:10px;border:2px dashed #aaa;background:#f5f5f5;font-size:13px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;color:#888;cursor:pointer;touch-action:manipulation;margin-bottom:1.1rem;transition:all 0.15s;}
+.checker-nashi-btn.selected{border-color:#E3350D;background:rgba(227,53,13,0.07);color:#E3350D;}
+.checker-result-card{border-radius:18px;padding:1.1rem 1rem;text-align:center;margin-bottom:1rem;box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+.checker-result-icon{font-size:52px;line-height:1;margin-bottom:0.4rem;}
+.checker-result-label{font-size:22px;font-weight:900;letter-spacing:2px;margin-bottom:0.3rem;}
+.checker-result-sub{font-size:13px;opacity:0.85;}
+.checker-result-formula{font-size:12px;margin-top:0.5rem;opacity:0.7;background:rgba(255,255,255,0.25);border-radius:8px;padding:0.3rem 0.6rem;display:inline-block;}
+.checker-reset-btn{width:100%;padding:0.85rem;font-size:16px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;border-radius:12px;background:linear-gradient(135deg,#E3350D,#ff5722);color:#fff;border:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;margin-bottom:0.75rem;}
+.checker-type-tag{display:inline-block;padding:0.2rem 0.7rem;border-radius:8px;font-size:12px;font-weight:700;color:#fff;margin:0 3px;}
 </style>
 </head>
 <body>
@@ -1307,6 +1326,301 @@ function makeMathQ(){
   return{type:'math',op,a,b,ans,poke1,poke2,choices};
 }
 
+// ===== タイプ相性チェッカー =====
+var CHECKER_SVG_BASE = 'https://raw.githubusercontent.com/duiker101/pokemon-type-svg-icons/master/icons/';
+var CHECKER_TYPE_EN = {
+  'ノーマル':'normal','ほのお':'fire','みず':'water','でんき':'electric',
+  'くさ':'grass','こおり':'ice','かくとう':'fighting','どく':'poison',
+  'じめん':'ground','ひこう':'flying','エスパー':'psychic','むし':'bug',
+  'いわ':'rock','ゴースト':'ghost','ドラゴン':'dragon','あく':'dark',
+  'はがね':'steel','フェアリー':'fairy'
+};
+var CHECKER_RESULT_DEF = {
+  2:   {label:'こうかばつぐん！', icon:'🔥', sub:'ダメージが2ばいになる！', bg:'linear-gradient(135deg,#ff6b35,#f7c948)', color:'#fff'},
+  1:   {label:'ふつう',           icon:'⚡', sub:'ふつうのダメージ',         bg:'linear-gradient(135deg,#5bb8f5,#6890F0)', color:'#fff'},
+  0.5: {label:'こうかいまひとつ…', icon:'💧', sub:'ダメージが半分になる…',   bg:'linear-gradient(135deg,#78C850,#5a9a3a)', color:'#fff'},
+  0:   {label:'こうかなし',        icon:'🌑', sub:'ダメージが 0 ！きかない！', bg:'linear-gradient(135deg,#555,#333)',       color:'#fff'}
+};
+
+function checkerTypeIcon(typeName){
+  var en = CHECKER_TYPE_EN[typeName];
+  var img = document.createElement('img');
+  img.src = CHECKER_SVG_BASE + en + '.svg';
+  img.width = 24; img.height = 24;
+  img.style.cssText = 'vertical-align:middle;margin-right:4px;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.3))';
+  return img;
+}
+
+function renderCheckerTypeGrid(area, label, selectedRef, onSelect, includeNashi) {
+  var wrap = el('div','checker-wrap');
+
+  var stepLbl = el('div','checker-step-label');
+  stepLbl.textContent = label;
+  wrap.appendChild(stepLbl);
+
+  // 「なし」ボタン（2つめタイプ選択時のみ）
+  var nashiBtn = null;
+  if (includeNashi) {
+    nashiBtn = el('button','checker-nashi-btn');
+    nashiBtn.textContent = 'なし（タイプは1まいだけ）';
+    nashiBtn.addEventListener('click', function(){
+      selectedRef.value = null;
+      onSelect(null);
+    });
+    wrap.appendChild(nashiBtn);
+  }
+
+  // タイプグリッド
+  var grid = el('div','checker-type-grid');
+  ALL_TYPES.forEach(function(t){
+    var btn = el('button','checker-type-btn');
+    btn.style.background = TYPE_COLORS[t];
+    // アイコン
+    btn.appendChild(checkerTypeIcon(t));
+    // ラベル
+    var span = document.createElement('span');
+    span.textContent = t;
+    btn.appendChild(span);
+    btn.addEventListener('click', function(){
+      // 選択状態更新
+      grid.querySelectorAll('.checker-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+      if(nashiBtn) nashiBtn.classList.remove('selected');
+      btn.classList.add('selected');
+      selectedRef.value = t;
+    });
+    grid.appendChild(btn);
+  });
+  wrap.appendChild(grid);
+
+  // 「つぎへ」ボタン（なしは即確定のため不要）
+  if (!includeNashi || true) {
+    var nextBtn = el('button','checker-reset-btn');
+    nextBtn.textContent = 'つぎへ →';
+    nextBtn.style.background = 'linear-gradient(135deg,#1a5276,#2980b9)';
+    nextBtn.addEventListener('click', function(){
+      if(selectedRef.value === undefined){ return; } // 未選択チェック
+      onSelect(selectedRef.value);
+    });
+    wrap.appendChild(nextBtn);
+  }
+
+  area.appendChild(wrap);
+}
+
+function showTypeChecker(){
+  currentMode = 'checker';
+  var area = document.getElementById('main-area');
+  area.innerHTML = '';
+
+  var backBtn = el('button','back-btn');
+  backBtn.textContent = '← もどる';
+  backBtn.addEventListener('click', showTop);
+  area.appendChild(backBtn);
+
+  var sb = el('div','status-bar');
+  var mb = el('span','mode-badge');
+  mb.textContent = '🔍 タイプチェッカー';
+  mb.style.cssText = 'color:#1a5276;background:rgba(255,255,255,0.85);border:1px solid rgba(26,82,118,0.25)';
+  sb.appendChild(mb);
+  area.appendChild(sb);
+
+  // Step1: わざのタイプ
+  var atkRef = {value: undefined};
+  renderCheckerTypeGrid(area,
+    '① つかうわざのタイプは？',
+    atkRef,
+    function(atkType){
+      if(atkType === undefined || atkType === null){ return; }
+      showCheckerStep2(atkType);
+    },
+    false
+  );
+}
+
+function showCheckerStep2(atkType){
+  var area = document.getElementById('main-area');
+  area.innerHTML = '';
+
+  var backBtn = el('button','back-btn');
+  backBtn.textContent = '← もどる';
+  backBtn.addEventListener('click', showTypeChecker);
+  area.appendChild(backBtn);
+
+  var sb = el('div','status-bar');
+  var mb = el('span','mode-badge');
+  mb.textContent = '🔍 タイプチェッカー';
+  mb.style.cssText = 'color:#1a5276;background:rgba(255,255,255,0.85);border:1px solid rgba(26,82,118,0.25)';
+  sb.appendChild(mb);
+  // 選択済みわざタイプ表示
+  var atkTag = el('span','checker-type-tag');
+  atkTag.style.background = TYPE_COLORS[atkType];
+  atkTag.appendChild(checkerTypeIcon(atkType));
+  var atkSpan = document.createElement('span'); atkSpan.textContent = atkType;
+  atkTag.appendChild(atkSpan);
+  sb.appendChild(atkTag);
+  area.appendChild(sb);
+
+  var def1Ref = {value: undefined};
+  renderCheckerTypeGrid(area,
+    '② あいてのポケモンのタイプは？（1まいめ）',
+    def1Ref,
+    function(def1Type){
+      if(def1Type === undefined || def1Type === null){ return; }
+      showCheckerStep3(atkType, def1Type);
+    },
+    false
+  );
+}
+
+function showCheckerStep3(atkType, def1Type){
+  var area = document.getElementById('main-area');
+  area.innerHTML = '';
+
+  var backBtn = el('button','back-btn');
+  backBtn.textContent = '← もどる';
+  backBtn.addEventListener('click', function(){ showCheckerStep2(atkType); });
+  area.appendChild(backBtn);
+
+  var sb = el('div','status-bar');
+  var mb = el('span','mode-badge');
+  mb.textContent = '🔍 タイプチェッカー';
+  mb.style.cssText = 'color:#1a5276;background:rgba(255,255,255,0.85);border:1px solid rgba(26,82,118,0.25)';
+  sb.appendChild(mb);
+  [atkType, def1Type].forEach(function(t){
+    var tag = el('span','checker-type-tag');
+    tag.style.background = TYPE_COLORS[t];
+    tag.appendChild(checkerTypeIcon(t));
+    var s = document.createElement('span'); s.textContent = t;
+    tag.appendChild(s);
+    sb.appendChild(tag);
+  });
+  area.appendChild(sb);
+
+  // 「なし」は即結果、タイプ選択も即結果
+  var wrap = el('div','checker-wrap');
+
+  var stepLbl = el('div','checker-step-label');
+  stepLbl.textContent = '③ あいてのタイプは2まいある？（2まいめ）';
+  wrap.appendChild(stepLbl);
+
+  // 「なし」ボタン（先頭）
+  var nashiBtn = el('button','checker-nashi-btn');
+  nashiBtn.textContent = 'なし（タイプは1まいだけ）';
+  nashiBtn.addEventListener('click', function(){
+    showCheckerResult(atkType, [def1Type]);
+  });
+  wrap.appendChild(nashiBtn);
+
+  // タイプグリッド（即結果）
+  var grid = el('div','checker-type-grid');
+  ALL_TYPES.forEach(function(t){
+    var btn = el('button','checker-type-btn');
+    btn.style.background = TYPE_COLORS[t];
+    btn.appendChild(checkerTypeIcon(t));
+    var span = document.createElement('span'); span.textContent = t;
+    btn.appendChild(span);
+    btn.addEventListener('click', function(){
+      showCheckerResult(atkType, [def1Type, t]);
+    });
+    grid.appendChild(btn);
+  });
+  wrap.appendChild(grid);
+  area.appendChild(wrap);
+}
+
+function showCheckerResult(atkType, defTypes){
+  // 倍率計算（TYPE_CHARTをそのまま流用）
+  var mult = 1;
+  defTypes.forEach(function(dt){
+    if(!dt) return;
+    var row = TYPE_CHART[atkType] || {};
+    var v = (row[dt] !== undefined) ? row[dt] : 1;
+    mult *= v;
+  });
+
+  var def = CHECKER_RESULT_DEF[mult] || CHECKER_RESULT_DEF[1];
+
+  var area = document.getElementById('main-area');
+  area.innerHTML = '';
+
+  var backBtn = el('button','back-btn');
+  backBtn.textContent = '← もどる';
+  backBtn.addEventListener('click', showTypeChecker);
+  area.appendChild(backBtn);
+
+  // 倍率内訳サマリー
+  var sb = el('div','status-bar');
+  var mb = el('span','mode-badge');
+  mb.textContent = '🔍 タイプチェッカー';
+  mb.style.cssText = 'color:#1a5276;background:rgba(255,255,255,0.85);border:1px solid rgba(26,82,118,0.25)';
+  sb.appendChild(mb);
+  area.appendChild(sb);
+
+  var wrap = el('div','checker-wrap');
+
+  // わざ→相手タイプ まとめ表示
+  var summary = el('div');
+  summary.style.cssText = 'text-align:center;margin-bottom:1rem;font-size:13px;color:#1a5276;font-weight:700;';
+  var atkTag = el('span','checker-type-tag');
+  atkTag.style.background = TYPE_COLORS[atkType];
+  atkTag.appendChild(checkerTypeIcon(atkType));
+  var as = document.createElement('span'); as.textContent = atkType; atkTag.appendChild(as);
+  summary.appendChild(atkTag);
+  var arrow = document.createElement('span');
+  arrow.textContent = ' → '; arrow.style.fontSize = '16px';
+  summary.appendChild(arrow);
+  defTypes.forEach(function(dt){
+    if(!dt) return;
+    var dtTag = el('span','checker-type-tag');
+    dtTag.style.background = TYPE_COLORS[dt];
+    dtTag.appendChild(checkerTypeIcon(dt));
+    var ds = document.createElement('span'); ds.textContent = dt; dtTag.appendChild(ds);
+    summary.appendChild(dtTag);
+  });
+  wrap.appendChild(summary);
+
+  // 結果カード
+  var card = el('div','checker-result-card');
+  card.style.background = def.bg;
+  card.style.color = def.color;
+
+  var iconDiv = el('div','checker-result-icon');
+  iconDiv.textContent = def.icon;
+  card.appendChild(iconDiv);
+
+  var labelDiv = el('div','checker-result-label');
+  labelDiv.textContent = def.label;
+  card.appendChild(labelDiv);
+
+  var subDiv = el('div','checker-result-sub');
+  subDiv.textContent = def.sub;
+  card.appendChild(subDiv);
+
+  var multStr = mult === 0.5 ? '×½' : '×' + mult;
+  var fml = el('div','checker-result-formula');
+  fml.textContent = 'ダメージ倍率：' + multStr;
+  card.appendChild(fml);
+
+  wrap.appendChild(card);
+
+  // もういちどしらべる
+  var resetBtn = el('button','checker-reset-btn');
+  resetBtn.textContent = '🔍 もういちどしらべる';
+  resetBtn.addEventListener('click', showTypeChecker);
+  wrap.appendChild(resetBtn);
+
+  // トップへ
+  var topBtn = el('button','checker-reset-btn');
+  topBtn.textContent = 'トップにもどる';
+  topBtn.style.background = 'rgba(255,255,255,0.3)';
+  topBtn.style.color = '#1a5276';
+  topBtn.style.border = '2px solid #1a5276';
+  topBtn.addEventListener('click', showTop);
+  wrap.appendChild(topBtn);
+
+  area.appendChild(wrap);
+}
+
 // ===== トップ画面 =====
 function showTop(){
   cleanupBtlRotate(); // バトル画面からの遷移フェイルセーフ
@@ -1328,6 +1642,7 @@ function showTop(){
     {id:'math',icon:'➕',name:'さんすうクイズ',desc:'ポケモンをつかった たしざん・ひきざん！ 10もんチャレンジ'},
     {id:'maze',icon:'🗺️',name:'めいろ',desc:'ゆびでなぞってゴールをめざせ！ポケモンといっしょにすすもう！'},
     {id:'battle',icon:'⚔️',name:'バトルナビ',desc:'モンコレでバトル！わざとタイプ相性をかくにんしよう！'},
+    {id:'checker',icon:'🔍',name:'タイプ相性チェッカー',desc:'バトル中にすぐ調べられる！わざのタイプとあいてのタイプをえらぼう'},
   ];
   modes.forEach(function(m){
     const card=el('div','mode-card');
@@ -1371,6 +1686,7 @@ function startMode(mode){
   currentMode=mode;answered=false;
   isRetryMode=false;
   if(mode==='battle'){startBattleNavi();return;}
+  if(mode==='checker'){showTypeChecker();return;}
   if(mode==='kana'){startKanaMode();return;}
   if(mode==='maze'){showMazeTop();return;}
   if(mode==='typequiz'){startTypeQuiz();return;}
