@@ -1328,6 +1328,14 @@ function makeMathQ(){
 
 // ===== タイプ相性チェッカー =====
 var CHECKER_SVG_BASE = 'https://raw.githubusercontent.com/duiker101/pokemon-type-svg-icons/master/icons/';
+var CHECKER_TYPE_POKE = {
+  'ノーマル':143,'ほのお':6,'みず':9,'でんき':135,
+  'くさ':3,'こおり':144,'かくとう':68,'どく':94,
+  'じめん':105,'ひこう':18,'エスパー':65,'むし':12,
+  'いわ':76,'ゴースト':94,'ドラゴン':149,'あく':197,
+  'はがね':208,'フェアリー':176
+};
+var CHECKER_SPRITE_BASE = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/';
 var CHECKER_TYPE_EN = {
   'ノーマル':'normal','ほのお':'fire','みず':'water','でんき':'electric',
   'くさ':'grass','こおり':'ice','かくとう':'fighting','どく':'poison',
@@ -1528,17 +1536,29 @@ function showCheckerStep3(atkType, def1Type){
   area.appendChild(wrap);
 }
 
+function checkerMultStr(mult){
+  if(mult===0) return '×0';
+  if(mult===0.5) return '×½';
+  if(mult===0.25) return '×¼';
+  return '×'+mult;
+}
+function checkerEffDef(mult){
+  return CHECKER_RESULT_DEF[mult] || CHECKER_RESULT_DEF[1];
+}
+
 function showCheckerResult(atkType, defTypes){
-  // 倍率計算（TYPE_CHARTをそのまま流用）
+  // 倍率計算
   var mult = 1;
+  var mults = [];
   defTypes.forEach(function(dt){
-    if(!dt) return;
+    if(!dt){mults.push(null);return;}
     var row = TYPE_CHART[atkType] || {};
     var v = (row[dt] !== undefined) ? row[dt] : 1;
     mult *= v;
+    mults.push(v);
   });
 
-  var def = CHECKER_RESULT_DEF[mult] || CHECKER_RESULT_DEF[1];
+  var totalDef = checkerEffDef(mult);
 
   var area = document.getElementById('main-area');
   area.innerHTML = '';
@@ -1548,60 +1568,110 @@ function showCheckerResult(atkType, defTypes){
   backBtn.addEventListener('click', showTypeChecker);
   area.appendChild(backBtn);
 
-  // 倍率内訳サマリー
   var sb = el('div','status-bar');
   var mb = el('span','mode-badge');
   mb.textContent = '🔍 タイプチェッカー';
   mb.style.cssText = 'color:#1a5276;background:rgba(255,255,255,0.85);border:1px solid rgba(26,82,118,0.25)';
   sb.appendChild(mb);
-  area.appendChild(sb);
-
-  var wrap = el('div','checker-wrap');
-
-  // わざ→相手タイプ まとめ表示
-  var summary = el('div');
-  summary.style.cssText = 'text-align:center;margin-bottom:1rem;font-size:13px;color:#1a5276;font-weight:700;';
+  // ヘッダーにわざタイプ表示
   var atkTag = el('span','checker-type-tag');
   atkTag.style.background = TYPE_COLORS[atkType];
   atkTag.appendChild(checkerTypeIcon(atkType));
   var as = document.createElement('span'); as.textContent = atkType; atkTag.appendChild(as);
-  summary.appendChild(atkTag);
-  var arrow = document.createElement('span');
-  arrow.textContent = ' → '; arrow.style.fontSize = '16px';
-  summary.appendChild(arrow);
-  defTypes.forEach(function(dt){
-    if(!dt) return;
-    var dtTag = el('span','checker-type-tag');
-    dtTag.style.background = TYPE_COLORS[dt];
-    dtTag.appendChild(checkerTypeIcon(dt));
-    var ds = document.createElement('span'); ds.textContent = dt; dtTag.appendChild(ds);
-    summary.appendChild(dtTag);
-  });
-  wrap.appendChild(summary);
+  sb.appendChild(atkTag);
+  area.appendChild(sb);
 
-  // 結果カード
-  var card = el('div','checker-result-card');
-  card.style.background = def.bg;
-  card.style.color = def.color;
+  var wrap = el('div','checker-wrap');
+
+  // 各タイプ内訳カード（中サイズ）
+  defTypes.forEach(function(dt, i){
+    if(!dt) return;
+    var rowMult = mults[i];
+    var rowDef = checkerEffDef(rowMult);
+    var lbl = (i===0) ? '1つめのタイプ' : '2つめのタイプ';
+
+    var card = el('div','checker-breakdown-card');
+    card.style.cssText = 'background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:0;';
+
+    // ラベル
+    var lblEl = el('div');
+    lblEl.textContent = lbl;
+    lblEl.style.cssText = 'font-size:11px;color:#999;margin-bottom:6px;';
+    card.appendChild(lblEl);
+
+    // 3カラム行：タイプ(左) / ポケモン画像(中央) / 効果(右)
+    var row = el('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
+
+    // 左：タイプバッジ
+    var typeTag = el('span','checker-type-tag');
+    typeTag.style.background = TYPE_COLORS[dt];
+    typeTag.appendChild(checkerTypeIcon(dt));
+    var ts = document.createElement('span'); ts.textContent = dt; typeTag.appendChild(ts);
+    row.appendChild(typeTag);
+
+    // 中央：ポケモン画像
+    var pokeWrap = el('div');
+    pokeWrap.style.cssText = 'flex:1;display:flex;justify-content:center;align-items:center;';
+    var pokeImg = document.createElement('img');
+    pokeImg.src = CHECKER_SPRITE_BASE + (CHECKER_TYPE_POKE[dt]||1) + '.png';
+    pokeImg.style.cssText = 'width:52px;height:52px;object-fit:contain;';
+    pokeImg.onerror = function(){this.style.display='none';};
+    pokeWrap.appendChild(pokeImg);
+    row.appendChild(pokeWrap);
+
+    // 右：効果バッジ
+    var effBadge = el('span');
+    effBadge.textContent = rowDef.icon + ' ' + rowDef.label;
+    effBadge.style.cssText = 'font-size:12px;font-weight:700;padding:4px 10px;border-radius:10px;white-space:nowrap;background:'+rowDef.bg+';color:'+rowDef.color+';';
+    // バッジの背景はグラデーションを単色に近い形で代替
+    var badgeBgMap = {2:'#FAECE7',1:'#E8F4FB',0.5:'#EAF3DE',0:'#E8E8E8',0.25:'#EAF3DE'};
+    var badgeColMap = {2:'#993C1D',1:'#185FA5',0.5:'#3B6D11',0:'#444',0.25:'#3B6D11'};
+    effBadge.style.background = badgeBgMap[rowMult] || '#eee';
+    effBadge.style.color = badgeColMap[rowMult] || '#333';
+    row.appendChild(effBadge);
+
+    card.appendChild(row);
+    wrap.appendChild(card);
+  });
+
+  // 「あわせると…」区切り（2タイプの場合のみ）
+  var validTypes = defTypes.filter(function(dt){return !!dt;});
+  if(validTypes.length > 1){
+    var sep = el('div');
+    sep.style.cssText = 'display:flex;align-items:center;gap:6px;padding:0 4px;margin:4px 0;';
+    var line1 = el('div'); line1.style.cssText = 'flex:1;height:1px;background:rgba(255,255,255,0.3);';
+    var sepTxt = el('div'); sepTxt.textContent = 'あわせると…';
+    sepTxt.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.7);white-space:nowrap;';
+    var line2 = el('div'); line2.style.cssText = 'flex:1;height:1px;background:rgba(255,255,255,0.3);';
+    sep.appendChild(line1); sep.appendChild(sepTxt); sep.appendChild(line2);
+    wrap.appendChild(sep);
+  }
+
+  // 合計結果カード（大）
+  var totalCard = el('div','checker-result-card');
+  totalCard.style.background = totalDef.bg;
+  totalCard.style.color = totalDef.color;
 
   var iconDiv = el('div','checker-result-icon');
-  iconDiv.textContent = def.icon;
-  card.appendChild(iconDiv);
+  iconDiv.textContent = totalDef.icon;
+  totalCard.appendChild(iconDiv);
 
   var labelDiv = el('div','checker-result-label');
-  labelDiv.textContent = def.label;
-  card.appendChild(labelDiv);
+  labelDiv.textContent = totalDef.label;
+  totalCard.appendChild(labelDiv);
 
   var subDiv = el('div','checker-result-sub');
-  subDiv.textContent = def.sub;
-  card.appendChild(subDiv);
+  subDiv.textContent = totalDef.sub;
+  totalCard.appendChild(subDiv);
 
-  var multStr = mult === 0.5 ? '×½' : '×' + mult;
-  var fml = el('div','checker-result-formula');
-  fml.textContent = 'ダメージ倍率：' + multStr;
-  card.appendChild(fml);
-
-  wrap.appendChild(card);
+  if(validTypes.length > 1){
+    var fml = el('div','checker-result-formula');
+    var parts = mults.filter(function(m){return m!==null;}).map(checkerMultStr);
+    fml.textContent = 'ダメージ倍率：' + checkerMultStr(mult) + '（' + parts.join(' × ') + '）';
+    totalCard.appendChild(fml);
+  }
+  wrap.appendChild(totalCard);
 
   // もういちどしらべる
   var resetBtn = el('button','checker-reset-btn');
@@ -1612,9 +1682,9 @@ function showCheckerResult(atkType, defTypes){
   // トップへ
   var topBtn = el('button','checker-reset-btn');
   topBtn.textContent = 'トップにもどる';
-  topBtn.style.background = 'rgba(255,255,255,0.3)';
-  topBtn.style.color = '#1a5276';
-  topBtn.style.border = '2px solid #1a5276';
+  topBtn.style.background = 'rgba(255,255,255,0.15)';
+  topBtn.style.color = '#fff';
+  topBtn.style.border = '1.5px solid rgba(255,255,255,0.5)';
   topBtn.addEventListener('click', showTop);
   wrap.appendChild(topBtn);
 
