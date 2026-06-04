@@ -1362,7 +1362,7 @@ function renderCheckerTypeGrid(area, label, selectedRef, onSelect, includeNashi)
   var nashiBtn = null;
   if (includeNashi) {
     nashiBtn = el('button','checker-nashi-btn');
-    nashiBtn.textContent = 'なし（タイプは1まいだけ）';
+    nashiBtn.textContent = 'なし（タイプは1つだけ）';
     nashiBtn.addEventListener('click', function(){
       selectedRef.value = null;
       onSelect(null);
@@ -1462,7 +1462,7 @@ function showCheckerStep2(atkType){
 
   var def1Ref = {value: undefined};
   renderCheckerTypeGrid(area,
-    '② あいてのポケモンのタイプは？（1まいめ）',
+    '② あいてのポケモンの1つめのタイプは？',
     def1Ref,
     function(def1Type){
       if(def1Type === undefined || def1Type === null){ return; }
@@ -1500,12 +1500,12 @@ function showCheckerStep3(atkType, def1Type){
   var wrap = el('div','checker-wrap');
 
   var stepLbl = el('div','checker-step-label');
-  stepLbl.textContent = '③ あいてのタイプは2まいある？（2まいめ）';
+  stepLbl.textContent = '③ あいてのポケモンの2つめのタイプは？';
   wrap.appendChild(stepLbl);
 
   // 「なし」ボタン（先頭）
   var nashiBtn = el('button','checker-nashi-btn');
-  nashiBtn.textContent = 'なし（タイプは1まいだけ）';
+  nashiBtn.textContent = 'なし（タイプは1つだけ）';
   nashiBtn.addEventListener('click', function(){
     showCheckerResult(atkType, [def1Type]);
   });
