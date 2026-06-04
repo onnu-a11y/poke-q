@@ -1519,7 +1519,12 @@ function showCheckerStep3(atkType, def1Type){
   });
   wrap.appendChild(nashiBtn);
 
-  // タイプグリッド（即結果）
+  // タイプグリッド（選択→「こたえをみる」ボタン表示）
+  var selectedDef2 = null;
+  var answerBtn = el('button','checker-reset-btn');
+  answerBtn.textContent = '🔍 こたえをみる';
+  answerBtn.style.display = 'none';
+
   var grid = el('div','checker-type-grid');
   ALL_TYPES.forEach(function(t){
     var btn = el('button','checker-type-btn');
@@ -1528,11 +1533,19 @@ function showCheckerStep3(atkType, def1Type){
     var span = document.createElement('span'); span.textContent = t;
     btn.appendChild(span);
     btn.addEventListener('click', function(){
-      showCheckerResult(atkType, [def1Type, t]);
+      grid.querySelectorAll('.checker-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      selectedDef2 = t;
+      answerBtn.style.display = 'block';
     });
     grid.appendChild(btn);
   });
   wrap.appendChild(grid);
+
+  answerBtn.addEventListener('click', function(){
+    if(selectedDef2) showCheckerResult(atkType, [def1Type, selectedDef2]);
+  });
+  wrap.appendChild(answerBtn);
   area.appendChild(wrap);
 }
 
@@ -1639,11 +1652,11 @@ function showCheckerResult(atkType, defTypes){
   var validTypes = defTypes.filter(function(dt){return !!dt;});
   if(validTypes.length > 1){
     var sep = el('div');
-    sep.style.cssText = 'display:flex;align-items:center;gap:6px;padding:0 4px;margin:4px 0;';
-    var line1 = el('div'); line1.style.cssText = 'flex:1;height:1px;background:rgba(255,255,255,0.3);';
+    sep.style.cssText = 'display:flex;align-items:center;gap:10px;padding:14px 4px;';
+    var line1 = el('div'); line1.style.cssText = 'flex:1;height:1.5px;background:rgba(255,255,255,0.5);';
     var sepTxt = el('div'); sepTxt.textContent = 'あわせると…';
-    sepTxt.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.7);white-space:nowrap;';
-    var line2 = el('div'); line2.style.cssText = 'flex:1;height:1px;background:rgba(255,255,255,0.3);';
+    sepTxt.style.cssText = 'font-size:16px;font-weight:700;color:#fff;white-space:nowrap;letter-spacing:2px;text-shadow:0 1px 4px rgba(0,0,0,0.4);';
+    var line2 = el('div'); line2.style.cssText = 'flex:1;height:1.5px;background:rgba(255,255,255,0.5);';
     sep.appendChild(line1); sep.appendChild(sepTxt); sep.appendChild(line2);
     wrap.appendChild(sep);
   }
