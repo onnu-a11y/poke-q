@@ -1344,10 +1344,12 @@ var CHECKER_TYPE_EN = {
   'はがね':'steel','フェアリー':'fairy'
 };
 var CHECKER_RESULT_DEF = {
-  2:   {label:'こうかばつぐん！', icon:'🔥', sub:'ダメージが2ばいになる！', bg:'linear-gradient(135deg,#ff6b35,#f7c948)', color:'#fff'},
-  1:   {label:'ふつう',           icon:'⚡', sub:'ふつうのダメージ',         bg:'linear-gradient(135deg,#5bb8f5,#6890F0)', color:'#fff'},
-  0.5: {label:'こうかいまひとつ…', icon:'💧', sub:'ダメージが半分になる…',   bg:'linear-gradient(135deg,#78C850,#5a9a3a)', color:'#fff'},
-  0:   {label:'こうかなし',        icon:'🌑', sub:'ダメージが 0 ！きかない！', bg:'linear-gradient(135deg,#555,#333)',       color:'#fff'}
+  4:    {label:'こうかばつぐん！', icon:'🔥', sub:'ダメージが4ばいになる！',  bg:'linear-gradient(135deg,#c0392b,#e74c3c)', color:'#fff'},
+  2:    {label:'こうかばつぐん！', icon:'🔥', sub:'ダメージが2ばいになる！',  bg:'linear-gradient(135deg,#ff6b35,#f7c948)', color:'#fff'},
+  1:    {label:'ふつう',           icon:'⚡', sub:'ふつうのダメージ',          bg:'linear-gradient(135deg,#5bb8f5,#6890F0)', color:'#fff'},
+  0.5:  {label:'こうかいまひとつ…', icon:'💧', sub:'ダメージが半分になる…',  bg:'linear-gradient(135deg,#78C850,#5a9a3a)', color:'#fff'},
+  0.25: {label:'こうかいまひとつ…', icon:'💧', sub:'ダメージが¼になる…',     bg:'linear-gradient(135deg,#5a9a3a,#3d6b28)', color:'#fff'},
+  0:    {label:'こうかなし',        icon:'🌑', sub:'ダメージが 0 ！きかない！', bg:'linear-gradient(135deg,#555,#333)',      color:'#fff'}
 };
 
 function checkerTypeIcon(typeName){
@@ -1532,12 +1534,35 @@ function showCheckerStep3(atkType, def1Type){
     btn.appendChild(checkerTypeIcon(t));
     var span = document.createElement('span'); span.textContent = t;
     btn.appendChild(span);
-    btn.addEventListener('click', function(){
-      grid.querySelectorAll('.checker-type-btn').forEach(function(b){ b.classList.remove('selected'); });
-      btn.classList.add('selected');
-      selectedDef2 = t;
-      answerBtn.style.display = 'block';
-    });
+    // 1つめと同じタイプは選択不可
+    if(t === def1Type){
+      btn.disabled = true;
+      btn.style.cursor = 'not-allowed';
+      btn.style.background = '#fff';
+      btn.style.border = '2px solid #ccc';
+      btn.style.opacity = '1';
+      btn.style.position = 'relative';
+      btn.style.overflow = 'hidden';
+      span.style.color = '#1a6fc4';
+      // ×線を2本追加
+      var xLine1 = document.createElement('div');
+      xLine1.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg);width:3px;height:120%;background:rgba(180,0,0,0.45);border-radius:2px;pointer-events:none;';
+      var xLine2 = document.createElement('div');
+      xLine2.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);width:3px;height:120%;background:rgba(180,0,0,0.45);border-radius:2px;pointer-events:none;';
+      btn.appendChild(xLine1);
+      btn.appendChild(xLine2);
+      var usedLbl = document.createElement('div');
+      usedLbl.textContent = '１つめのタイプ';
+      usedLbl.style.cssText = 'font-size:10px;color:#1a6fc4;font-weight:700;margin-top:2px;text-align:center;';
+      btn.appendChild(usedLbl);
+    } else {
+      btn.addEventListener('click', function(){
+        grid.querySelectorAll('.checker-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        selectedDef2 = t;
+        answerBtn.style.display = 'block';
+      });
+    }
     grid.appendChild(btn);
   });
   wrap.appendChild(grid);
